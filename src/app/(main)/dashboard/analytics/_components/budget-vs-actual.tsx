@@ -3,8 +3,19 @@
 import { Ellipsis } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 
 const budgetData = [
   { month: "Jan", budget: 1200000, actual: 1150000 },
@@ -45,7 +56,9 @@ export function BudgetVsActual() {
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle className="font-normal">Budget vs Dépenses réelles</CardTitle>
+        <CardTitle className="font-normal">
+          Budget vs Dépenses réelles
+        </CardTitle>
         <CardAction>
           <Ellipsis className="size-4" />
         </CardAction>
@@ -63,14 +76,39 @@ export function BudgetVsActual() {
             }}
           >
             <CartesianGrid vertical={false} />
-            <XAxis dataKey="month" tickLine={false} tickMargin={10} axisLine={false} />
-            <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => `${value / 1000000}M`} />
+            <XAxis
+              dataKey="month"
+              tickLine={false}
+              tickMargin={10}
+              axisLine={false}
+            />
+            <YAxis
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              tickFormatter={(value) => `${value / 1000000}M`}
+            />
             <ChartTooltip
               cursor={false}
-              content={<ChartTooltipContent indicator="line" valueFormatter={(value) => formatFCFA(Number(value))} />}
+              content={
+                <ChartTooltipContent
+                  indicator="line"
+                  formatter={(value) => formatFCFA(Number(value))}
+                />
+              }
             />
-            <Bar dataKey="budget" fill="var(--color-budget)" radius={[4, 4, 0, 0]} barSize={20} />
-            <Bar dataKey="actual" fill="var(--color-actual)" radius={[4, 4, 0, 0]} barSize={20} />
+            <Bar
+              dataKey="budget"
+              fill="var(--color-budget)"
+              radius={[4, 4, 0, 0]}
+              barSize={20}
+            />
+            <Bar
+              dataKey="actual"
+              fill="var(--color-actual)"
+              radius={[4, 4, 0, 0]}
+              barSize={20}
+            />
           </BarChart>
         </ChartContainer>
       </CardContent>

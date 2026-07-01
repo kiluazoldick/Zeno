@@ -3,8 +3,19 @@
 import { Ellipsis } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 
 const financialData = [
   { month: "Jan", income: 1800000, expense: 950000 },
@@ -57,14 +68,39 @@ export function FinancialOverview() {
             }}
           >
             <CartesianGrid vertical={false} />
-            <XAxis dataKey="month" tickLine={false} tickMargin={10} axisLine={false} />
-            <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => `${value / 1000000}M`} />
+            <XAxis
+              dataKey="month"
+              tickLine={false}
+              tickMargin={10}
+              axisLine={false}
+            />
+            <YAxis
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              tickFormatter={(value) => `${value / 1000000}M`}
+            />
             <ChartTooltip
               cursor={false}
-              content={<ChartTooltipContent indicator="line" valueFormatter={(value) => formatFCFA(Number(value))} />}
+              content={
+                <ChartTooltipContent
+                  indicator="line"
+                  formatter={(value) => formatFCFA(Number(value))}
+                />
+              }
             />
-            <Bar dataKey="income" fill="var(--color-income)" radius={[4, 4, 0, 0]} barSize={20} />
-            <Bar dataKey="expense" fill="var(--color-expense)" radius={[4, 4, 0, 0]} barSize={20} />
+            <Bar
+              dataKey="income"
+              fill="var(--color-income)"
+              radius={[4, 4, 0, 0]}
+              barSize={20}
+            />
+            <Bar
+              dataKey="expense"
+              fill="var(--color-expense)"
+              radius={[4, 4, 0, 0]}
+              barSize={20}
+            />
           </BarChart>
         </ChartContainer>
       </CardContent>

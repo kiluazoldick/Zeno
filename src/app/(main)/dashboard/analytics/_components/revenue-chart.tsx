@@ -3,7 +3,14 @@
 import { format } from "date-fns";
 import { Area, CartesianGrid, ComposedChart, Line, XAxis } from "recharts";
 
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   type ChartConfig,
   ChartContainer,
@@ -12,7 +19,14 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const revenueData = [
   { month: "Jan", revenue: 1250000, expenses: 850000, profit: 400000 },
@@ -57,9 +71,13 @@ export function RevenueChart() {
   return (
     <Card className="@container/card">
       <CardHeader>
-        <CardTitle className="leading-none">Évolution du chiffre d'affaires</CardTitle>
+        <CardTitle className="leading-none">
+          Évolution du chiffre d'affaires
+        </CardTitle>
         <CardDescription>
-          <span className="@[540px]/card:block hidden">Revenus, dépenses et bénéfices mensuels en FCFA</span>
+          <span className="@[540px]/card:block hidden">
+            Revenus, dépenses et bénéfices mensuels en FCFA
+          </span>
           <span className="@[540px]/card:hidden">Performance mensuelle</span>
         </CardDescription>
         <CardAction>
@@ -79,17 +97,33 @@ export function RevenueChart() {
       </CardHeader>
 
       <CardContent>
-        <ChartContainer config={chartConfig} className="aspect-auto h-72 w-full">
+        <ChartContainer
+          config={chartConfig}
+          className="aspect-auto h-72 w-full"
+        >
           <ComposedChart data={revenueData} margin={{ top: 0 }}>
             <defs>
               <linearGradient id="fillRevenue" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--color-revenue)" stopOpacity={0.36} />
-                <stop offset="95%" stopColor="var(--color-revenue)" stopOpacity={0.04} />
+                <stop
+                  offset="5%"
+                  stopColor="var(--color-revenue)"
+                  stopOpacity={0.36}
+                />
+                <stop
+                  offset="95%"
+                  stopColor="var(--color-revenue)"
+                  stopOpacity={0.04}
+                />
               </linearGradient>
             </defs>
             <CartesianGrid vertical={false} strokeOpacity={0.5} />
 
-            <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
+            <XAxis
+              dataKey="month"
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+            />
 
             <ChartTooltip
               cursor={false}
@@ -97,16 +131,14 @@ export function RevenueChart() {
                 <ChartTooltipContent
                   className="w-60"
                   indicator="line"
-                  valueFormatter={(value, name) => {
-                    if (typeof value === "number") {
-                      return formatFCFA(value);
-                    }
-                    return value;
-                  }}
+                  formatter={(value) => formatFCFA(Number(value))}
                 />
               }
             />
-            <ChartLegend verticalAlign="top" content={<ChartLegendContent className="mb-5 justify-end" />} />
+            <ChartLegend
+              verticalAlign="top"
+              content={<ChartLegendContent className="mb-5 justify-end" />}
+            />
 
             <Area
               dataKey="revenue"
@@ -116,7 +148,13 @@ export function RevenueChart() {
               strokeWidth={2}
               dot={false}
             />
-            <Line dataKey="expenses" type="monotone" stroke="var(--color-expenses)" strokeWidth={1.5} dot={false} />
+            <Line
+              dataKey="expenses"
+              type="monotone"
+              stroke="var(--color-expenses)"
+              strokeWidth={1.5}
+              dot={false}
+            />
             <Line
               dataKey="profit"
               type="monotone"
