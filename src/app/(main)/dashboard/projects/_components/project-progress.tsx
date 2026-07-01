@@ -52,7 +52,7 @@ export function ProjectProgress() {
             />
             <ChartTooltip
               cursor={false}
-              content={<ChartTooltipContent indicator="line" valueFormatter={(value) => `${value}%`} />}
+              content={<ChartTooltipContent indicator="line" formatter={(value) => `${value}%`} />}
             />
             <Bar dataKey="progress" fill="var(--color-progress)" radius={[4, 4, 0, 0]} barSize={40} />
           </BarChart>

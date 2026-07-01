@@ -1,10 +1,28 @@
 "use client";
 
 import { Ellipsis } from "lucide-react";
-import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis } from "recharts";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  LabelList,
+  XAxis,
+  YAxis,
+} from "recharts";
 
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 
 const productivityData = [
   { name: "Nanga D.", tasks: 12, productivity: 92 },
@@ -44,26 +62,48 @@ export function ProductivityMembers() {
             }}
           >
             <CartesianGrid horizontal={false} vertical={false} />
-            <YAxis dataKey="name" tickLine={false} tickMargin={10} type="category" width={80} />
-            <XAxis dataKey="productivity" hide type="number" domain={[0, 100]} />
+            <YAxis
+              dataKey="name"
+              tickLine={false}
+              tickMargin={10}
+              type="category"
+              width={80}
+            />
+            <XAxis
+              dataKey="productivity"
+              hide
+              type="number"
+              domain={[0, 100]}
+            />
             <ChartTooltip
               cursor={false}
               content={
                 <ChartTooltipContent
                   indicator="line"
                   labelFormatter={(label) => `Membre: ${label}`}
-                  valueFormatter={(value) => `${value}%`}
+                  formatter={(value) => `${value}%`}
                 />
               }
             />
-            <Bar dataKey="productivity" fill="var(--color-productivity)" radius={4} barSize={28} fillOpacity={0.8}>
+            <Bar
+              dataKey="productivity"
+              fill="var(--color-productivity)"
+              radius={4}
+              barSize={28}
+              fillOpacity={0.8}
+            >
               <LabelList
                 className="fill-foreground"
                 dataKey="productivity"
                 fontSize={14}
-                formatter={(value: number) => `${value}%`}
                 offset={8}
                 position="right"
+                content={({ value }) => {
+                  if (typeof value === "number") {
+                    return `${value}%`;
+                  }
+                  return null;
+                }}
               />
             </Bar>
           </BarChart>

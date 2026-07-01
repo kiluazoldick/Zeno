@@ -149,7 +149,7 @@ export function PerformanceOverview() {
                   className="w-60"
                   indicator="line"
                   labelFormatter={(value) => format(parseISO(value), "d MMMM yyyy")}
-                  valueFormatter={(value, name) => {
+                  formatter={(value, name) => {
                     if (name === "revenue" || name === "expenses") {
                       return formatFCFA(Number(value));
                     }
