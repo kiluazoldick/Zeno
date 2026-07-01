@@ -1,0 +1,162 @@
+[
+  {
+    "id": "OP-001",
+    "account": "Groupe Banto",
+    "stage": "Devis envoyé",
+    "priority": "Haute",
+    "health": "En bonne voie",
+    "value": "42 000 000 FCFA"
+  },
+  {
+    "id": "OP-002",
+    "account": "Hôtel Royal",
+    "stage": "Découverte",
+    "priority": "Haute",
+    "health": "En attente",
+    "value": "18 500 000 FCFA"
+  },
+  {
+    "id": "OP-003",
+    "account": "Hôpital Central",
+    "stage": "Négociation",
+    "priority": "Haute",
+    "health": "À risque",
+    "value": "63 000 000 FCFA"
+  },
+  {
+    "id": "OP-004",
+    "account": "Marché Municipal",
+    "stage": "Qualifié",
+    "priority": "Haute",
+    "health": "À risque",
+    "value": "26 400 000 FCFA"
+  },
+  {
+    "id": "OP-005",
+    "account": "Complexe Sportif",
+    "stage": "Devis envoyé",
+    "priority": "Haute",
+    "health": "À revoir",
+    "value": "58 900 000 FCFA"
+  },
+  {
+    "id": "OP-006",
+    "account": "SIEM",
+    "stage": "Découverte",
+    "priority": "Moyenne",
+    "health": "En bonne voie",
+    "value": "31 200 000 FCFA"
+  },
+  {
+    "id": "OP-007",
+    "account": "Promoteur Bonapriso",
+    "stage": "Négociation",
+    "priority": "Moyenne",
+    "health": "En bonne voie",
+    "value": "15 600 000 FCFA"
+  },
+  {
+    "id": "OP-008",
+    "account": "Zone Industrielle",
+    "stage": "Qualifié",
+    "priority": "Moyenne",
+    "health": "En attente",
+    "value": "47 900 000 FCFA"
+  },
+  {
+    "id": "OP-009",
+    "account": "Aéroport Douala",
+    "stage": "Devis envoyé",
+    "priority": "Haute",
+    "health": "À risque",
+    "value": "52 400 000 FCFA"
+  },
+  {
+    "id": "OP-010",
+    "account": "Ministère Éducation",
+    "stage": "Découverte",
+    "priority": "Haute",
+    "health": "À risque",
+    "value": "22 800 000 FCFA"
+  },
+  {
+    "id": "OP-011",
+    "account": "Mairie Douala",
+    "stage": "Négociation",
+    "priority": "Moyenne",
+    "health": "À revoir",
+    "value": "19 300 000 FCFA"
+  },
+  {
+    "id": "OP-012",
+    "account": "Port Autonome",
+    "stage": "Qualifié",
+    "priority": "Haute",
+    "health": "En bonne voie",
+    "value": "68 500 000 FCFA"
+  },
+  {
+    "id": "OP-013",
+    "account": "SONARA",
+    "stage": "Devis envoyé",
+    "priority": "Haute",
+    "health": "En bonne voie",
+    "value": "36 100 000 FCFA"
+  },
+  {
+    "id": "OP-014",
+    "account": "ENEO",
+    "stage": "Découverte",
+    "priority": "Moyenne",
+    "health": "En attente",
+    "value": "27 400 000 FCFA"
+  },
+  {
+    "id": "OP-015",
+    "account": "CAMTEL",
+    "stage": "Négociation",
+    "priority": "Moyenne",
+    "health": "À risque",
+    "value": "24 700 000 FCFA"
+  },
+  {
+    "id": "OP-016",
+    "account": "CNPS",
+    "stage": "Qualifié",
+    "priority": "Haute",
+    "health": "À risque",
+    "value": "33 400 000 FCFA"
+  },
+  {
+    "id": "OP-017",
+    "account": "MINMAP",
+    "stage": "Devis envoyé",
+    "priority": "Haute",
+    "health": "À revoir",
+    "value": "71 800 000 FCFA"
+  },
+  {
+    "id": "OP-018",
+    "account": "Hôtel de Ville",
+    "stage": "Découverte",
+    "priority": "Moyenne",
+    "health": "En bonne voie",
+    "value": "29 200 000 FCFA"
+  },
+  {
+    "id": "OP-019",
+    "account": "Université de Yaoundé",
+    "stage": "Négociation",
+    "priority": "Moyenne",
+    "health": "En bonne voie",
+    "value": "44 800 000 FCFA"
+  },
+  {
+    "id": "OP-020",
+    "account": "CHU Douala",
+    "stage": "Qualifié",
+    "priority": "Haute",
+    "health": "En attente",
+    "value": "38 100 000 FCFA"
+  }
+]

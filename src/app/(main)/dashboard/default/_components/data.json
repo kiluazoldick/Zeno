@@ -1,0 +1,92 @@
+[
+  {
+    "id": "PRJ-001",
+    "name": "Construction Immeuble Banto",
+    "email": "client.banto@entreprise.cm",
+    "plan": "Projet Premium",
+    "status": "En cours",
+    "billing": "Payé",
+    "joined": "2026-06-15"
+  },
+  {
+    "id": "PRJ-002",
+    "name": "Rénovation Hôtel Royal",
+    "email": "hotel.royal@cm",
+    "plan": "Projet Standard",
+    "status": "Terminé",
+    "billing": "Payé",
+    "joined": "2026-06-10"
+  },
+  {
+    "id": "PRJ-003",
+    "name": "Infrastructure École Primaire",
+    "email": "education.gouv@cm",
+    "plan": "Projet Public",
+    "status": "En attente",
+    "billing": "En attente",
+    "joined": "2026-06-08"
+  },
+  {
+    "id": "PRJ-004",
+    "name": "Extension Hôpital Central",
+    "email": "hopital.central@cm",
+    "plan": "Projet Premium",
+    "status": "En cours",
+    "billing": "Payé",
+    "joined": "2026-06-05"
+  },
+  {
+    "id": "PRJ-005",
+    "name": "Construction Marché Municipal",
+    "email": "mairie.douala@cm",
+    "plan": "Projet Public",
+    "status": "En attente",
+    "billing": "Non payé",
+    "joined": "2026-06-01"
+  },
+  {
+    "id": "PRJ-006",
+    "name": "Rénovation Bureaux SIEM",
+    "email": "siem@enterprise.cm",
+    "plan": "Projet Standard",
+    "status": "Annulé",
+    "billing": "Annulé",
+    "joined": "2026-05-28"
+  },
+  {
+    "id": "PRJ-007",
+    "name": "Construction Complexe Sportif",
+    "email": "sports.gouv@cm",
+    "plan": "Projet Premium",
+    "status": "En cours",
+    "billing": "Partiel",
+    "joined": "2026-05-25"
+  },
+  {
+    "id": "PRJ-008",
+    "name": "Aménagement Zone Industrielle",
+    "email": "industries.gouv@cm",
+    "plan": "Projet Public",
+    "status": "En attente",
+    "billing": "En attente",
+    "joined": "2026-05-20"
+  },
+  {
+    "id": "PRJ-009",
+    "name": "Construction Villas Résidentielles",
+    "email": "promoteur.bonapriso@cm",
+    "plan": "Projet Standard",
+    "status": "Terminé",
+    "billing": "Payé",
+    "joined": "2026-05-15"
+  },
+  {
+    "id": "PRJ-010",
+    "name": "Rénovation Aéroport International",
+    "email": "aeroport.douala@cm",
+    "plan": "Projet Premium",
+    "status": "En cours",
+    "billing": "Payé",
+    "joined": "2026-05-10"
+  }
+]
