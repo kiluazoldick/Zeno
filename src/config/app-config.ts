@@ -5,10 +5,10 @@ const currentYear = new Date().getFullYear();
 export const APP_CONFIG = {
   name: "Zeno",
   version: packageJson.version,
-  copyright: `© ${currentYear}, Studio Admin.`,
+  copyright: `© ${currentYear}, Zeno Admin.`,
   meta: {
-    title: "Studio Admin - Modern Next.js Dashboard Starter Template",
+    title: "Zeno Admin - Zoldick",
     description:
-      "Studio Admin is a modern, open-source dashboard starter template built with Next.js 16, Tailwind CSS v4, and shadcn/ui. Perfect for SaaS apps, admin panels, and internal tools—fully customizable and production-ready.",
+      "Zeno Admin - Systeme de gestion interne pour Zoldick. Une application web moderne et réactive pour gérer les opérations internes de l'entreprise.  Optimisée pour la performance et l'expérience utilisateur, Zeno Admin offre une interface intuitive pour la gestion des données, la surveillance des activités et la prise de décisions éclairées.  Avec Zeno Admin, les équipes peuvent collaborer efficacement, suivre les performances en temps réel et accéder à des analyses approfondies pour améliorer la productivité et la rentabilité. Que vous soyez un administrateur, un gestionnaire ou un membre de l'équipe, Zeno Admin est l'outil idéal pour rationaliser vos processus internes et atteindre nos objectifs commerciaux.  ",
   },
 };
