@@ -199,7 +199,6 @@ export function AnnonceForm() {
                                 );
                               }
                             }}
-                            initialFocus
                           />
                         </PopoverContent>
                       </Popover>
@@ -248,7 +247,6 @@ export function AnnonceForm() {
                                 );
                               }
                             }}
-                            initialFocus
                           />
                         </PopoverContent>
                       </Popover>
