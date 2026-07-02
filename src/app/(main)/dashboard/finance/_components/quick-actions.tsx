@@ -1,37 +1,48 @@
 import {
   Banknote,
   ChevronRight,
-  Droplet,
+  FileText,
   History,
-  Lightbulb,
   MoreHorizontal,
-  QrCode,
+  Plus,
   SendHorizontal,
-  Smartphone,
+  TrendingUp,
+  Users,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
-import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from "@/components/ui/input-group";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from "@/components/ui/input-group";
 
 const contacts = [
-  { id: 1, initials: "AR" },
-  { id: 2, initials: "SC" },
-  { id: 3, initials: "MJ" },
-  { id: 4, initials: "ED" },
+  { id: 1, initials: "ND", name: "Nanga D." },
+  { id: 2, initials: "SM", name: "Sarah M." },
+  { id: 3, initials: "JK", name: "Jean K." },
+  { id: 4, initials: "ML", name: "Marie L." },
 ];
 
 const shortcuts = [
-  { id: 1, label: "Scan QR", icon: QrCode },
-  { id: 2, label: "Transfer", icon: SendHorizontal },
-  { id: 3, label: "Pay Bills", icon: Banknote },
-  { id: 4, label: "History", icon: History },
-  { id: 5, label: "Mobile", icon: Smartphone },
-  { id: 6, label: "Electricity", icon: Lightbulb },
-  { id: 7, label: "Water", icon: Droplet },
-  { id: 8, label: "More", icon: MoreHorizontal },
+  { id: 1, label: "Nouveau paiement", icon: Banknote },
+  { id: 2, label: "Nouveau devis", icon: FileText },
+  { id: 3, label: "Nouvelle facture", icon: Plus },
+  { id: 4, label: "Transfert", icon: SendHorizontal },
+  { id: 5, label: "Historique", icon: History },
+  { id: 6, label: "Rapport mensuel", icon: TrendingUp },
+  { id: 7, label: "Clients", icon: Users },
+  { id: 8, label: "Plus", icon: MoreHorizontal },
 ];
 
 export function QuickActions() {
@@ -39,13 +50,18 @@ export function QuickActions() {
     <div className="flex flex-col gap-4">
       <Card>
         <CardHeader>
-          <CardTitle className="font-normal">Quick Transfer</CardTitle>
+          <CardTitle className="font-normal">Transfert rapide</CardTitle>
           <CardAction>
             <div className="flex items-center gap-1">
               <div className="flex -space-x-2">
                 {contacts.map((contact) => (
-                  <Avatar key={contact.id} className="size-7 border-2 border-background">
-                    <AvatarFallback className="text-[10px]">{contact.initials}</AvatarFallback>
+                  <Avatar
+                    key={contact.id}
+                    className="size-7 border-2 border-background"
+                  >
+                    <AvatarFallback className="text-[10px]">
+                      {contact.initials}
+                    </AvatarFallback>
                   </Avatar>
                 ))}
               </div>
@@ -57,32 +73,42 @@ export function QuickActions() {
           <Field orientation="horizontal">
             <InputGroup>
               <InputGroupAddon>
-                <InputGroupText>$</InputGroupText>
+                <InputGroupText>FCFA</InputGroupText>
               </InputGroupAddon>
-              <InputGroupInput placeholder="0.00" />
+              <InputGroupInput placeholder="0" />
               <InputGroupAddon align="inline-end">
-                <InputGroupText>USD</InputGroupText>
+                <InputGroupText>XAF</InputGroupText>
               </InputGroupAddon>
             </InputGroup>
-            <Button>Send</Button>
+            <Button className="bg-zeno-primary hover:bg-zeno-primary/90">
+              Envoyer
+            </Button>
           </Field>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle className="font-normal">Shortcuts</CardTitle>
+          <CardTitle className="font-normal">Raccourcis</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-4 gap-4">
             {shortcuts.map((shortcut) => {
               const Icon = shortcut.icon;
               return (
-                <div key={shortcut.id} className="flex flex-col items-center gap-2.5">
-                  <Button variant="outline" className="size-12 rounded-full">
+                <div
+                  key={shortcut.id}
+                  className="flex flex-col items-center gap-2.5"
+                >
+                  <Button
+                    variant="outline"
+                    className="size-12 rounded-full hover:border-zeno-primary hover:text-zeno-primary"
+                  >
                     <Icon className="size-5" />
                   </Button>
-                  <span className="text-center text-muted-foreground text-xs">{shortcut.label}</span>
+                  <span className="text-center text-muted-foreground text-xs">
+                    {shortcut.label}
+                  </span>
                 </div>
               );
             })}

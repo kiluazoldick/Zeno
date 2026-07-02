@@ -1,64 +1,80 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+
+const kpiData = [
+  {
+    label: "Chiffre d'affaires",
+    value: "18 450 000",
+    change: "+8.4%",
+    trend: "up",
+    period: "+1 428 000 FCFA",
+    description: "vs mois dernier",
+  },
+  {
+    label: "Dépenses totales",
+    value: "12 234 000",
+    change: "-3.2%",
+    trend: "down",
+    period: "-392 000 FCFA",
+    description: "vs mois dernier",
+  },
+  {
+    label: "Bénéfice net",
+    value: "6 216 000",
+    change: "+12.5%",
+    trend: "up",
+    period: "+691 000 FCFA",
+    description: "vs mois dernier",
+  },
+  {
+    label: "Budget restant",
+    value: "4 280 000",
+    change: "+5.2%",
+    trend: "up",
+    period: "Budget: 10 500 000",
+    description: "sur budget total",
+  },
+];
 
 export function OverviewKpis() {
   return (
-    <div className="overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10">
-      <div className="grid grid-cols-1 xl:grid-cols-8">
-        <Card className="gap-5 overflow-hidden rounded-none border-0 border-foreground/10 border-b ring-0 xl:col-span-4 xl:border-r">
-          <CardHeader>
-            <CardTitle className="font-normal">Net worth</CardTitle>
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {kpiData.map((kpi) => (
+        <Card key={kpi.label} className="overflow-hidden">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              {kpi.label}
+            </CardTitle>
           </CardHeader>
-          <CardContent className="flex items-end justify-between">
-            <div className="space-y-1">
-              <div className="text-3xl leading-none tracking-tight">$128.4K</div>
-              <p className="text-muted-foreground text-xs">+$9.8K vs last month</p>
-            </div>
-            <Badge className="bg-green-500/10 text-green-700 dark:bg-green-500/15 dark:text-green-300">+8.4%</Badge>
-          </CardContent>
-        </Card>
-
-        <Card className="gap-5 overflow-hidden rounded-none border-0 border-foreground/10 border-b ring-0 xl:col-span-4">
-          <CardHeader>
-            <CardTitle className="font-normal">Available cash</CardTitle>
-          </CardHeader>
-          <CardContent className="flex items-end justify-between">
+          <CardContent>
             <div className="flex flex-col gap-1">
-              <div className="text-3xl leading-none tracking-tight">$12.8K</div>
-              <p className="text-muted-foreground text-xs">$410 above your 30-day average</p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold tracking-tight">
+                  {kpi.value}
+                </span>
+                <span className="text-xs text-muted-foreground">FCFA</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">
+                  {kpi.period}
+                </span>
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "text-xs font-medium",
+                    kpi.trend === "up"
+                      ? "border-green-200 bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400"
+                      : "border-red-200 bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400",
+                  )}
+                >
+                  {kpi.change}
+                </Badge>
+              </div>
             </div>
-            <Badge className="bg-green-500/10 text-green-700 dark:bg-green-500/15 dark:text-green-300">+3.2%</Badge>
           </CardContent>
         </Card>
-
-        <Card className="gap-5 overflow-hidden rounded-none border-0 border-foreground/10 ring-0 xl:col-span-4 xl:border-r">
-          <CardHeader>
-            <CardTitle className="font-normal">Monthly spend</CardTitle>
-          </CardHeader>
-          <CardContent className="flex items-end justify-between">
-            <div className="flex flex-col gap-1">
-              <div className="text-3xl leading-none tracking-tight">$2,140</div>
-              <p className="text-muted-foreground text-xs">$124 more than last month</p>
-            </div>
-            <Badge variant="destructive" className="bg-destructive/10 text-destructive">
-              +6.1%
-            </Badge>
-          </CardContent>
-        </Card>
-
-        <Card className="gap-5 overflow-hidden rounded-none border-0 ring-0 xl:col-span-4">
-          <CardHeader>
-            <CardTitle className="font-normal">Savings rate</CardTitle>
-          </CardHeader>
-          <CardContent className="flex items-end justify-between">
-            <div className="flex flex-col gap-1">
-              <div className="text-3xl leading-none tracking-tight">28%</div>
-              <p className="text-muted-foreground text-xs">Up from 25.6% last month</p>
-            </div>
-            <Badge className="bg-green-500/10 text-green-700 dark:bg-green-500/15 dark:text-green-300">+2.4%</Badge>
-          </CardContent>
-        </Card>
-      </div>
+      ))}
     </div>
   );
 }

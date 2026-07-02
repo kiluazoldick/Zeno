@@ -1,55 +1,86 @@
 "use client";
 
 import { addDays, format, set } from "date-fns";
-import { ChevronRight, Zap } from "lucide-react";
-import { siClaude, siLinear, siResend } from "simple-icons";
+import { ChevronRight, Clock } from "lucide-react";
 
-import { SimpleIcon } from "@/components/simple-icon";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemMedia,
+  ItemTitle,
+} from "@/components/ui/item";
 
 const transactions = [
   {
     id: 1,
-    title: "Claude Pro Subscription",
-    date: format(set(addDays(new Date(), 2), { hours: 14, minutes: 45 }), "hh.mm a '•' MMMM dd, yyyy"),
-    icon: siClaude,
+    title: "Paiement fournisseurs - Banto",
+    date: format(
+      set(addDays(new Date(), 2), { hours: 14, minutes: 45 }),
+      "HH:mm '•' dd MMMM yyyy",
+    ),
+    amount: "4 200 000 FCFA",
+    type: "sortie",
   },
   {
     id: 2,
-    title: "Resend Pro Team",
-    date: format(set(addDays(new Date(), 4), { hours: 7, minutes: 0 }), "hh.mm a '•' MMMM dd, yyyy"),
-    icon: siResend,
+    title: "Facture client - Hôtel Royal",
+    date: format(
+      set(addDays(new Date(), 4), { hours: 7, minutes: 0 }),
+      "HH:mm '•' dd MMMM yyyy",
+    ),
+    amount: "12 500 000 FCFA",
+    type: "entree",
   },
   {
     id: 3,
-    title: "Linear Plus Plan",
-    date: format(set(addDays(new Date(), 10), { hours: 7, minutes: 0 }), "hh.mm a '•' MMMM dd, yyyy"),
-    icon: siLinear,
+    title: "Salaires mensuels",
+    date: format(
+      set(addDays(new Date(), 10), { hours: 7, minutes: 0 }),
+      "HH:mm '•' dd MMMM yyyy",
+    ),
+    amount: "8 450 000 FCFA",
+    type: "sortie",
   },
 ];
 
 export function UpcomingTransactions() {
+  const totalDue = transactions
+    .filter((t) => t.type === "sortie")
+    .reduce((sum, t) => sum + parseInt(t.amount.replace(/\D/g, "")), 0);
+
+  const totalIncoming = transactions
+    .filter((t) => t.type === "entree")
+    .reduce((sum, t) => sum + parseInt(t.amount.replace(/\D/g, "")), 0);
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-normal">Upcoming Bills & Payments</CardTitle>
+        <CardTitle className="font-normal">Transactions à venir</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1">
             <h2 className="flex items-baseline text-3xl leading-none tracking-tight">
-              <span className="font-normal">$1,245</span>
-              <span className="text-muted-foreground text-xl">.00</span>
+              <span className="font-normal">
+                {(totalIncoming - totalDue).toLocaleString("fr-FR")}
+              </span>
+              <span className="text-muted-foreground text-xl"> FCFA</span>
             </h2>
             <p className="text-muted-foreground text-sm leading-none">
-              You have <span className="font-medium text-foreground">3</span> bills due this month
+              Solde net des transactions à venir
             </p>
           </div>
-          <div className="flex w-max items-center gap-2 rounded-md border border-border bg-muted/70 px-2 py-1.5 text-sm">
-            <Zap className="size-4 fill-primary text-primary" />
+          <div className="flex w-max items-center gap-2 rounded-md border border-zeno-primary/20 bg-zeno-primary/5 px-2 py-1.5 text-sm">
+            <Clock className="size-4 text-zeno-primary" />
             <span className="text-muted-foreground">
-              Autopay will process <span className="font-medium text-foreground">$145.00</span> today
+              <span className="font-medium text-zeno-primary">
+                {transactions.length}
+              </span>{" "}
+              transactions prévues
             </span>
           </div>
         </div>
@@ -59,7 +90,16 @@ export function UpcomingTransactions() {
             <Item key={transaction.id} variant="outline" size="xs">
               <ItemMedia>
                 <div className="grid size-9 place-items-center rounded-md border bg-background">
-                  <SimpleIcon icon={transaction.icon} />
+                  <span
+                    className={cn(
+                      "text-xs font-bold",
+                      transaction.type === "entree"
+                        ? "text-green-600"
+                        : "text-destructive",
+                    )}
+                  >
+                    {transaction.type === "entree" ? "+" : "-"}
+                  </span>
                 </div>
               </ItemMedia>
               <ItemContent>
@@ -67,6 +107,16 @@ export function UpcomingTransactions() {
                 <ItemDescription>{transaction.date}</ItemDescription>
               </ItemContent>
               <ItemActions>
+                <span
+                  className={cn(
+                    "text-sm font-medium mr-2",
+                    transaction.type === "entree"
+                      ? "text-green-600"
+                      : "text-destructive",
+                  )}
+                >
+                  {transaction.amount}
+                </span>
                 <ChevronRight className="size-5 text-muted-foreground" />
               </ItemActions>
             </Item>
@@ -75,4 +125,8 @@ export function UpcomingTransactions() {
       </CardContent>
     </Card>
   );
+}
+
+function cn(...classes: (string | false | undefined)[]) {
+  return classes.filter(Boolean).join(" ");
 }
