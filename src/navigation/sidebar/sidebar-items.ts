@@ -1,11 +1,8 @@
 import {
   Banknote,
-  BarChart3,
-  Briefcase,
   Calendar,
   ChartBar,
   CheckSquare,
-  ClipboardList,
   FileText,
   FolderKanban,
   Gauge,
@@ -18,9 +15,13 @@ import {
   MessageSquare,
   ReceiptText,
   ScrollText,
-  UserRound,
   Users,
+  UserRound,
   Wallet,
+  BarChart3,
+  Briefcase,
+  ClipboardList,
+  CreditCard,
 } from "lucide-react";
 
 export type NavBadge = "new" | "soon";
@@ -169,8 +170,9 @@ export const sidebarItems: NavGroup[] = [
       {
         id: "transactions",
         title: "Transactions",
-        url: "/dashboard/finance",
-        icon: Wallet,
+        url: "/dashboard/transactions",
+        icon: CreditCard,
+        badge: "new",
       },
     ],
   },
