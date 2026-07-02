@@ -211,7 +211,6 @@ export function RapportForm() {
                                 );
                               }
                             }}
-                            initialFocus
                           />
                         </PopoverContent>
                       </Popover>
