@@ -1,19 +1,68 @@
 "use client";
 
 import { useState } from "react";
+import {
+  useAnnonces,
+  usePublishedAnnonces,
+  useImportantAnnonces,
+} from "@/hooks/queries/use-annonces";
+import { Loader2, AlertCircle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, List, Megaphone } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
+import { AnnonceFeed } from "./_components/annonce-feed";
 import { AnnonceList } from "./_components/annonce-list";
 import { AnnonceForm } from "./_components/annonce-form";
-import { AnnonceFeed } from "./_components/annonce-feed";
+import { fallbackAnnonces } from "./_components/annonce-data";
 
 export default function Page() {
   const [activeTab, setActiveTab] = useState<"list" | "create" | "feed">(
     "feed",
   );
+
+  // Récupérer les annonces publiées pour le fil d'actualité
+  const {
+    data: published,
+    isLoading: publishedLoading,
+    error: publishedError,
+  } = usePublishedAnnonces();
+
+  // Récupérer toutes les annonces pour la liste
+  const {
+    data: allAnnonces,
+    isLoading: allLoading,
+    error: allError,
+  } = useAnnonces({
+    includeAuteur: true,
+  });
+
+  const isLoading = publishedLoading || allLoading;
+  const error = publishedError || allError;
+
+  // Données de fallback
+  const feedData =
+    published && published.length > 0 ? published : fallbackAnnonces;
+  const listData =
+    allAnnonces && allAnnonces.length > 0 ? allAnnonces : fallbackAnnonces;
+
+  if (isLoading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <div className="flex items-center gap-2 text-destructive">
+          <AlertCircle className="size-5" />
+          <span>Erreur lors du chargement des annonces: {error.message}</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -53,10 +102,10 @@ export default function Page() {
 
       <Tabs value={activeTab} className="w-full">
         <TabsContent value="feed" className="mt-0">
-          <AnnonceFeed />
+          <AnnonceFeed annonces={feedData} />
         </TabsContent>
         <TabsContent value="list" className="mt-0">
-          <AnnonceList />
+          <AnnonceList annonces={listData} isLoading={allLoading} />
         </TabsContent>
         <TabsContent value="create" className="mt-0">
           <AnnonceForm />

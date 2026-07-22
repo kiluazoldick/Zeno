@@ -33,17 +33,25 @@ import {
   SlidersHorizontal,
   Table2,
   Upload,
+  Loader2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { ButtonGroup, ButtonGroupSeparator } from "@/components/ui/button-group";
+import {
+  ButtonGroup,
+  ButtonGroupSeparator,
+} from "@/components/ui/button-group";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { columnIds, columns } from "./data";
@@ -51,6 +59,12 @@ import { KanbanColumn } from "./kanban-column";
 import { TaskCard } from "./task-card";
 import type { BoardState, ColumnId, Task } from "./types";
 import { findColumnId, findTask } from "./utils";
+
+// Hook pour les mutations
+import {
+  useUpdateTaskStatus,
+  useUpdateTaskPosition,
+} from "@/hooks/queries/use-tasks";
 
 interface KanbanProps {
   initialBoard: BoardState;
@@ -60,9 +74,17 @@ export function Kanban({ initialBoard }: KanbanProps) {
   const [board, setBoard] = React.useState<BoardState>(initialBoard);
   const [columnOrder, setColumnOrder] = React.useState<ColumnId[]>(columnIds);
   const [activeTask, setActiveTask] = React.useState<Task | null>(null);
-  const [activeColumnId, setActiveColumnId] = React.useState<ColumnId | null>(null);
+  const [activeColumnId, setActiveColumnId] = React.useState<ColumnId | null>(
+    null,
+  );
   const boardBeforeDrag = React.useRef<BoardState | null>(null);
-  const orderedColumns = columnOrder.flatMap((columnId) => columns.find((column) => column.id === columnId) ?? []);
+  const orderedColumns = columnOrder.flatMap(
+    (columnId) => columns.find((column) => column.id === columnId) ?? [],
+  );
+
+  // Mutations pour le drag & drop
+  const updateTaskStatus = useUpdateTaskStatus();
+  const updateTaskPosition = useUpdateTaskPosition();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -106,7 +128,8 @@ export function Kanban({ initialBoard }: KanbanProps) {
 
       if (overColId) setActiveColumnId(overColId);
 
-      if (!activeColId || !overColId || activeColId === overColId) return currentBoard;
+      if (!activeColId || !overColId || activeColId === overColId)
+        return currentBoard;
 
       const activeItems = currentBoard[activeColId];
       const overItems = currentBoard[overColId];
@@ -120,7 +143,11 @@ export function Kanban({ initialBoard }: KanbanProps) {
       return {
         ...currentBoard,
         [activeColId]: activeItems.filter((task) => task.id !== activeId),
-        [overColId]: [...overItems.slice(0, nextIndex), activeItem, ...overItems.slice(nextIndex)],
+        [overColId]: [
+          ...overItems.slice(0, nextIndex),
+          activeItem,
+          ...overItems.slice(nextIndex),
+        ],
       };
     });
   }
@@ -160,12 +187,14 @@ export function Kanban({ initialBoard }: KanbanProps) {
     setBoard((currentBoard) => {
       const activeColumnId = findColumnId(currentBoard, activeId);
       const overColumnId = findColumnId(currentBoard, overId);
-      if (!activeColumnId || !overColumnId || activeColumnId !== overColumnId) return currentBoard;
+      if (!activeColumnId || !overColumnId || activeColumnId !== overColumnId)
+        return currentBoard;
 
       const columnTasks = currentBoard[activeColumnId];
       const activeIndex = columnTasks.findIndex((task) => task.id === activeId);
       const overIndex = columnTasks.findIndex((task) => task.id === overId);
-      if (activeIndex === -1 || overIndex === -1 || activeIndex === overIndex) return currentBoard;
+      if (activeIndex === -1 || overIndex === -1 || activeIndex === overIndex)
+        return currentBoard;
 
       return {
         ...currentBoard,
@@ -173,6 +202,9 @@ export function Kanban({ initialBoard }: KanbanProps) {
       };
     });
   }
+
+  // Si le board est vide, afficher un message
+  const hasTasks = Object.values(board).some((tasks) => tasks.length > 0);
 
   return (
     <div className="flex h-[calc(100dvh-var(--dashboard-header-height))] min-h-0 min-w-0 flex-col overflow-hidden">
@@ -217,7 +249,10 @@ export function Kanban({ initialBoard }: KanbanProps) {
             <ButtonGroupSeparator />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button aria-label="Menu ajout" className="bg-zeno-primary hover:bg-zeno-primary/90">
+                <Button
+                  aria-label="Menu ajout"
+                  className="bg-zeno-primary hover:bg-zeno-primary/90"
+                >
                   <ChevronDown />
                 </Button>
               </DropdownMenuTrigger>
@@ -240,28 +275,51 @@ export function Kanban({ initialBoard }: KanbanProps) {
         </div>
       </div>
 
-      <DndContext
-        id="kanban-board"
-        sensors={sensors}
-        collisionDetection={closestCorners}
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
-        onDragCancel={handleDragCancel}
-      >
-        <div className="scrollbar-thin min-h-0 min-w-0 flex-1 overflow-x-auto overflow-y-hidden bg-muted/25 px-4 pt-4 pb-0 [scrollbar-color:var(--border)_transparent] lg:px-5 lg:pt-5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:h-1">
-          <div className="inline-grid h-full min-w-full grid-cols-[repeat(4,minmax(20rem,1fr))] gap-4">
-            <SortableContext items={columnOrder} strategy={horizontalListSortingStrategy}>
-              {orderedColumns.map((column) => (
-                <KanbanColumn key={column.id} column={column} tasks={board[column.id]} />
-              ))}
-            </SortableContext>
+      {!hasTasks ? (
+        <div className="flex flex-1 items-center justify-center text-muted-foreground">
+          <div className="text-center">
+            <KanbanIcon className="mx-auto size-12 opacity-30" />
+            <p className="mt-2 text-sm">Aucune tâche dans le Kanban</p>
+            <p className="text-xs">Créez votre première tâche pour commencer</p>
           </div>
         </div>
-        <DragOverlay dropAnimation={null}>
-          {activeTask ? <TaskCard task={activeTask} columnId={activeColumnId ?? undefined} isOverlay /> : null}
-        </DragOverlay>
-      </DndContext>
+      ) : (
+        <DndContext
+          id="kanban-board"
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+          onDragCancel={handleDragCancel}
+        >
+          <div className="scrollbar-thin min-h-0 min-w-0 flex-1 overflow-x-auto overflow-y-hidden bg-muted/25 px-4 pt-4 pb-0 [scrollbar-color:var(--border)_transparent] lg:px-5 lg:pt-5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:h-1">
+            <div className="inline-grid h-full min-w-full grid-cols-[repeat(4,minmax(20rem,1fr))] gap-4">
+              <SortableContext
+                items={columnOrder}
+                strategy={horizontalListSortingStrategy}
+              >
+                {orderedColumns.map((column) => (
+                  <KanbanColumn
+                    key={column.id}
+                    column={column}
+                    tasks={board[column.id]}
+                  />
+                ))}
+              </SortableContext>
+            </div>
+          </div>
+          <DragOverlay dropAnimation={null}>
+            {activeTask ? (
+              <TaskCard
+                task={activeTask}
+                columnId={activeColumnId ?? undefined}
+                isOverlay
+              />
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+      )}
     </div>
   );
 }

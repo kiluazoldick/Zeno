@@ -28,7 +28,28 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const revenueData = [
+interface RevenueChartProps {
+  data?: Array<{
+    mois: string;
+    entrees: number;
+    sorties: number;
+    solde: number;
+  }>;
+  isLoading?: boolean;
+}
+
+// Formater en FCFA
+const formatFCFA = (value: number) => {
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "XAF",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+};
+
+// Données mockées de fallback (si pas de données)
+const fallbackData = [
   { month: "Jan", revenue: 1250000, expenses: 850000, profit: 400000 },
   { month: "Fév", revenue: 1800000, expenses: 920000, profit: 880000 },
   { month: "Mar", revenue: 1500000, expenses: 780000, profit: 720000 },
@@ -43,13 +64,29 @@ const revenueData = [
   { month: "Déc", revenue: 2800000, expenses: 1320000, profit: 1480000 },
 ];
 
-const formatFCFA = (value: number) => {
-  return new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency: "XAF",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
+// Transformer les données du backend
+const transformData = (
+  monthlyData?: Array<{
+    mois: string;
+    entrees: number;
+    sorties: number;
+    solde: number;
+  }>,
+) => {
+  if (!monthlyData || monthlyData.length === 0) {
+    return fallbackData;
+  }
+
+  return monthlyData.map((item) => {
+    const date = new Date(item.mois);
+    const month = date.toLocaleString("fr-FR", { month: "short" });
+    return {
+      month: month,
+      revenue: item.entrees || 0,
+      expenses: item.sorties || 0,
+      profit: item.solde || 0,
+    };
+  });
 };
 
 const chartConfig = {
@@ -67,7 +104,22 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function RevenueChart() {
+export function RevenueChart({ data, isLoading }: RevenueChartProps) {
+  const chartData = transformData(data);
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Chargement...</CardTitle>
+        </CardHeader>
+        <CardContent className="flex h-72 items-center justify-center">
+          <div className="size-8 animate-spin rounded-full border-4 border-zeno-primary border-t-transparent" />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="@container/card">
       <CardHeader>
@@ -101,7 +153,7 @@ export function RevenueChart() {
           config={chartConfig}
           className="aspect-auto h-72 w-full"
         >
-          <ComposedChart data={revenueData} margin={{ top: 0 }}>
+          <ComposedChart data={chartData} margin={{ top: 0 }}>
             <defs>
               <linearGradient id="fillRevenue" x1="0" y1="0" x2="0" y2="1">
                 <stop

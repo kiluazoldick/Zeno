@@ -2,8 +2,24 @@
 
 import { Label, Pie, PieChart } from "recharts";
 
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+
+interface ProjectsDistributionProps {
+  data?: Array<{ statut: string; count: number }>;
+  isLoading?: boolean;
+}
 
 const projectData = [
   { status: "En cours", value: 8, fill: "var(--chart-1)" },
@@ -16,44 +32,67 @@ const chartConfig = {
   value: {
     label: "Projets",
   },
-  "En cours": {
-    color: "var(--chart-1)",
-    label: "En cours",
-  },
-  Terminé: {
-    color: "var(--chart-2)",
-    label: "Terminé",
-  },
-  "En attente": {
-    color: "var(--chart-3)",
-    label: "En attente",
-  },
-  Annulé: {
-    color: "var(--chart-4)",
-    label: "Annulé",
-  },
 } satisfies ChartConfig;
 
-const totalProjects = projectData.reduce((sum, item) => sum + item.value, 0);
+export function ProjectsDistribution({
+  data,
+  isLoading,
+}: ProjectsDistributionProps) {
+  // Transformer les données ou utiliser le fallback
+  const chartData =
+    data && data.length > 0
+      ? data.map((item) => ({
+          status: item.statut,
+          value: item.count,
+          fill:
+            projectData.find((p) => p.status === item.statut)?.fill ||
+            "var(--chart-5)",
+        }))
+      : projectData;
 
-export function ProjectsDistribution() {
+  const total = chartData.reduce((sum, item) => sum + item.value, 0);
+
+  if (isLoading) {
+    return (
+      <Card className="h-full">
+        <CardHeader>
+          <CardTitle className="font-normal">Répartition des projets</CardTitle>
+          <CardAction>
+            <div className="flex items-center gap-1 text-sm">
+              <span className="font-medium">Total: ...</span>
+            </div>
+          </CardAction>
+        </CardHeader>
+        <CardContent className="flex h-64 items-center justify-center">
+          <div className="size-8 animate-spin rounded-full border-4 border-zeno-primary border-t-transparent" />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="h-full">
       <CardHeader>
         <CardTitle className="font-normal">Répartition des projets</CardTitle>
         <CardAction>
           <div className="flex items-center gap-1 text-sm">
-            <span className="font-medium">Total: {totalProjects}</span>
+            <span className="font-medium">Total: {total}</span>
           </div>
         </CardAction>
       </CardHeader>
 
       <CardContent className="flex flex-col items-center">
-        <ChartContainer config={chartConfig} className="mx-auto aspect-square h-56 w-full max-w-56">
+        <ChartContainer
+          config={chartConfig}
+          className="mx-auto aspect-square h-56 w-full max-w-56"
+        >
           <PieChart>
-            <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel className="w-40" />} />
+            <ChartTooltip
+              cursor={false}
+              content={<ChartTooltipContent hideLabel className="w-40" />}
+            />
             <Pie
-              data={projectData}
+              data={chartData}
               dataKey="value"
               nameKey="status"
               innerRadius={55}
@@ -68,12 +107,25 @@ export function ProjectsDistribution() {
                   }
 
                   return (
-                    <text dominantBaseline="middle" textAnchor="middle" x={viewBox.cx} y={viewBox.cy}>
-                      <tspan className="fill-muted-foreground text-xs" x={viewBox.cx} y={(viewBox.cy ?? 0) - 8}>
+                    <text
+                      dominantBaseline="middle"
+                      textAnchor="middle"
+                      x={viewBox.cx}
+                      y={viewBox.cy}
+                    >
+                      <tspan
+                        className="fill-muted-foreground text-xs"
+                        x={viewBox.cx}
+                        y={(viewBox.cy ?? 0) - 8}
+                      >
                         Total
                       </tspan>
-                      <tspan className="fill-foreground font-medium text-lg" x={viewBox.cx} y={(viewBox.cy ?? 0) + 14}>
-                        {totalProjects}
+                      <tspan
+                        className="fill-foreground font-medium text-lg"
+                        x={viewBox.cx}
+                        y={(viewBox.cy ?? 0) + 14}
+                      >
+                        {total}
                       </tspan>
                     </text>
                   );
@@ -84,9 +136,12 @@ export function ProjectsDistribution() {
         </ChartContainer>
 
         <div className="grid grid-cols-2 gap-2 w-full mt-4">
-          {projectData.map((item) => (
+          {chartData.map((item) => (
             <div key={item.status} className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded-full" style={{ backgroundColor: item.fill }} />
+              <div
+                className="h-3 w-3 rounded-full"
+                style={{ backgroundColor: item.fill }}
+              />
               <span className="text-sm">{item.status}</span>
               <span className="text-sm font-medium ml-auto">{item.value}</span>
             </div>

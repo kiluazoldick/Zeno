@@ -5,7 +5,13 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { parse } from "date-fns";
 import { Check, Clock, MoreHorizontal, X } from "lucide-react";
 
-import { Avatar, AvatarBadge, AvatarFallback, AvatarGroup, AvatarGroupCount } from "@/components/ui/avatar";
+import {
+  Avatar,
+  AvatarBadge,
+  AvatarFallback,
+  AvatarGroup,
+  AvatarGroupCount,
+} from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -33,7 +39,10 @@ function StatusBadge({ status }: { status: UserRow["status"] }) {
   const meta = statusMeta[status];
 
   return (
-    <Badge className={cn("gap-1.5 border px-2 py-1 font-medium", meta.badgeClass)} variant="outline">
+    <Badge
+      className={cn("gap-1.5 border px-2 py-1 font-medium", meta.badgeClass)}
+      variant="outline"
+    >
       <span className={cn("size-1.5 rounded-full", meta.dotClass)} />
       {status}
     </Badge>
@@ -41,6 +50,10 @@ function StatusBadge({ status }: { status: UserRow["status"] }) {
 }
 
 function getAvatarTone(name: string) {
+  if (!name) {
+    return "[&_[data-slot=avatar-fallback]]:bg-slate-100 [&_[data-slot=avatar-fallback]]:text-slate-700 after:border-slate-200 dark:[&_[data-slot=avatar-fallback]]:bg-slate-500/15 dark:[&_[data-slot=avatar-fallback]]:text-slate-300 dark:after:border-slate-500/20";
+  }
+
   const tones = [
     "[&_[data-slot=avatar-fallback]]:bg-amber-100 [&_[data-slot=avatar-fallback]]:text-amber-700 after:border-amber-200 dark:[&_[data-slot=avatar-fallback]]:bg-amber-500/15 dark:[&_[data-slot=avatar-fallback]]:text-amber-300 dark:after:border-amber-500/20",
     "[&_[data-slot=avatar-fallback]]:bg-orange-100 [&_[data-slot=avatar-fallback]]:text-orange-700 after:border-orange-200 dark:[&_[data-slot=avatar-fallback]]:bg-orange-500/15 dark:[&_[data-slot=avatar-fallback]]:text-orange-300 dark:after:border-orange-500/20",
@@ -85,19 +98,32 @@ function getLastActiveBadge(lastActive: number) {
   };
 }
 
-function AvatarCell({ lastActive, name }: { lastActive: number; name: string }) {
+function AvatarCell({
+  lastActive,
+  name,
+}: {
+  lastActive: number;
+  name: string;
+}) {
   const badge = getLastActiveBadge(lastActive);
   const BadgeIcon = badge.icon;
+  const safeName = name || "Membre";
 
   return (
-    <Avatar size="lg" className={cn("font-medium", getAvatarTone(name))}>
-      <AvatarFallback>{getInitials(name)}</AvatarFallback>
-      <AvatarBadge className={badge.className}>{BadgeIcon ? <BadgeIcon /> : null}</AvatarBadge>
+    <Avatar size="lg" className={cn("font-medium", getAvatarTone(safeName))}>
+      <AvatarFallback>{getInitials(safeName)}</AvatarFallback>
+      <AvatarBadge className={badge.className}>
+        {BadgeIcon ? <BadgeIcon /> : null}
+      </AvatarBadge>
     </Avatar>
   );
 }
 
 function WorkspaceCell({ workspaces }: { workspaces: string[] }) {
+  if (!workspaces || !Array.isArray(workspaces) || workspaces.length === 0) {
+    return <div className="text-muted-foreground text-sm">-</div>;
+  }
+
   const [firstWorkspace, ...remainingWorkspaces] = workspaces;
   const remainingCount = remainingWorkspaces.length;
 
@@ -105,14 +131,33 @@ function WorkspaceCell({ workspaces }: { workspaces: string[] }) {
     <AvatarGroup className="*:data-[slot=avatar]:ring-0">
       {firstWorkspace ? (
         <Avatar className="after:rounded-sm">
-          <AvatarFallback className="rounded-sm ring-0">{getInitials(firstWorkspace)}</AvatarFallback>
+          <AvatarFallback className="rounded-sm ring-0">
+            {getInitials(firstWorkspace)}
+          </AvatarFallback>
         </Avatar>
       ) : null}
       {remainingCount > 0 ? (
-        <AvatarGroupCount className="rounded-sm border ring-card">+{remainingCount}</AvatarGroupCount>
+        <AvatarGroupCount className="rounded-sm border ring-card">
+          +{remainingCount}
+        </AvatarGroupCount>
       ) : null}
     </AvatarGroup>
   );
+}
+
+function safeParseDate(dateString: string) {
+  if (!dateString || dateString === "-") {
+    return 0;
+  }
+  try {
+    const parsed = parse(dateString, "dd MMM yyyy, h:mm a", new Date());
+    if (isNaN(parsed.getTime())) {
+      return 0;
+    }
+    return parsed.getTime();
+  } catch (e) {
+    return 0;
+  }
 }
 
 export const usersColumns: ColumnDef<UserRow>[] = [
@@ -122,7 +167,10 @@ export const usersColumns: ColumnDef<UserRow>[] = [
       <div className="flex items-center justify-center">
         <Checkbox
           aria-label="Sélectionner tous les membres"
-          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         />
       </div>
@@ -150,10 +198,17 @@ export const usersColumns: ColumnDef<UserRow>[] = [
     header: "Membre",
     cell: ({ row }) => (
       <div className="flex items-center gap-3">
-        <AvatarCell name={row.original.name} lastActive={row.original.lastActive} />
+        <AvatarCell
+          name={row.original.name}
+          lastActive={row.original.lastActive}
+        />
         <div className="min-w-0">
-          <div className="truncate font-medium text-foreground text-sm">{row.original.name}</div>
-          <div className="truncate text-muted-foreground text-sm">{row.original.email}</div>
+          <div className="truncate font-medium text-foreground text-sm">
+            {row.original.name}
+          </div>
+          <div className="truncate text-muted-foreground text-sm">
+            {row.original.email}
+          </div>
         </div>
       </div>
     ),
@@ -162,7 +217,9 @@ export const usersColumns: ColumnDef<UserRow>[] = [
     accessorKey: "role",
     header: "Rôle / Équipe",
     filterFn: "equalsString",
-    cell: ({ row }) => <RoleCell role={row.original.role} team={row.original.team} />,
+    cell: ({ row }) => (
+      <RoleCell role={row.original.role} team={row.original.team} />
+    ),
   },
   {
     accessorKey: "team",
@@ -184,37 +241,56 @@ export const usersColumns: ColumnDef<UserRow>[] = [
   },
   {
     id: "joinedDate",
-    accessorFn: (row) => parse(row.joinedDate, "dd MMM yyyy, h:mm a", new Date()).getTime(),
+    accessorFn: (row) => safeParseDate(row.joinedDate),
     header: "Date d'arrivée",
-    cell: ({ row }) => <div className="text-foreground text-sm">{row.original.joinedDate}</div>,
+    cell: ({ row }) => (
+      <div className="text-foreground text-sm">{row.original.joinedDate}</div>
+    ),
   },
   {
     id: "actions",
     header: () => <div className="text-right">Actions</div>,
-    cell: ({ row }) => (
-      <div className="text-right">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              aria-label={`Actions pour ${row.original.name}`}
-              className="size-8 rounded-md text-muted-foreground hover:bg-muted/50"
-              size="icon-sm"
-              variant="ghost"
-            >
-              <MoreHorizontal className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>Voir le profil</DropdownMenuItem>
-            <DropdownMenuItem>Modifier le membre</DropdownMenuItem>
-            <DropdownMenuItem>Gérer l'équipe</DropdownMenuItem>
-            <DropdownMenuItem>Renvoyer l'invitation</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive">Désactiver le membre</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    ),
+    cell: ({ row }) => {
+      const member = row.original;
+
+      // Fonction pour déclencher l'édition
+      const handleEdit = () => {
+        const event = new CustomEvent("editMember", { detail: member });
+        document.dispatchEvent(event);
+      };
+
+      // Fonction pour déclencher la suppression
+      const handleDelete = () => {
+        const event = new CustomEvent("deleteMember", { detail: member });
+        document.dispatchEvent(event);
+      };
+
+      return (
+        <div className="text-right">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                aria-label={`Actions pour ${member.name}`}
+                className="size-8 rounded-md text-muted-foreground hover:bg-muted/50"
+                size="icon-sm"
+                variant="ghost"
+              >
+                <MoreHorizontal className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleEdit}>
+                Modifier le membre
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleDelete} variant="destructive">
+                Supprimer
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      );
+    },
     enableHiding: false,
     enableSorting: false,
   },

@@ -1,16 +1,35 @@
-import { FileText, CheckCircle, Clock, Archive } from "lucide-react";
+"use client";
+
+import { FileText, CheckCircle, Clock, Archive, Loader2 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import type { Report } from "@/types/database";
 
-import { rapportsData } from "./rapport-data";
+interface RapportKpiProps {
+  rapports: Report[];
+}
 
-export function RapportKpi() {
-  const total = rapportsData.length;
-  const valides = rapportsData.filter((r) => r.statut === "Validé").length;
-  const enCours = rapportsData.filter((r) => r.statut === "En cours").length;
-  const brouillons = rapportsData.filter(
-    (r) => r.statut === "Brouillon",
-  ).length;
+export function RapportKpi({ rapports }: RapportKpiProps) {
+  // Données de fallback
+  const fallbackData = {
+    total: 12,
+    valides: 5,
+    enCours: 4,
+    brouillons: 3,
+  };
+
+  // Calcul des KPI
+  const total = rapports.length || fallbackData.total;
+  const valides =
+    rapports.filter((r) => r.statut === "Validé").length ||
+    fallbackData.valides;
+  const enCours =
+    rapports.filter((r) => r.statut === "En cours").length ||
+    fallbackData.enCours;
+  const brouillons =
+    rapports.filter((r) => r.statut === "Brouillon").length ||
+    fallbackData.brouillons;
 
   const kpiData = [
     {
@@ -65,8 +84,4 @@ export function RapportKpi() {
       })}
     </div>
   );
-}
-
-function cn(...classes: (string | false | undefined)[]) {
-  return classes.filter(Boolean).join(" ");
 }

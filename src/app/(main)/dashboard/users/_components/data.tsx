@@ -1,6 +1,19 @@
-export type UserStatus = "Actif" | "Invitation en attente" | "Désactivé" | "Verrouillé" | "Suspendu";
+export type UserStatus =
+  | "Actif"
+  | "Invitation en attente"
+  | "Désactivé"
+  | "Verrouillé"
+  | "Suspendu";
 
-const teamValues = ["Direction", "Terrain", "Bureau", "Finance", "Commercial", "Rapport", "Admin"] as const;
+const teamValues = [
+  "Direction",
+  "Terrain",
+  "Bureau",
+  "Finance",
+  "Commercial",
+  "Rapport",
+  "Admin",
+] as const;
 
 export type UserTeam = (typeof teamValues)[number];
 
@@ -15,8 +28,8 @@ export type UserRow = {
   workspace: string[];
 };
 
-export const users: UserRow[] = [
-  // Direction
+// Données mockées de fallback (utilisées si la base est vide)
+export const defaultUsers: UserRow[] = [
   {
     name: "Nanga Doumer",
     email: "nanga.doumer@zoldick.cm",
@@ -27,7 +40,6 @@ export const users: UserRow[] = [
     joinedDate: "01 Jan 2020, 8:00 AM",
     lastActive: 0,
   },
-  // Équipe Terrain
   {
     name: "Sarah M.",
     email: "sarah.m@zoldick.cm",
@@ -39,30 +51,18 @@ export const users: UserRow[] = [
     lastActive: 5,
   },
   {
+    name: "Jean K.",
+    email: "jean.k@zoldick.cm",
+    role: "Responsable Commercial",
+    status: "Actif",
+    team: "Commercial",
+    workspace: ["Hôpital Central", "Marché Municipal"],
+    joinedDate: "19 Mai 2022, 3:00 PM",
+    lastActive: 20,
+  },
+  {
     name: "Marie L.",
     email: "marie.l@zoldick.cm",
-    role: "Ingénieur",
-    status: "Actif",
-    team: "Terrain",
-    workspace: ["Hôpital Central", "Complexe Sportif"],
-    joinedDate: "10 Avr 2023, 11:15 AM",
-    lastActive: 30,
-  },
-  // Équipe Bureau
-  {
-    name: "Claire R.",
-    email: "claire.r@zoldick.cm",
-    role: "Assistante Administrative",
-    status: "Actif",
-    team: "Bureau",
-    workspace: ["Tous les projets"],
-    joinedDate: "20 Mai 2021, 2:45 PM",
-    lastActive: 12,
-  },
-  // Équipe Finance
-  {
-    name: "Marie L.",
-    email: "finance@zoldick.cm",
     role: "Responsable Financier",
     status: "Actif",
     team: "Finance",
@@ -70,17 +70,6 @@ export const users: UserRow[] = [
     joinedDate: "10 Avr 2022, 8:30 AM",
     lastActive: 15,
   },
-  {
-    name: "Jean K.",
-    email: "jean.k@zoldick.cm",
-    role: "Comptable",
-    status: "Actif",
-    team: "Finance",
-    workspace: ["Tous les projets"],
-    joinedDate: "03 Jan 2023, 9:00 AM",
-    lastActive: 45,
-  },
-  // Équipe Commercial
   {
     name: "Paul B.",
     email: "paul.b@zoldick.cm",
@@ -92,257 +81,14 @@ export const users: UserRow[] = [
     lastActive: 8,
   },
   {
-    name: "Jean K.",
-    email: "commercial@zoldick.cm",
-    role: "Responsable Commercial",
-    status: "Actif",
-    team: "Commercial",
-    workspace: ["Hôpital Central", "Marché Municipal"],
-    joinedDate: "19 Mai 2022, 3:00 PM",
-    lastActive: 20,
-  },
-  // Équipe Rapport
-  {
-    name: "Sarah M.",
-    email: "rapport@zoldick.cm",
-    role: "Rapporteur",
-    status: "Actif",
-    team: "Rapport",
-    workspace: ["Banto", "Hôtel Royal"],
-    joinedDate: "15 Mar 2022, 9:30 AM",
-    lastActive: 5,
-  },
-  // Équipe Admin
-  {
     name: "Claire R.",
-    email: "admin@zoldick.cm",
-    role: "Administrateur",
+    email: "claire.r@zoldick.cm",
+    role: "Assistante Administrative",
     status: "Actif",
     team: "Admin",
     workspace: ["Tous les projets"],
     joinedDate: "20 Mai 2021, 2:45 PM",
     lastActive: 12,
-  },
-  // Membres avec statuts particuliers
-  {
-    name: "Demi Wilkinson",
-    email: "demi.w@zoldick.cm",
-    role: "Stagiaire",
-    status: "Invitation en attente",
-    team: "Terrain",
-    workspace: ["Banto"],
-    joinedDate: "28 Fév 2026, 6:15 PM",
-    lastActive: 60,
-  },
-  {
-    name: "Candice Wu",
-    email: "candice.w@zoldick.cm",
-    role: "Consultant",
-    status: "Actif",
-    team: "Commercial",
-    workspace: ["Marché Municipal"],
-    joinedDate: "19 Mai 2026, 7:55 AM",
-    lastActive: 2 * 60,
-  },
-  {
-    name: "Natali Craig",
-    email: "natali.c@zoldick.cm",
-    role: "Chargé de projet",
-    status: "Invitation en attente",
-    team: "Direction",
-    workspace: ["Complexe Sportif"],
-    joinedDate: "03 Jan 2026, 12:05 PM",
-    lastActive: 90 * 24 * 60,
-  },
-  {
-    name: "Drew Cano",
-    email: "drew.c@zoldick.cm",
-    role: "Technicien",
-    status: "Actif",
-    team: "Terrain",
-    workspace: ["Hôtel Royal"],
-    joinedDate: "21 Jul 2025, 8:40 PM",
-    lastActive: 3 * 60,
-  },
-  {
-    name: "Orlando Diggs",
-    email: "orlando.d@zoldick.cm",
-    role: "Chauffeur",
-    status: "Désactivé",
-    team: "Admin",
-    workspace: ["Tous les projets"],
-    joinedDate: "16 Sep 2025, 3:25 PM",
-    lastActive: 6,
-  },
-  {
-    name: "Andi Lane",
-    email: "andi.l@zoldick.cm",
-    role: "Assistant",
-    status: "Actif",
-    team: "Direction",
-    workspace: ["Tous les projets"],
-    joinedDate: "04 Nov 2024, 9:50 AM",
-    lastActive: 12,
-  },
-  {
-    name: "Kate Morrison",
-    email: "kate.m@zoldick.cm",
-    role: "Responsable RH",
-    status: "Actif",
-    team: "Admin",
-    workspace: ["Tous les projets"],
-    joinedDate: "30 Déc 2024, 4:35 PM",
-    lastActive: 30,
-  },
-  {
-    name: "Alec Whitten",
-    email: "alec.w@zoldick.cm",
-    role: "Magasinier",
-    status: "Suspendu",
-    team: "Admin",
-    workspace: ["Banto"],
-    joinedDate: "12 Fév 2025, 10:20 AM",
-    lastActive: 8 * 24 * 60,
-  },
-  {
-    name: "Ariana Decker",
-    email: "ariana.d@zoldick.cm",
-    role: "Architecte",
-    status: "Actif",
-    team: "Bureau",
-    workspace: ["Hôpital Central", "Complexe Sportif"],
-    joinedDate: "08 Août 2024, 1:10 PM",
-    lastActive: 24 * 60,
-  },
-  {
-    name: "Steven Tey",
-    email: "steven.t@zoldick.cm",
-    role: "Dessinateur",
-    status: "Invitation en attente",
-    team: "Bureau",
-    workspace: ["Marché Municipal"],
-    joinedDate: "17 Jan 2025, 5:45 PM",
-    lastActive: 90 * 24 * 60,
-  },
-  {
-    name: "Lori Bryson",
-    email: "lori.b@zoldick.cm",
-    role: "Responsable Finance",
-    status: "Actif",
-    team: "Finance",
-    workspace: ["Tous les projets"],
-    joinedDate: "02 Oct 2024, 11:15 AM",
-    lastActive: 45,
-  },
-  {
-    name: "Koray Okumus",
-    email: "koray.o@zoldick.cm",
-    role: "Secrétaire",
-    status: "Actif",
-    team: "Admin",
-    workspace: ["Tous les projets"],
-    joinedDate: "22 Mai 2025, 8:30 AM",
-    lastActive: 10,
-  },
-  {
-    name: "Josh Miller",
-    email: "josh.m@zoldick.cm",
-    role: "Stagiaire",
-    status: "Actif",
-    team: "Finance",
-    workspace: ["Hôpital Central"],
-    joinedDate: "14 Jul 2025, 6:05 PM",
-    lastActive: 4 * 60,
-  },
-  {
-    name: "Mollie Hall",
-    email: "mollie.h@zoldick.cm",
-    role: "Ancien employé",
-    status: "Désactivé",
-    team: "Terrain",
-    workspace: ["Banto"],
-    joinedDate: "26 Nov 2024, 3:40 PM",
-    lastActive: 21 * 24 * 60,
-  },
-  {
-    name: "Rene Wells",
-    email: "rene.w@zoldick.cm",
-    role: "Chef de projet",
-    status: "Actif",
-    team: "Direction",
-    workspace: ["Hôtel Royal", "Banto"],
-    joinedDate: "11 Avr 2025, 9:05 AM",
-    lastActive: 18,
-  },
-  {
-    name: "Rylee Howard",
-    email: "rylee.h@zoldick.cm",
-    role: "Conducteur",
-    status: "Verrouillé",
-    team: "Admin",
-    workspace: ["Tous les projets"],
-    joinedDate: "09 Sep 2024, 12:25 PM",
-    lastActive: 2 * 24 * 60,
-  },
-  {
-    name: "Sienna Hewitt",
-    email: "sienna.h@zoldick.cm",
-    role: "Chargée de com",
-    status: "Actif",
-    team: "Commercial",
-    workspace: ["Tous les projets"],
-    joinedDate: "05 Déc 2024, 2:15 PM",
-    lastActive: 0,
-  },
-  {
-    name: "Noah Pierre",
-    email: "noah.p@zoldick.cm",
-    role: "Technicien",
-    status: "Actif",
-    team: "Terrain",
-    workspace: ["Complexe Sportif"],
-    joinedDate: "18 Jun 2025, 4:50 PM",
-    lastActive: 7,
-  },
-  {
-    name: "Eve Lechner",
-    email: "eve.l@zoldick.cm",
-    role: "Comptable",
-    status: "Suspendu",
-    team: "Finance",
-    workspace: ["Tous les projets"],
-    joinedDate: "01 Mar 2024, 10:10 AM",
-    lastActive: 30 * 24 * 60,
-  },
-  {
-    name: "Zahir McClure",
-    email: "zahir.m@zoldick.cm",
-    role: "Magasinier",
-    status: "Actif",
-    team: "Admin",
-    workspace: ["Hôtel Royal"],
-    joinedDate: "07 Fév 2025, 7:20 PM",
-    lastActive: 60,
-  },
-  {
-    name: "Mia Romberg",
-    email: "mia.r@zoldick.cm",
-    role: "Assistante",
-    status: "Invitation en attente",
-    team: "Direction",
-    workspace: ["Tous les projets"],
-    joinedDate: "29 Avr 2025, 11:55 AM",
-    lastActive: 90 * 24 * 60,
-  },
-  {
-    name: "Nico Arendt",
-    email: "nico.a@zoldick.cm",
-    role: "Dessinateur",
-    status: "Actif",
-    team: "Bureau",
-    workspace: ["Banto", "Hôpital Central"],
-    joinedDate: "13 Mai 2025, 6:35 PM",
-    lastActive: 25,
   },
 ];
 
@@ -375,7 +121,14 @@ export const filters = {
     "Ancien employé",
   ],
   team: ["Tous", ...teamValues],
-  status: ["Tous", "Actif", "Invitation en attente", "Désactivé", "Verrouillé", "Suspendu"],
+  status: [
+    "Tous",
+    "Actif",
+    "Invitation en attente",
+    "Désactivé",
+    "Verrouillé",
+    "Suspendu",
+  ],
   workspace: [
     "Tous",
     "Tous les projets",
@@ -387,13 +140,18 @@ export const filters = {
   ],
 };
 
-export const statusMeta: Record<UserStatus, { badgeClass: string; dotClass: string }> = {
+export const statusMeta: Record<
+  UserStatus,
+  { badgeClass: string; dotClass: string }
+> = {
   Actif: {
-    badgeClass: "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    badgeClass:
+      "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
     dotClass: "bg-emerald-500",
   },
   "Invitation en attente": {
-    badgeClass: "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400",
+    badgeClass:
+      "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400",
     dotClass: "bg-amber-500",
   },
   Désactivé: {
@@ -405,7 +163,8 @@ export const statusMeta: Record<UserStatus, { badgeClass: string; dotClass: stri
     dotClass: "bg-destructive",
   },
   Suspendu: {
-    badgeClass: "border-orange-500/20 bg-orange-500/10 text-orange-600 dark:text-orange-400",
+    badgeClass:
+      "border-orange-500/20 bg-orange-500/10 text-orange-600 dark:text-orange-400",
     dotClass: "bg-orange-500",
   },
 };

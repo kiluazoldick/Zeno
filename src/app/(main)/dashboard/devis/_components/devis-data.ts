@@ -1,3 +1,4 @@
+import type { Devis } from "@/types/database";
 import { addDays, format } from "date-fns";
 
 // ============ TYPES ============
@@ -54,21 +55,7 @@ export interface DevisFormValues {
   conditions: string;
 }
 
-export interface Devis extends DevisFormValues {
-  status: DevisStatus;
-  priority: DevisPriority;
-  projet: string;
-  client: string;
-  amount: string;
-  dateEmission: string;
-  dateValidite: string;
-}
-
 // ============ CONSTANTES ============
-export const DEVIS_PAPER_WIDTH = 816;
-export const DEVIS_PAPER_HEIGHT = 1056;
-export const DEVIS_PAPER_SCALE = 0.6;
-
 const today = new Date();
 
 export const devisTaxOptions: DevisTaxOption[] = [
@@ -139,137 +126,120 @@ export const defaultDevisValues: DevisFormValues = {
       unitPrice: 1000000,
     },
   ],
-  notes: "Merci de nous faire part de votre décision dans les meilleurs délais.",
+  notes:
+    "Merci de nous faire part de votre décision dans les meilleurs délais.",
   conditions: "Devis valable 30 jours. Paiement à 30 jours fin de mois.",
 };
 
-// ============ DONNÉES MOCKÉES ============
-export const devisData: Devis[] = [
+// ============ DONNÉES MOCKÉES DE FALLBACK ============
+export const fallbackDevis: Devis[] = [
   {
     id: "DEV-001",
     numero: "DEV-2026-001",
-    client: "Groupe Banto",
-    projet: "Construction Immeuble Banto",
-    status: "Accepté",
-    priority: "Haute",
-    amount: "85 000 000",
-    dateEmission: "10 Jan 2026",
-    dateValidite: "10 Fév 2026",
-    issuedDate: "2026-01-10",
-    validiteDate: "2026-02-10",
-    from: defaultDevisValues.from,
-    to: devisClients[0],
-    taxId: "tva",
-    discountType: "fixed",
-    discountValue: 0,
-    items: defaultDevisValues.items,
-    notes: "",
+    client_id: null,
+    projet_id: null,
+    titre: "Construction Immeuble Banto",
+    statut: "Accepté",
+    priorite: "Haute",
+    montant_total: 85000000,
+    date_emission: "2026-01-10",
+    date_validite: "2026-02-10",
+    contenu: [],
     conditions: "",
+    notes: "",
+    taxe_id: "tva",
+    created_at: "",
+    updated_at: "",
   },
   {
     id: "DEV-002",
     numero: "DEV-2026-002",
-    client: "Hôtel Royal",
-    projet: "Rénovation Hôtel Royal",
-    status: "Accepté",
-    priority: "Haute",
-    amount: "42 500 000",
-    dateEmission: "25 Fév 2026",
-    dateValidite: "25 Mar 2026",
-    issuedDate: "2026-02-25",
-    validiteDate: "2026-03-25",
-    from: defaultDevisValues.from,
-    to: devisClients[1],
-    taxId: "tva",
-    discountType: "fixed",
-    discountValue: 0,
-    items: defaultDevisValues.items,
-    notes: "",
+    client_id: null,
+    projet_id: null,
+    titre: "Rénovation Hôtel Royal",
+    statut: "Accepté",
+    priorite: "Haute",
+    montant_total: 42500000,
+    date_emission: "2026-02-25",
+    date_validite: "2026-03-25",
+    contenu: [],
     conditions: "",
+    notes: "",
+    taxe_id: "tva",
+    created_at: "",
+    updated_at: "",
   },
   {
     id: "DEV-003",
     numero: "DEV-2026-003",
-    client: "Hôpital Central",
-    projet: "Extension Hôpital Central",
-    status: "Envoyé",
-    priority: "Haute",
-    amount: "120 000 000",
-    dateEmission: "15 Mar 2026",
-    dateValidite: "15 Avr 2026",
-    issuedDate: "2026-03-15",
-    validiteDate: "2026-04-15",
-    from: defaultDevisValues.from,
-    to: devisClients[2],
-    taxId: "tva",
-    discountType: "fixed",
-    discountValue: 0,
-    items: defaultDevisValues.items,
-    notes: "",
+    client_id: null,
+    projet_id: null,
+    titre: "Extension Hôpital Central",
+    statut: "Envoyé",
+    priorite: "Haute",
+    montant_total: 120000000,
+    date_emission: "2026-03-15",
+    date_validite: "2026-04-15",
+    contenu: [],
     conditions: "",
+    notes: "",
+    taxe_id: "tva",
+    created_at: "",
+    updated_at: "",
   },
   {
     id: "DEV-004",
     numero: "DEV-2026-004",
-    client: "Mairie Douala",
-    projet: "Construction Marché Municipal",
-    status: "Envoyé",
-    priority: "Moyenne",
-    amount: "65 000 000",
-    dateEmission: "20 Mai 2026",
-    dateValidite: "20 Juin 2026",
-    issuedDate: "2026-05-20",
-    validiteDate: "2026-06-20",
-    from: defaultDevisValues.from,
-    to: devisClients[3],
-    taxId: "tva",
-    discountType: "fixed",
-    discountValue: 0,
-    items: defaultDevisValues.items,
-    notes: "",
+    client_id: null,
+    projet_id: null,
+    titre: "Construction Marché Municipal",
+    statut: "Envoyé",
+    priorite: "Moyenne",
+    montant_total: 65000000,
+    date_emission: "2026-05-20",
+    date_validite: "2026-06-20",
+    contenu: [],
     conditions: "",
+    notes: "",
+    taxe_id: "tva",
+    created_at: "",
+    updated_at: "",
   },
   {
     id: "DEV-005",
     numero: "DEV-2026-005",
-    client: "Ministère des Sports",
-    projet: "Complexe Sportif",
-    status: "Brouillon",
-    priority: "Haute",
-    amount: "95 000 000",
-    dateEmission: "01 Mai 2026",
-    dateValidite: "01 Juin 2026",
-    issuedDate: "2026-05-01",
-    validiteDate: "2026-06-01",
-    from: defaultDevisValues.from,
-    to: devisClients[0],
-    taxId: "tva",
-    discountType: "fixed",
-    discountValue: 0,
-    items: defaultDevisValues.items,
-    notes: "",
+    client_id: null,
+    projet_id: null,
+    titre: "Complexe Sportif",
+    statut: "Brouillon",
+    priorite: "Haute",
+    montant_total: 95000000,
+    date_emission: "2026-05-01",
+    date_validite: "2026-06-01",
+    contenu: [],
     conditions: "",
+    notes: "",
+    taxe_id: "tva",
+    created_at: "",
+    updated_at: "",
   },
   {
     id: "DEV-006",
     numero: "DEV-2026-006",
-    client: "SIEM",
-    projet: "Rénovation SIEM",
-    status: "Refusé",
-    priority: "Basse",
-    amount: "15 000 000",
-    dateEmission: "15 Jan 2026",
-    dateValidite: "15 Fév 2026",
-    issuedDate: "2026-01-15",
-    validiteDate: "2026-02-15",
-    from: defaultDevisValues.from,
-    to: devisClients[1],
-    taxId: "tva",
-    discountType: "fixed",
-    discountValue: 0,
-    items: defaultDevisValues.items,
-    notes: "",
+    client_id: null,
+    projet_id: null,
+    titre: "Rénovation SIEM",
+    statut: "Refusé",
+    priorite: "Basse",
+    montant_total: 15000000,
+    date_emission: "2026-01-15",
+    date_validite: "2026-02-15",
+    contenu: [],
     conditions: "",
+    notes: "",
+    taxe_id: "tva",
+    created_at: "",
+    updated_at: "",
   },
 ];
 
@@ -286,25 +256,55 @@ export function getDevisItems(devis: DevisFormValues) {
 }
 
 export function getDevisSubtotal(devis: DevisFormValues) {
-  return getDevisItems(devis).reduce((subtotal, item) => subtotal + getLineAmount(item), 0);
+  return getDevisItems(devis).reduce(
+    (subtotal, item) => subtotal + getLineAmount(item),
+    0,
+  );
 }
 
 export function getDevisTaxOption(devis: DevisFormValues) {
-  return devisTaxOptions.find((taxOption) => taxOption.id === devis.taxId) ?? devisTaxOptions[0];
+  return (
+    devisTaxOptions.find((taxOption) => taxOption.id === devis.taxId) ??
+    devisTaxOptions[0]
+  );
 }
 
 export function getDevisTax(devis: DevisFormValues) {
   const taxRate = getDevisTaxOption(devis).rate;
-  return Math.max(getDevisSubtotal(devis) - getDevisDiscount(devis), 0) * (taxRate / 100);
+  return (
+    Math.max(getDevisSubtotal(devis) - getDevisDiscount(devis), 0) *
+    (taxRate / 100)
+  );
 }
 
 export function getDevisDiscount(devis: DevisFormValues) {
   const subtotal = getDevisSubtotal(devis);
-  const discountValue = Number.isFinite(devis.discountValue) ? devis.discountValue : 0;
-  const discount = devis.discountType === "percent" ? subtotal * (discountValue / 100) : discountValue;
+  const discountValue = Number.isFinite(devis.discountValue)
+    ? devis.discountValue
+    : 0;
+  const discount =
+    devis.discountType === "percent"
+      ? subtotal * (discountValue / 100)
+      : discountValue;
   return Math.min(Math.max(discount, 0), subtotal);
 }
 
 export function getDevisTotal(devis: DevisFormValues) {
-  return Math.max(getDevisSubtotal(devis) - getDevisDiscount(devis), 0) + getDevisTax(devis);
+  return (
+    Math.max(getDevisSubtotal(devis) - getDevisDiscount(devis), 0) +
+    getDevisTax(devis)
+  );
+}
+
+// Fonctions pour les statistiques
+export function getDevisByStatus(devis: Devis[], statut: string) {
+  return devis.filter((d) => d.statut === statut);
+}
+
+export function getDevisAcceptes(devis: Devis[]) {
+  return getDevisByStatus(devis, "Accepté");
+}
+
+export function getDevisEnAttente(devis: Devis[]) {
+  return getDevisByStatus(devis, "Envoyé");
 }

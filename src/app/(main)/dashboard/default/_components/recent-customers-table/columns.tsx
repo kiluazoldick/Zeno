@@ -2,17 +2,23 @@
 "use no memo";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import { addMinutes, differenceInCalendarDays, endOfToday, format, parseISO } from "date-fns";
 import {
-  AlertCircle,
-  Building2,
-  CheckCircle2,
+  addMinutes,
+  differenceInCalendarDays,
+  endOfToday,
+  format,
+  parseISO,
+} from "date-fns";
+import {
   CircleAlertIcon,
   CircleCheckIcon,
-  Clock,
   Clock3Icon,
   LoaderIcon,
+  Building2,
+  CheckCircle2,
+  Clock,
   XCircle,
+  AlertCircle,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -40,7 +46,9 @@ function statusIcon(status: string) {
 function billingIcon(billing: string) {
   switch (billing) {
     case "Payé":
-      return <CircleCheckIcon className="fill-green-500 stroke-primary-foreground dark:fill-green-600" />;
+      return (
+        <CircleCheckIcon className="fill-green-500 stroke-primary-foreground dark:fill-green-600" />
+      );
     case "En attente":
       return <LoaderIcon className="text-zeno-accent" />;
     case "Non payé":
@@ -54,13 +62,41 @@ function billingIcon(billing: string) {
   }
 }
 
+// Fonction sécurisée pour formater la date
+function formatDateSafely(dateValue: string) {
+  if (!dateValue || dateValue === "-" || dateValue === "Non défini") {
+    return { date: "-", time: "" };
+  }
+
+  try {
+    const baseDate = parseISO(dateValue);
+    if (isNaN(baseDate.getTime())) {
+      return { date: "-", time: "" };
+    }
+
+    const joinedAt = addMinutes(
+      baseDate,
+      9 * 60 + Math.floor(Math.random() * 12) * 17,
+    );
+    return {
+      date: format(joinedAt, "dd MMMM yyyy"),
+      time: `à ${format(joinedAt, "HH:mm")}`,
+    };
+  } catch (e) {
+    return { date: "-", time: "" };
+  }
+}
+
 export const recentCustomersColumns: ColumnDef<RecentCustomerRow>[] = [
   {
     id: "select",
     header: ({ table }) => (
       <div className="flex items-center justify-center">
         <Checkbox
-          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label="Sélectionner tous les projets"
         />
@@ -88,8 +124,12 @@ export const recentCustomersColumns: ColumnDef<RecentCustomerRow>[] = [
         <div className="min-w-0 flex-1">
           <div className="flex items-end justify-between gap-3">
             <div className="grid min-w-0 gap-0.5">
-              <span className="truncate font-medium text-sm leading-none">{row.original.name}</span>
-              <span className="truncate text-muted-foreground text-xs leading-none">#{row.original.id}</span>
+              <span className="truncate font-medium text-sm leading-none">
+                {row.original.name}
+              </span>
+              <span className="truncate text-muted-foreground text-xs leading-none">
+                #{row.original.id}
+              </span>
             </div>
           </div>
         </div>
@@ -135,7 +175,10 @@ export const recentCustomersColumns: ColumnDef<RecentCustomerRow>[] = [
         "Projet Public": "border-zeno-accent text-zeno-accent",
       };
       return (
-        <Badge variant="outline" className={`px-2 py-1 text-xs ${planColors[row.original.plan] || ""}`}>
+        <Badge
+          variant="outline"
+          className={`px-2 py-1 text-xs ${planColors[row.original.plan] || ""}`}
+        >
           {row.original.plan}
         </Badge>
       );
@@ -144,11 +187,18 @@ export const recentCustomersColumns: ColumnDef<RecentCustomerRow>[] = [
   {
     id: "joinedWindow",
     accessorFn: (row) => {
-      const daysSinceJoined = differenceInCalendarDays(endOfToday(), parseISO(row.joined));
-
-      if (daysSinceJoined <= 30) return ["30", "90"];
-      if (daysSinceJoined <= 90) return ["90"];
-      return [];
+      if (!row.joined || row.joined === "-") return [];
+      try {
+        const daysSinceJoined = differenceInCalendarDays(
+          endOfToday(),
+          parseISO(row.joined),
+        );
+        if (daysSinceJoined <= 30) return ["30", "90"];
+        if (daysSinceJoined <= 90) return ["90"];
+        return [];
+      } catch (e) {
+        return [];
+      }
     },
     filterFn: "arrIncludes",
     enableHiding: true,
@@ -157,13 +207,14 @@ export const recentCustomersColumns: ColumnDef<RecentCustomerRow>[] = [
     accessorKey: "joined",
     header: "Date de début",
     cell: ({ row }) => {
-      const baseDate = parseISO(row.original.joined);
-      const joinedAt = addMinutes(baseDate, 9 * 60 + (Number(row.original.id.split("-")[1]) % 12) * 17);
+      const { date, time } = formatDateSafely(row.original.joined);
 
       return (
         <div className="grid gap-0.5">
-          <span className="text-sm">{format(joinedAt, "dd MMMM yyyy")}</span>
-          <span className="text-muted-foreground text-xs">à {format(joinedAt, "HH:mm")}</span>
+          <span className="text-sm">{date}</span>
+          {time && (
+            <span className="text-muted-foreground text-xs">{time}</span>
+          )}
         </div>
       );
     },

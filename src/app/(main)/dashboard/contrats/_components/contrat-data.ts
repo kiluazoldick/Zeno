@@ -1,4 +1,5 @@
 import { addDays, format } from "date-fns";
+import type { Contrat } from "@/types/database";
 
 // ============ TYPES ============
 export type ContratStatus = "Brouillon" | "En cours" | "Signé" | "Annulé";
@@ -57,21 +58,7 @@ export interface ContratFormValues {
   clauses: string;
 }
 
-export interface Contrat extends ContratFormValues {
-  status: ContratStatus;
-  priority: ContratPriority;
-  projet: string;
-  client: string;
-  amount: string;
-  dateEmission: string;
-  dateSignature: string;
-}
-
 // ============ CONSTANTES ============
-export const CONTRAT_PAPER_WIDTH = 816;
-export const CONTRAT_PAPER_HEIGHT = 1056;
-export const CONTRAT_PAPER_SCALE = 0.6;
-
 const today = new Date();
 
 export const contratTaxOptions: ContratTaxOption[] = [
@@ -144,134 +131,130 @@ export const defaultContratValues: ContratFormValues = {
       unitPrice: 1000000,
     },
   ],
-  notes: "Merci de nous faire part de votre décision dans les meilleurs délais.",
+  notes:
+    "Merci de nous faire part de votre décision dans les meilleurs délais.",
   conditions: "Contrat valable 1 an. Renouvelable par tacite reconduction.",
   clauses: "Clause de confidentialité et de non-concurrence applicables.",
 };
 
-// ============ DONNÉES MOCKÉES ============
-export const contratData: Contrat[] = [
+// ============ DONNÉES MOCKÉES DE FALLBACK ============
+export const fallbackContrats: Contrat[] = [
   {
     id: "CTR-001",
     numero: "CTR-2026-001",
-    client: "Groupe Banto",
-    projet: "Construction Immeuble Banto",
-    status: "En cours",
-    priority: "Haute",
-    amount: "85 000 000",
-    dateEmission: "15 Fév 2026",
-    dateSignature: "15 Mar 2026",
-    issuedDate: "2026-02-15",
-    signatureDate: "2026-03-15",
-    dateDebut: "2026-03-15",
-    dateFin: "2027-03-15",
-    from: defaultContratValues.from,
-    to: contratClients[0],
-    taxId: "tva",
-    discountType: "fixed",
-    discountValue: 0,
-    items: defaultContratValues.items,
-    notes: "",
+    client_id: null,
+    projet_id: null,
+    devis_id: null,
+    titre: "Construction Immeuble Banto",
+    statut: "En cours",
+    priorite: "Haute",
+    montant_total: 85000000,
+    date_emission: "2026-02-15",
+    date_signature: "2026-03-15",
+    date_debut: "2026-03-15",
+    date_fin: "2027-03-15",
+    contenu: [],
     conditions: "",
     clauses: "",
+    notes: "",
+    created_at: "",
+    updated_at: "",
   },
   {
     id: "CTR-002",
     numero: "CTR-2026-002",
-    client: "Hôtel Royal",
-    projet: "Rénovation Hôtel Royal",
-    status: "Signé",
-    priority: "Haute",
-    amount: "42 500 000",
-    dateEmission: "01 Avr 2026",
-    dateSignature: "15 Avr 2026",
-    issuedDate: "2026-04-01",
-    signatureDate: "2026-04-15",
-    dateDebut: "2026-04-15",
-    dateFin: "2026-10-15",
-    from: defaultContratValues.from,
-    to: contratClients[1],
-    taxId: "tva",
-    discountType: "fixed",
-    discountValue: 0,
-    items: defaultContratValues.items,
-    notes: "",
+    client_id: null,
+    projet_id: null,
+    devis_id: null,
+    titre: "Rénovation Hôtel Royal",
+    statut: "Signé",
+    priorite: "Haute",
+    montant_total: 42500000,
+    date_emission: "2026-04-01",
+    date_signature: "2026-04-15",
+    date_debut: "2026-04-15",
+    date_fin: "2026-10-15",
+    contenu: [],
     conditions: "",
     clauses: "",
+    notes: "",
+    created_at: "",
+    updated_at: "",
   },
   {
     id: "CTR-003",
     numero: "CTR-2026-003",
-    client: "Hôpital Central",
-    projet: "Extension Hôpital Central",
-    status: "Brouillon",
-    priority: "Haute",
-    amount: "120 000 000",
-    dateEmission: "15 Avr 2026",
-    dateSignature: "15 Mai 2026",
-    issuedDate: "2026-04-15",
-    signatureDate: "2026-05-15",
-    dateDebut: "2026-06-01",
-    dateFin: "2027-06-01",
-    from: defaultContratValues.from,
-    to: contratClients[2],
-    taxId: "tva",
-    discountType: "fixed",
-    discountValue: 0,
-    items: defaultContratValues.items,
-    notes: "",
+    client_id: null,
+    projet_id: null,
+    devis_id: null,
+    titre: "Extension Hôpital Central",
+    statut: "Brouillon",
+    priorite: "Haute",
+    montant_total: 120000000,
+    date_emission: "2026-04-15",
+    date_signature: null,
+    date_debut: "2026-06-01",
+    date_fin: "2027-06-01",
+    contenu: [],
     conditions: "",
     clauses: "",
+    notes: "",
+    created_at: "",
+    updated_at: "",
   },
   {
     id: "CTR-004",
     numero: "CTR-2026-004",
-    client: "Ministère des Sports",
-    projet: "Complexe Sportif",
-    status: "En cours",
-    priority: "Haute",
-    amount: "95 000 000",
-    dateEmission: "01 Juin 2026",
-    dateSignature: "15 Juin 2026",
-    issuedDate: "2026-06-01",
-    signatureDate: "2026-06-15",
-    dateDebut: "2026-06-15",
-    dateFin: "2027-06-15",
-    from: defaultContratValues.from,
-    to: contratClients[0],
-    taxId: "tva",
-    discountType: "fixed",
-    discountValue: 0,
-    items: defaultContratValues.items,
-    notes: "",
+    client_id: null,
+    projet_id: null,
+    devis_id: null,
+    titre: "Complexe Sportif",
+    statut: "En cours",
+    priorite: "Haute",
+    montant_total: 95000000,
+    date_emission: "2026-06-01",
+    date_signature: "2026-06-15",
+    date_debut: "2026-06-15",
+    date_fin: "2027-06-15",
+    contenu: [],
     conditions: "",
     clauses: "",
+    notes: "",
+    created_at: "",
+    updated_at: "",
   },
   {
     id: "CTR-005",
     numero: "CTR-2026-005",
-    client: "SIEM",
-    projet: "Rénovation SIEM",
-    status: "Annulé",
-    priority: "Basse",
-    amount: "15 000 000",
-    dateEmission: "15 Jan 2026",
-    dateSignature: "30 Jan 2026",
-    issuedDate: "2026-01-15",
-    signatureDate: "2026-01-30",
-    dateDebut: "2026-02-01",
-    dateFin: "2026-08-01",
-    from: defaultContratValues.from,
-    to: contratClients[1],
-    taxId: "tva",
-    discountType: "fixed",
-    discountValue: 0,
-    items: defaultContratValues.items,
-    notes: "",
+    client_id: null,
+    projet_id: null,
+    devis_id: null,
+    titre: "Rénovation SIEM",
+    statut: "Annulé",
+    priorite: "Basse",
+    montant_total: 15000000,
+    date_emission: "2026-01-15",
+    date_signature: "2026-01-30",
+    date_debut: "2026-02-01",
+    date_fin: "2026-08-01",
+    contenu: [],
     conditions: "",
     clauses: "",
+    notes: "",
+    created_at: "",
+    updated_at: "",
   },
 ];
+
+// ============ COULEURS DES STATUTS ============
+export const statusColors: Record<string, string> = {
+  Brouillon: "border-muted-foreground/20 bg-muted text-muted-foreground",
+  "En cours":
+    "border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+  Signé:
+    "border-green-500/20 bg-green-500/10 text-green-700 dark:text-green-300",
+  Annulé: "border-destructive/20 bg-destructive/10 text-destructive",
+};
 
 // ============ FONCTIONS UTILES ============
 export function getLineAmount(item?: ContratLineItem) {
@@ -286,25 +269,42 @@ export function getContratItems(contrat: ContratFormValues) {
 }
 
 export function getContratSubtotal(contrat: ContratFormValues) {
-  return getContratItems(contrat).reduce((subtotal, item) => subtotal + getLineAmount(item), 0);
+  return getContratItems(contrat).reduce(
+    (subtotal, item) => subtotal + getLineAmount(item),
+    0,
+  );
 }
 
 export function getContratTaxOption(contrat: ContratFormValues) {
-  return contratTaxOptions.find((taxOption) => taxOption.id === contrat.taxId) ?? contratTaxOptions[0];
+  return (
+    contratTaxOptions.find((taxOption) => taxOption.id === contrat.taxId) ??
+    contratTaxOptions[0]
+  );
 }
 
 export function getContratTax(contrat: ContratFormValues) {
   const taxRate = getContratTaxOption(contrat).rate;
-  return Math.max(getContratSubtotal(contrat) - getContratDiscount(contrat), 0) * (taxRate / 100);
+  return (
+    Math.max(getContratSubtotal(contrat) - getContratDiscount(contrat), 0) *
+    (taxRate / 100)
+  );
 }
 
 export function getContratDiscount(contrat: ContratFormValues) {
   const subtotal = getContratSubtotal(contrat);
-  const discountValue = Number.isFinite(contrat.discountValue) ? contrat.discountValue : 0;
-  const discount = contrat.discountType === "percent" ? subtotal * (discountValue / 100) : discountValue;
+  const discountValue = Number.isFinite(contrat.discountValue)
+    ? contrat.discountValue
+    : 0;
+  const discount =
+    contrat.discountType === "percent"
+      ? subtotal * (discountValue / 100)
+      : discountValue;
   return Math.min(Math.max(discount, 0), subtotal);
 }
 
 export function getContratTotal(contrat: ContratFormValues) {
-  return Math.max(getContratSubtotal(contrat) - getContratDiscount(contrat), 0) + getContratTax(contrat);
+  return (
+    Math.max(getContratSubtotal(contrat) - getContratDiscount(contrat), 0) +
+    getContratTax(contrat)
+  );
 }

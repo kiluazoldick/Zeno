@@ -19,11 +19,10 @@ import {
   ChevronDown,
   Eye,
   MoreHorizontal,
-  Plus,
   Search,
-  Trash2,
   Pin,
   Archive,
+  Loader2,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -76,17 +75,21 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import type { Annonce } from "@/types/database";
 
 import {
-  annoncesData,
+  fallbackAnnonces,
   importanceColors,
-  type Annonce,
-  type AnnonceImportance,
-  type AnnonceStatus,
+  statusColors,
 } from "./annonce-data";
 
+interface AnnonceListProps {
+  annonces: Annonce[];
+  isLoading: boolean;
+}
+
 const importanceOptions = ["Tous", "Haute", "Normale", "Basse"];
-const statusOptions = ["Tous", "Publiée", "Archivée", "Brouillon"];
+const statusOptionsList = ["Tous", "Publiée", "Archivée", "Brouillon"];
 
 function getPageNumbers(currentPage: number, pageCount: number) {
   if (pageCount <= 3) {
@@ -104,7 +107,9 @@ function preventPaginationNavigation(
   event.preventDefault();
 }
 
-export function AnnonceList() {
+export function AnnonceList({ annonces, isLoading }: AnnonceListProps) {
+  const data = annonces && annonces.length > 0 ? annonces : fallbackAnnonces;
+
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
@@ -118,14 +123,13 @@ export function AnnonceList() {
   });
 
   const filteredData = React.useMemo(() => {
-    if (!searchQuery) return annoncesData;
-    return annoncesData.filter(
+    if (!searchQuery) return data;
+    return data.filter(
       (annonce) =>
         annonce.titre.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        annonce.contenu.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        annonce.auteur.toLowerCase().includes(searchQuery.toLowerCase()),
+        annonce.contenu.toLowerCase().includes(searchQuery.toLowerCase()),
     );
-  }, [searchQuery]);
+  }, [searchQuery, data]);
 
   const columns: ColumnDef<Annonce>[] = [
     {
@@ -155,7 +159,7 @@ export function AnnonceList() {
       header: "ID",
       cell: ({ row }) => (
         <div className="font-mono text-sm text-muted-foreground">
-          {row.original.id}
+          {row.original.id.substring(0, 7)}
         </div>
       ),
     },
@@ -177,9 +181,6 @@ export function AnnonceList() {
           <div className="truncate font-medium text-sm">
             {row.original.titre}
           </div>
-          <div className="truncate text-muted-foreground text-xs">
-            {row.original.auteur}
-          </div>
         </div>
       ),
     },
@@ -200,32 +201,51 @@ export function AnnonceList() {
       filterFn: (row, id, value) => value.includes(row.getValue(id)),
     },
     {
-      accessorKey: "status",
+      accessorKey: "statut",
       header: "Statut",
-      cell: ({ row }) => (
-        <Badge variant="outline" className="px-2 py-1">
-          {row.original.status}
-        </Badge>
-      ),
+      cell: ({ row }) => {
+        const status = row.original.statut;
+        return (
+          <Badge
+            className={cn(
+              "gap-1 rounded-sm border font-medium",
+              statusColors[status],
+            )}
+            variant="outline"
+          >
+            {status}
+          </Badge>
+        );
+      },
       filterFn: (row, id, value) => value.includes(row.getValue(id)),
     },
     {
-      accessorKey: "date",
+      accessorKey: "date_annonce",
       header: "Date",
-      cell: ({ row }) => <div className="text-sm">{row.original.date}</div>,
+      cell: ({ row }) => (
+        <div className="text-sm">
+          {new Date(row.original.date_annonce).toLocaleDateString("fr-FR", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          })}
+        </div>
+      ),
     },
     {
-      accessorKey: "commentaires",
+      accessorKey: "commentaires_count",
       header: "Commentaires",
       cell: ({ row }) => (
-        <div className="text-sm text-center">{row.original.commentaires}</div>
+        <div className="text-sm text-center">
+          {row.original.commentaires_count || 0}
+        </div>
       ),
     },
     {
       id: "actions",
       cell: ({ row }) => {
         const annonce = row.original;
-        const isDraft = annonce.status === "Brouillon";
+        const isDraft = annonce.statut === "Brouillon";
 
         return (
           <DropdownMenu>
@@ -253,7 +273,7 @@ export function AnnonceList() {
                   <DropdownMenuSeparator />
                 </>
               )}
-              {annonce.status === "Publiée" && (
+              {annonce.statut === "Publiée" && (
                 <DropdownMenuItem>
                   <Archive className="size-4" />
                   Archiver
@@ -261,7 +281,6 @@ export function AnnonceList() {
               )}
               {isDraft && (
                 <DropdownMenuItem variant="destructive">
-                  <Trash2 className="size-4" />
                   Supprimer
                 </DropdownMenuItem>
               )}
@@ -302,7 +321,7 @@ export function AnnonceList() {
   const importanceFilter =
     (table.getColumn("importance")?.getFilterValue() as string[]) ?? [];
   const statusFilter =
-    (table.getColumn("status")?.getFilterValue() as string[]) ?? [];
+    (table.getColumn("statut")?.getFilterValue() as string[]) ?? [];
 
   function toggleImportanceFilter(value: string) {
     const current = importanceFilter;
@@ -321,14 +340,14 @@ export function AnnonceList() {
       ? current.filter((v) => v !== value)
       : [...current, value];
     table
-      .getColumn("status")
+      .getColumn("statut")
       ?.setFilterValue(newFilter.length ? newFilter : undefined);
     table.setPageIndex(0);
   }
 
   function clearFilters() {
     table.getColumn("importance")?.setFilterValue(undefined);
-    table.getColumn("status")?.setFilterValue(undefined);
+    table.getColumn("statut")?.setFilterValue(undefined);
     setSearchQuery("");
     table.setPageIndex(0);
   }
@@ -337,6 +356,20 @@ export function AnnonceList() {
     importanceFilter.length > 0 ||
     statusFilter.length > 0 ||
     searchQuery.length > 0;
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="leading-none">Liste des annonces</CardTitle>
+          <CardDescription>Chargement des données...</CardDescription>
+        </CardHeader>
+        <CardContent className="flex h-64 items-center justify-center">
+          <Loader2 className="size-8 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -400,7 +433,7 @@ export function AnnonceList() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
-                {statusOptions.map((status) => (
+                {statusOptionsList.map((status) => (
                   <DropdownMenuCheckboxItem
                     key={status}
                     checked={
@@ -410,7 +443,7 @@ export function AnnonceList() {
                     }
                     onCheckedChange={() => {
                       if (status === "Tous") {
-                        table.getColumn("status")?.setFilterValue(undefined);
+                        table.getColumn("statut")?.setFilterValue(undefined);
                         table.setPageIndex(0);
                       } else {
                         toggleStatusFilter(status);

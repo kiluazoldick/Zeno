@@ -16,24 +16,32 @@ import {
 } from "@tanstack/react-table";
 import {
   ArrowUpDown,
-  Ban,
-  CheckCircle,
   ChevronDown,
-  Clock,
   Eye,
   FileDown,
-  FileSignature,
-  FileText,
   MoreHorizontal,
   Plus,
   Search,
+  FileSignature,
   Trash2,
+  CheckCircle,
   XCircle,
+  Clock,
+  Ban,
+  Loader2,
+  FileText,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
@@ -43,7 +51,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import {
   Pagination,
   PaginationContent,
@@ -53,30 +65,31 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import type { Contrat } from "@/types/database";
 
-import { type Contrat, type ContratStatus, contratData } from "./contrat-data";
+import { fallbackContrats, statusColors } from "./contrat-data";
 
-const statusColors: Record<ContratStatus, { bg: string; icon: React.ReactNode }> = {
-  Brouillon: {
-    bg: "border-muted-foreground/20 bg-muted text-muted-foreground",
-    icon: <FileText className="size-3.5" />,
-  },
-  "En cours": {
-    bg: "border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300",
-    icon: <Clock className="size-3.5" />,
-  },
-  Signé: {
-    bg: "border-green-500/20 bg-green-500/10 text-green-700 dark:text-green-300",
-    icon: <CheckCircle className="size-3.5" />,
-  },
-  Annulé: {
-    bg: "border-destructive/20 bg-destructive/10 text-destructive",
-    icon: <XCircle className="size-3.5" />,
-  },
-};
+interface ContratListProps {
+  contrats: Contrat[];
+  isLoading: boolean;
+}
 
 const priorityColors: Record<string, string> = {
   Haute: "text-destructive",
@@ -91,18 +104,26 @@ function getPageNumbers(currentPage: number, pageCount: number) {
     return Array.from({ length: pageCount }, (_, index) => index + 1);
   }
   if (currentPage <= 2) return [1, 2, 3];
-  if (currentPage >= pageCount - 1) return [pageCount - 2, pageCount - 1, pageCount];
+  if (currentPage >= pageCount - 1)
+    return [pageCount - 2, pageCount - 1, pageCount];
   return [currentPage - 1, currentPage, currentPage + 1];
 }
 
-function preventPaginationNavigation(event: React.MouseEvent<HTMLAnchorElement>) {
+function preventPaginationNavigation(
+  event: React.MouseEvent<HTMLAnchorElement>,
+) {
   event.preventDefault();
 }
 
-export function ContratList() {
+export function ContratList({ contrats, isLoading }: ContratListProps) {
+  const data = contrats && contrats.length > 0 ? contrats : fallbackContrats;
+
   const [rowSelection, setRowSelection] = React.useState({});
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    [],
+  );
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
   const [searchQuery, setSearchQuery] = React.useState("");
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
@@ -110,21 +131,24 @@ export function ContratList() {
   });
 
   const filteredData = React.useMemo(() => {
-    if (!searchQuery) return contratData;
-    return contratData.filter(
+    if (!searchQuery) return data;
+    return data.filter(
       (contrat) =>
         contrat.numero.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        contrat.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        contrat.projet.toLowerCase().includes(searchQuery.toLowerCase()),
+        (contrat.titre?.toLowerCase().includes(searchQuery.toLowerCase()) ??
+          false),
     );
-  }, [searchQuery]);
+  }, [searchQuery, data]);
 
   const columns: ColumnDef<Contrat>[] = [
     {
       id: "select",
       header: ({ table }) => (
         <Checkbox
-          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label="Sélectionner tous"
         />
@@ -142,10 +166,14 @@ export function ContratList() {
     {
       accessorKey: "numero",
       header: "N° Contrat",
-      cell: ({ row }) => <div className="font-mono text-sm font-medium">{row.original.numero}</div>,
+      cell: ({ row }) => (
+        <div className="font-mono text-sm font-medium">
+          {row.original.numero}
+        </div>
+      ),
     },
     {
-      accessorKey: "client",
+      accessorKey: "titre",
       header: ({ column }) => (
         <Button
           variant="ghost"
@@ -153,55 +181,97 @@ export function ContratList() {
           className="-ml-3 text-muted-foreground"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Client
+          Projet
           <ArrowUpDown className="ml-2 size-4" />
         </Button>
       ),
       cell: ({ row }) => (
         <div className="min-w-0">
-          <div className="truncate font-medium text-sm">{row.original.client}</div>
-          <div className="truncate text-muted-foreground text-xs">{row.original.projet}</div>
+          <div className="truncate font-medium text-sm">
+            {row.original.titre || "Sans titre"}
+          </div>
         </div>
       ),
     },
     {
-      accessorKey: "status",
+      accessorKey: "statut",
       header: "Statut",
-      cell: ({ row }) => (
-        <Badge
-          className={cn("gap-1.5 rounded-sm border font-medium", statusColors[row.original.status].bg)}
-          variant="outline"
-        >
-          {statusColors[row.original.status].icon}
-          {row.original.status}
-        </Badge>
-      ),
+      cell: ({ row }) => {
+        const status = row.original.statut;
+        const iconMap: Record<string, React.ReactNode> = {
+          Brouillon: <FileText className="size-3.5" />,
+          "En cours": <Clock className="size-3.5" />,
+          Signé: <CheckCircle className="size-3.5" />,
+          Annulé: <Ban className="size-3.5" />,
+        };
+        return (
+          <Badge
+            className={cn(
+              "gap-1.5 rounded-sm border font-medium",
+              statusColors[status],
+            )}
+            variant="outline"
+          >
+            {iconMap[status]}
+            {status}
+          </Badge>
+        );
+      },
       filterFn: (row, id, value) => value.includes(row.getValue(id)),
     },
     {
-      accessorKey: "amount",
+      accessorKey: "montant_total",
       header: "Montant",
       cell: ({ row }) => (
         <div className="font-medium tabular-nums text-sm">
-          {row.original.amount} <span className="text-muted-foreground text-xs">FCFA</span>
+          {row.original.montant_total
+            ? new Intl.NumberFormat("fr-FR").format(row.original.montant_total)
+            : "0"}
+          <span className="text-muted-foreground text-xs"> FCFA</span>
         </div>
       ),
     },
     {
-      accessorKey: "dateEmission",
+      accessorKey: "date_emission",
       header: "Émis le",
-      cell: ({ row }) => <div className="text-sm">{row.original.dateEmission}</div>,
+      cell: ({ row }) => (
+        <div className="text-sm">
+          {row.original.date_emission
+            ? new Date(row.original.date_emission).toLocaleDateString("fr-FR", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })
+            : "-"}
+        </div>
+      ),
     },
     {
-      accessorKey: "dateSignature",
+      accessorKey: "date_signature",
       header: "Signature",
-      cell: ({ row }) => <div className="text-sm">{row.original.dateSignature}</div>,
+      cell: ({ row }) => (
+        <div className="text-sm">
+          {row.original.date_signature
+            ? new Date(row.original.date_signature).toLocaleDateString(
+                "fr-FR",
+                { day: "numeric", month: "short", year: "numeric" },
+              )
+            : "-"}
+        </div>
+      ),
     },
     {
-      accessorKey: "priority",
+      accessorKey: "priorite",
       header: "Priorité",
       cell: ({ row }) => (
-        <div className={cn("font-medium text-sm", priorityColors[row.original.priority])}>{row.original.priority}</div>
+        <div
+          className={cn(
+            "font-medium text-sm",
+            priorityColors[row.original.priorite],
+          )}
+        >
+          {row.original.priorite}
+        </div>
       ),
       filterFn: (row, id, value) => value.includes(row.getValue(id)),
     },
@@ -209,13 +279,17 @@ export function ContratList() {
       id: "actions",
       cell: ({ row }) => {
         const contrat = row.original;
-        const isDraft = contrat.status === "Brouillon";
-        const isSigned = contrat.status === "Signé";
+        const isDraft = contrat.statut === "Brouillon";
+        const isSigned = contrat.statut === "Signé";
 
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm" className="text-muted-foreground">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="text-muted-foreground"
+              >
                 <MoreHorizontal className="size-4" />
                 <span className="sr-only">Menu</span>
               </Button>
@@ -251,7 +325,10 @@ export function ContratList() {
                 </DropdownMenuItem>
               )}
               {(isDraft || isSigned) && (
-                <DropdownMenuItem variant="destructive" className="text-destructive">
+                <DropdownMenuItem
+                  variant="destructive"
+                  className="text-destructive"
+                >
                   <Ban className="size-4" />
                   Annuler le contrat
                 </DropdownMenuItem>
@@ -284,40 +361,72 @@ export function ContratList() {
   });
 
   const pageCount = Math.max(table.getPageCount(), 1);
-  const currentPage = Math.min(table.getState().pagination.pageIndex + 1, pageCount);
+  const currentPage = Math.min(
+    table.getState().pagination.pageIndex + 1,
+    pageCount,
+  );
   const pageNumbers = getPageNumbers(currentPage, pageCount);
 
-  const statusFilter = (table.getColumn("status")?.getFilterValue() as string[]) ?? [];
-  const priorityFilter = (table.getColumn("priority")?.getFilterValue() as string[]) ?? [];
+  const statusFilter =
+    (table.getColumn("statut")?.getFilterValue() as string[]) ?? [];
+  const priorityFilter =
+    (table.getColumn("priorite")?.getFilterValue() as string[]) ?? [];
 
   function toggleStatusFilter(value: string) {
     const current = statusFilter;
-    const newFilter = current.includes(value) ? current.filter((v) => v !== value) : [...current, value];
-    table.getColumn("status")?.setFilterValue(newFilter.length ? newFilter : undefined);
+    const newFilter = current.includes(value)
+      ? current.filter((v) => v !== value)
+      : [...current, value];
+    table
+      .getColumn("statut")
+      ?.setFilterValue(newFilter.length ? newFilter : undefined);
     table.setPageIndex(0);
   }
 
   function togglePriorityFilter(value: string) {
     const current = priorityFilter;
-    const newFilter = current.includes(value) ? current.filter((v) => v !== value) : [...current, value];
-    table.getColumn("priority")?.setFilterValue(newFilter.length ? newFilter : undefined);
+    const newFilter = current.includes(value)
+      ? current.filter((v) => v !== value)
+      : [...current, value];
+    table
+      .getColumn("priorite")
+      ?.setFilterValue(newFilter.length ? newFilter : undefined);
     table.setPageIndex(0);
   }
 
   function clearFilters() {
-    table.getColumn("status")?.setFilterValue(undefined);
-    table.getColumn("priority")?.setFilterValue(undefined);
+    table.getColumn("statut")?.setFilterValue(undefined);
+    table.getColumn("priorite")?.setFilterValue(undefined);
     setSearchQuery("");
     table.setPageIndex(0);
   }
 
-  const isFiltered = statusFilter.length > 0 || priorityFilter.length > 0 || searchQuery.length > 0;
+  const isFiltered =
+    statusFilter.length > 0 ||
+    priorityFilter.length > 0 ||
+    searchQuery.length > 0;
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="leading-none">Liste des contrats</CardTitle>
+          <CardDescription>Chargement des données...</CardDescription>
+        </CardHeader>
+        <CardContent className="flex h-64 items-center justify-center">
+          <Loader2 className="size-8 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="leading-none">Liste des contrats</CardTitle>
-        <CardDescription>Tous les contrats en cours, signés, en brouillon ou annulés</CardDescription>
+        <CardDescription>
+          Tous les contrats en cours, signés, en brouillon ou annulés
+        </CardDescription>
         <CardAction>
           <div className="flex flex-wrap items-center gap-2">
             <InputGroup className="h-7 w-44 md:w-52">
@@ -343,10 +452,14 @@ export function ContratList() {
                 {statusOptions.map((status) => (
                   <DropdownMenuCheckboxItem
                     key={status}
-                    checked={status === "Tous" ? statusFilter.length === 0 : statusFilter.includes(status)}
+                    checked={
+                      status === "Tous"
+                        ? statusFilter.length === 0
+                        : statusFilter.includes(status)
+                    }
                     onCheckedChange={() => {
                       if (status === "Tous") {
-                        table.getColumn("status")?.setFilterValue(undefined);
+                        table.getColumn("statut")?.setFilterValue(undefined);
                         table.setPageIndex(0);
                       } else {
                         toggleStatusFilter(status);
@@ -385,7 +498,10 @@ export function ContratList() {
               </Button>
             )}
 
-            <Button size="sm" className="bg-zeno-primary hover:bg-zeno-primary/90">
+            <Button
+              size="sm"
+              className="bg-zeno-primary hover:bg-zeno-primary/90"
+            >
               <Plus className="size-4" />
               Nouveau contrat
             </Button>
@@ -400,7 +516,12 @@ export function ContratList() {
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
                     <TableHead key={header.id} colSpan={header.colSpan}>
-                      {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
                     </TableHead>
                   ))}
                 </TableRow>
@@ -409,15 +530,26 @@ export function ContratList() {
             <TableBody className="**:data-[slot='table-row']:border-border/50">
               {table.getRowModel().rows.length ? (
                 table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                  >
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
                     ))}
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={table.getVisibleLeafColumns().length} className="h-24 text-center">
+                  <TableCell
+                    colSpan={table.getVisibleLeafColumns().length}
+                    className="h-24 text-center"
+                  >
                     Aucun contrat trouvé.
                   </TableCell>
                 </TableRow>
@@ -462,7 +594,11 @@ export function ContratList() {
               <PaginationItem>
                 <PaginationPrevious
                   href="#"
-                  className={!table.getCanPreviousPage() ? "pointer-events-none opacity-50" : undefined}
+                  className={
+                    !table.getCanPreviousPage()
+                      ? "pointer-events-none opacity-50"
+                      : undefined
+                  }
                   onClick={(event) => {
                     preventPaginationNavigation(event);
                     table.previousPage();
@@ -478,7 +614,9 @@ export function ContratList() {
                 <PaginationItem key={pageNumber}>
                   <PaginationLink
                     href="#"
-                    isActive={table.getState().pagination.pageIndex === pageNumber - 1}
+                    isActive={
+                      table.getState().pagination.pageIndex === pageNumber - 1
+                    }
                     onClick={(event) => {
                       preventPaginationNavigation(event);
                       table.setPageIndex(pageNumber - 1);
@@ -496,7 +634,11 @@ export function ContratList() {
               <PaginationItem>
                 <PaginationNext
                   href="#"
-                  className={!table.getCanNextPage() ? "pointer-events-none opacity-50" : undefined}
+                  className={
+                    !table.getCanNextPage()
+                      ? "pointer-events-none opacity-50"
+                      : undefined
+                  }
                   onClick={(event) => {
                     preventPaginationNavigation(event);
                     table.nextPage();

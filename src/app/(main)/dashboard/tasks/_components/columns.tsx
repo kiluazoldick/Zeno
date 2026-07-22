@@ -1,7 +1,17 @@
 "use client";
+"use no memo";
 
 import type { Column, ColumnDef } from "@tanstack/react-table";
-import { ArrowDown, ArrowUp, ArrowUpDown, Calendar, MapPin, MoreHorizontal, RotateCcw, User } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  MoreHorizontal,
+  RotateCcw,
+  User,
+  Calendar,
+  MapPin,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,28 +35,38 @@ import { labels, priorities, statuses, type Task } from "./data";
 
 const statusStyles: Record<string, string> = {
   "À faire": "border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-300",
-  "En cours": "border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+  "En cours":
+    "border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300",
   Annulé: "border-muted-foreground/20 bg-muted text-muted-foreground",
-  Terminé: "border-green-500/20 bg-green-500/10 text-green-700 dark:text-green-300",
+  Terminé:
+    "border-green-500/20 bg-green-500/10 text-green-700 dark:text-green-300",
 };
 
-function SortIcon({ sortDirection }: { sortDirection: false | "asc" | "desc" }) {
+function SortIcon({
+  sortDirection,
+}: {
+  sortDirection: false | "asc" | "desc";
+}) {
   if (sortDirection === "desc") {
-    return <ArrowDown data-icon="inline-end" />;
+    return <ArrowDown className="size-4" />;
   }
 
   if (sortDirection === "asc") {
-    return <ArrowUp data-icon="inline-end" />;
+    return <ArrowUp className="size-4" />;
   }
 
-  return <ArrowUpDown data-icon="inline-end" />;
+  return <ArrowUpDown className="size-4" />;
 }
 
 function TitleColumnHeader({ column }: { column: Column<Task, unknown> }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="-ml-3 text-muted-foreground data-[state=open]:bg-accent">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-3 text-muted-foreground data-[state=open]:bg-accent"
+        >
           Titre
           <SortIcon sortDirection={column.getIsSorted()} />
         </Button>
@@ -75,7 +95,10 @@ export const columns: ColumnDef<Task>[] = [
     id: "select",
     header: ({ table }) => (
       <Checkbox
-        checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && "indeterminate")
+        }
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         aria-label="Sélectionner tout"
         className="translate-y-0.5"
@@ -95,7 +118,11 @@ export const columns: ColumnDef<Task>[] = [
   {
     accessorKey: "id",
     header: "ID",
-    cell: ({ row }) => <div className="w-20 font-mono text-muted-foreground text-sm">{row.getValue("id")}</div>,
+    cell: ({ row }) => (
+      <div className="w-20 font-mono text-muted-foreground text-sm">
+        {row.getValue("id")}
+      </div>
+    ),
     enableSorting: false,
     enableHiding: false,
   },
@@ -112,7 +139,9 @@ export const columns: ColumnDef<Task>[] = [
               {label.label}
             </Badge>
           )}
-          <span className="max-w-lg truncate font-medium text-sm">{row.getValue("title")}</span>
+          <span className="max-w-lg truncate font-medium text-sm">
+            {row.getValue("title")}
+          </span>
         </div>
       );
     },
@@ -126,36 +155,42 @@ export const columns: ColumnDef<Task>[] = [
         <span>{row.getValue("assignee")}</span>
       </div>
     ),
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
-    },
+    filterFn: (row, id, value) => value.includes(row.getValue(id)),
   },
   {
     accessorKey: "status",
     header: "Statut",
     cell: ({ row }) => {
-      const status = statuses.find((status) => status.value === row.getValue("status"));
+      const status = statuses.find(
+        (status) => status.value === row.getValue("status"),
+      );
 
       if (!status) {
         return null;
       }
 
       return (
-        <Badge className={cn("gap-1.5 rounded-sm border font-medium", statusStyles[status.value])} variant="outline">
-          {status.icon && <status.icon className="size-4" />}
+        <Badge
+          className={cn(
+            "gap-1.5 rounded-sm border font-medium",
+            statusStyles[status.value],
+          )}
+          variant="outline"
+        >
+          <status.icon className="size-4" />
           {status.label}
         </Badge>
       );
     },
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
-    },
+    filterFn: (row, id, value) => value.includes(row.getValue(id)),
   },
   {
     accessorKey: "priority",
     header: "Priorité",
     cell: ({ row }) => {
-      const priority = priorities.find((priority) => priority.value === row.getValue("priority"));
+      const priority = priorities.find(
+        (priority) => priority.value === row.getValue("priority"),
+      );
 
       if (!priority) {
         return null;
@@ -163,14 +198,12 @@ export const columns: ColumnDef<Task>[] = [
 
       return (
         <div className="flex items-center gap-2 text-sm">
-          {priority.icon && <priority.icon className="size-4 text-muted-foreground" />}
+          <priority.icon className="size-4 text-muted-foreground" />
           {priority.label}
         </div>
       );
     },
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
-    },
+    filterFn: (row, id, value) => value.includes(row.getValue(id)),
   },
   {
     accessorKey: "date",
@@ -188,7 +221,7 @@ export const columns: ColumnDef<Task>[] = [
     cell: ({ row }) => (
       <div className="flex items-center gap-2 text-sm">
         <MapPin className="size-3.5 text-muted-foreground" />
-        <span>{row.getValue("location") || "-"}</span>
+        <span>{row.getValue("location")}</span>
       </div>
     ),
   },
@@ -211,9 +244,7 @@ export const columns: ColumnDef<Task>[] = [
         </Badge>
       );
     },
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
-    },
+    filterFn: (row, id, value) => value.includes(row.getValue(id)),
   },
   {
     id: "actions",
@@ -224,7 +255,11 @@ export const columns: ColumnDef<Task>[] = [
         <div className="text-right">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm" className="text-muted-foreground data-[state=open]:bg-muted">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="text-muted-foreground data-[state=open]:bg-muted"
+              >
                 <MoreHorizontal />
                 <span className="sr-only">Menu</span>
               </Button>
@@ -239,7 +274,10 @@ export const columns: ColumnDef<Task>[] = [
                 <DropdownMenuSubContent>
                   <DropdownMenuRadioGroup value={task.label}>
                     {labels.map((label) => (
-                      <DropdownMenuRadioItem key={label.value} value={label.value}>
+                      <DropdownMenuRadioItem
+                        key={label.value}
+                        value={label.value}
+                      >
                         {label.label}
                       </DropdownMenuRadioItem>
                     ))}
@@ -256,5 +294,6 @@ export const columns: ColumnDef<Task>[] = [
         </div>
       );
     },
+    enableHiding: false,
   },
 ];

@@ -1,18 +1,6 @@
-import {
-  ArrowDown,
-  ArrowRight,
-  ArrowUp,
-  Calendar,
-  CheckCircle,
-  Circle,
-  CircleOff,
-  HelpCircle,
-  MapPin,
-  Timer,
-  Users,
-} from "lucide-react";
 import { z } from "zod";
 
+// Schéma pour les tâches
 const taskSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -21,20 +9,19 @@ const taskSchema = z.object({
   priority: z.string(),
   assignee: z.string(),
   date: z.string(),
-  location: z.string().optional(),
+  location: z.string(),
   reportDone: z.boolean(),
 });
 
 export type Task = z.infer<typeof taskSchema>;
 
-// Données des tâches Zoldick Entreprise
-const tasksData = [
-  // Tâches À faire
+// Données mockées de fallback
+export const fallbackTasks: Task[] = [
   {
     id: "TASK-001",
     title: "Finaliser rapport chantier Banto",
     status: "À faire",
-    label: "rapport",
+    label: "Rapport",
     priority: "haute",
     assignee: "Sarah M.",
     date: "15 Juin 2026",
@@ -45,7 +32,7 @@ const tasksData = [
     id: "TASK-002",
     title: "Préparer devis Hôpital Central",
     status: "À faire",
-    label: "devis",
+    label: "Devis",
     priority: "haute",
     assignee: "Jean K.",
     date: "18 Juin 2026",
@@ -56,7 +43,7 @@ const tasksData = [
     id: "TASK-003",
     title: "Réunion prospection complexe sportif",
     status: "À faire",
-    label: "réunion",
+    label: "Réunion",
     priority: "moyenne",
     assignee: "Paul B.",
     date: "20 Juin 2026",
@@ -67,7 +54,7 @@ const tasksData = [
     id: "TASK-004",
     title: "Mise à jour planning chantier Hôtel Royal",
     status: "À faire",
-    label: "chantier",
+    label: "Chantier",
     priority: "moyenne",
     assignee: "Marie L.",
     date: "22 Juin 2026",
@@ -76,33 +63,9 @@ const tasksData = [
   },
   {
     id: "TASK-005",
-    title: "Commander matériaux phase 2",
-    status: "À faire",
-    label: "logistique",
-    priority: "basse",
-    assignee: "Claire R.",
-    date: "25 Juin 2026",
-    location: "Douala",
-    reportDone: false,
-  },
-  {
-    id: "TASK-006",
-    title: "Valider devis Marché Municipal",
-    status: "À faire",
-    label: "devis",
-    priority: "haute",
-    assignee: "Nanga D.",
-    date: "28 Juin 2026",
-    location: "Douala",
-    reportDone: false,
-  },
-
-  // Tâches En cours
-  {
-    id: "TASK-007",
     title: "Rédaction contrat Hôtel Royal",
     status: "En cours",
-    label: "contrat",
+    label: "Contrat",
     priority: "haute",
     assignee: "Nanga D.",
     date: "14 Juin 2026",
@@ -110,10 +73,10 @@ const tasksData = [
     reportDone: false,
   },
   {
-    id: "TASK-008",
+    id: "TASK-006",
     title: "Suivi chantier Immeuble Banto",
     status: "En cours",
-    label: "chantier",
+    label: "Chantier",
     priority: "haute",
     assignee: "Sarah M.",
     date: "16 Juin 2026",
@@ -121,10 +84,10 @@ const tasksData = [
     reportDone: false,
   },
   {
-    id: "TASK-009",
+    id: "TASK-007",
     title: "Rapport financier mensuel",
     status: "En cours",
-    label: "finance",
+    label: "Finance",
     priority: "haute",
     assignee: "Marie L.",
     date: "19 Juin 2026",
@@ -132,69 +95,10 @@ const tasksData = [
     reportDone: false,
   },
   {
-    id: "TASK-010",
-    title: "Facturation client Banto",
-    status: "En cours",
-    label: "facture",
-    priority: "moyenne",
-    assignee: "Jean K.",
-    date: "21 Juin 2026",
-    location: "Douala",
-    reportDone: false,
-  },
-  {
-    id: "TASK-011",
-    title: "Négociation contrat école primaire",
-    status: "En cours",
-    label: "contrat",
-    priority: "moyenne",
-    assignee: "Paul B.",
-    date: "23 Juin 2026",
-    location: "Yaoundé",
-    reportDone: false,
-  },
-
-  // Tâches Annulées
-  {
-    id: "TASK-012",
-    title: "Projet école primaire - Annulé",
-    status: "Annulé",
-    label: "projet",
-    priority: "moyenne",
-    assignee: "Paul B.",
-    date: "10 Mai 2026",
-    location: "Yaoundé",
-    reportDone: true,
-  },
-  {
-    id: "TASK-013",
-    title: "Rénovation siège social - Reporté",
-    status: "Annulé",
-    label: "projet",
-    priority: "basse",
-    assignee: "Claire R.",
-    date: "15 Mai 2026",
-    location: "Douala",
-    reportDone: true,
-  },
-  {
-    id: "TASK-014",
-    title: "Projet complexe sportif - Abandonné",
-    status: "Annulé",
-    label: "projet",
-    priority: "basse",
-    assignee: "Jean K.",
-    date: "20 Mai 2026",
-    location: "Bafoussam",
-    reportDone: true,
-  },
-
-  // Tâches Terminées
-  {
-    id: "TASK-015",
+    id: "TASK-008",
     title: "Devis Marché Municipal - Validé",
     status: "Terminé",
-    label: "devis",
+    label: "Devis",
     priority: "haute",
     assignee: "Jean K.",
     date: "5 Juin 2026",
@@ -202,10 +106,10 @@ const tasksData = [
     reportDone: true,
   },
   {
-    id: "TASK-016",
+    id: "TASK-009",
     title: "Rapport chantier Banto phase 1",
     status: "Terminé",
-    label: "rapport",
+    label: "Rapport",
     priority: "haute",
     assignee: "Sarah M.",
     date: "7 Juin 2026",
@@ -213,129 +117,49 @@ const tasksData = [
     reportDone: true,
   },
   {
-    id: "TASK-017",
+    id: "TASK-010",
     title: "Contrat Hôtel Royal - Signé",
     status: "Terminé",
-    label: "contrat",
+    label: "Contrat",
     priority: "haute",
     assignee: "Nanga D.",
     date: "10 Juin 2026",
     location: "Douala",
     reportDone: true,
   },
-  {
-    id: "TASK-018",
-    title: "Facturation mensuelle - Juin",
-    status: "Terminé",
-    label: "facture",
-    priority: "moyenne",
-    assignee: "Marie L.",
-    date: "12 Juin 2026",
-    location: "Bureau",
-    reportDone: true,
-  },
-  {
-    id: "TASK-019",
-    title: "Rapport activité Hôtel Royal",
-    status: "Terminé",
-    label: "rapport",
-    priority: "haute",
-    assignee: "Sarah M.",
-    date: "13 Juin 2026",
-    location: "Douala",
-    reportDone: true,
-  },
-  {
-    id: "TASK-020",
-    title: "Audit financier trimestriel",
-    status: "Terminé",
-    label: "finance",
-    priority: "haute",
-    assignee: "Marie L.",
-    date: "14 Juin 2026",
-    location: "Bureau",
-    reportDone: true,
-  },
 ];
 
-export const tasks = z.array(taskSchema).parse(tasksData);
-
 export const labels = [
-  {
-    value: "rapport",
-    label: "Rapport",
-  },
-  {
-    value: "devis",
-    label: "Devis",
-  },
-  {
-    value: "contrat",
-    label: "Contrat",
-  },
-  {
-    value: "facture",
-    label: "Facture",
-  },
-  {
-    value: "chantier",
-    label: "Chantier",
-  },
-  {
-    value: "réunion",
-    label: "Réunion",
-  },
-  {
-    value: "projet",
-    label: "Projet",
-  },
-  {
-    value: "finance",
-    label: "Finance",
-  },
-  {
-    value: "logistique",
-    label: "Logistique",
-  },
+  { value: "rapport", label: "Rapport" },
+  { value: "devis", label: "Devis" },
+  { value: "contrat", label: "Contrat" },
+  { value: "facture", label: "Facture" },
+  { value: "chantier", label: "Chantier" },
+  { value: "réunion", label: "Réunion" },
+  { value: "projet", label: "Projet" },
+  { value: "finance", label: "Finance" },
 ];
 
 export const statuses = [
-  {
-    value: "À faire",
-    label: "À faire",
-    icon: Circle,
-  },
-  {
-    value: "En cours",
-    label: "En cours",
-    icon: Timer,
-  },
-  {
-    value: "Annulé",
-    label: "Annulé",
-    icon: CircleOff,
-  },
-  {
-    value: "Terminé",
-    label: "Terminé",
-    icon: CheckCircle,
-  },
+  { value: "À faire", label: "À faire", icon: Circle },
+  { value: "En cours", label: "En cours", icon: Timer },
+  { value: "Annulé", label: "Annulé", icon: CircleOff },
+  { value: "Terminé", label: "Terminé", icon: CheckCircle },
 ];
 
 export const priorities = [
-  {
-    label: "Basse",
-    value: "basse",
-    icon: ArrowDown,
-  },
-  {
-    label: "Moyenne",
-    value: "moyenne",
-    icon: ArrowRight,
-  },
-  {
-    label: "Haute",
-    value: "haute",
-    icon: ArrowUp,
-  },
+  { label: "Basse", value: "basse", icon: ArrowDown },
+  { label: "Moyenne", value: "moyenne", icon: ArrowRight },
+  { label: "Haute", value: "haute", icon: ArrowUp },
 ];
+
+// Imports pour les icônes
+import {
+  Circle,
+  Timer,
+  CircleOff,
+  CheckCircle,
+  ArrowDown,
+  ArrowRight,
+  ArrowUp,
+} from "lucide-react";

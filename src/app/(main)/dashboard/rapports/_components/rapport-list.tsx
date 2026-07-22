@@ -20,13 +20,11 @@ import {
   Eye,
   FileDown,
   MoreHorizontal,
-  Plus,
   Search,
-  Trash2,
   CheckCircle,
-  XCircle,
   Clock,
   FileText,
+  Loader2,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -79,14 +77,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import type { Report } from "@/types/database";
 
-import {
-  rapportsData,
-  statusColors,
-  type Rapport,
-  type RapportStatus,
-  type RapportType,
-} from "./rapport-data";
+import { fallbackRapports, statusColors } from "./rapport-data";
+
+interface RapportListProps {
+  rapports: Report[];
+  isLoading: boolean;
+}
 
 const statusOptions = ["Tous", "Brouillon", "En cours", "Validé", "Archivé"];
 const typeOptions = ["Tous", "Quotidien", "Hebdomadaire", "Mensuel", "Réunion"];
@@ -107,7 +105,9 @@ function preventPaginationNavigation(
   event.preventDefault();
 }
 
-export function RapportList() {
+export function RapportList({ rapports, isLoading }: RapportListProps) {
+  const data = rapports && rapports.length > 0 ? rapports : fallbackRapports;
+
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
@@ -121,16 +121,13 @@ export function RapportList() {
   });
 
   const filteredData = React.useMemo(() => {
-    if (!searchQuery) return rapportsData;
-    return rapportsData.filter(
-      (rapport) =>
-        rapport.titre.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        rapport.projet.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        rapport.auteur.toLowerCase().includes(searchQuery.toLowerCase()),
+    if (!searchQuery) return data;
+    return data.filter((rapport) =>
+      rapport.titre.toLowerCase().includes(searchQuery.toLowerCase()),
     );
-  }, [searchQuery]);
+  }, [searchQuery, data]);
 
-  const columns: ColumnDef<Rapport>[] = [
+  const columns: ColumnDef<Report>[] = [
     {
       id: "select",
       header: ({ table }) => (
@@ -158,7 +155,7 @@ export function RapportList() {
       header: "ID",
       cell: ({ row }) => (
         <div className="font-mono text-sm text-muted-foreground">
-          {row.original.id}
+          {row.original.id.substring(0, 7)}
         </div>
       ),
     },
@@ -181,7 +178,7 @@ export function RapportList() {
             {row.original.titre}
           </div>
           <div className="truncate text-muted-foreground text-xs">
-            {row.original.projet}
+            {row.original.type}
           </div>
         </div>
       ),
@@ -197,40 +194,43 @@ export function RapportList() {
       filterFn: (row, id, value) => value.includes(row.getValue(id)),
     },
     {
-      accessorKey: "auteur",
-      header: "Auteur",
-      cell: ({ row }) => <div className="text-sm">{row.original.auteur}</div>,
-    },
-    {
       accessorKey: "statut",
       header: "Statut",
-      cell: ({ row }) => (
-        <Badge
-          className={cn(
-            "gap-1.5 rounded-sm border font-medium",
-            statusColors[row.original.statut],
-          )}
-          variant="outline"
-        >
-          {row.original.statut === "Validé" && (
-            <CheckCircle className="size-3.5" />
-          )}
-          {row.original.statut === "En cours" && <Clock className="size-3.5" />}
-          {row.original.statut === "Brouillon" && (
-            <FileText className="size-3.5" />
-          )}
-          {row.original.statut === "Archivé" && (
-            <FileText className="size-3.5" />
-          )}
-          {row.original.statut}
-        </Badge>
-      ),
+      cell: ({ row }) => {
+        const status = row.original.statut;
+        const iconMap: Record<string, React.ReactNode> = {
+          Validé: <CheckCircle className="size-3.5" />,
+          "En cours": <Clock className="size-3.5" />,
+          Brouillon: <FileText className="size-3.5" />,
+          Archivé: <FileText className="size-3.5" />,
+        };
+        return (
+          <Badge
+            className={cn(
+              "gap-1.5 rounded-sm border font-medium",
+              statusColors[status],
+            )}
+            variant="outline"
+          >
+            {iconMap[status]}
+            {status}
+          </Badge>
+        );
+      },
       filterFn: (row, id, value) => value.includes(row.getValue(id)),
     },
     {
-      accessorKey: "date",
+      accessorKey: "date_rapport",
       header: "Date",
-      cell: ({ row }) => <div className="text-sm">{row.original.date}</div>,
+      cell: ({ row }) => (
+        <div className="text-sm">
+          {new Date(row.original.date_rapport).toLocaleDateString("fr-FR", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          })}
+        </div>
+      ),
     },
     {
       id: "actions",
@@ -269,15 +269,9 @@ export function RapportList() {
                   </DropdownMenuItem>
                 </>
               )}
-              {!isArchived && (
-                <DropdownMenuItem>
-                  <Plus className="size-4" />
-                  Dupliquer
-                </DropdownMenuItem>
-              )}
+              {!isArchived && <DropdownMenuItem>Dupliquer</DropdownMenuItem>}
               {isDraft && (
                 <DropdownMenuItem variant="destructive">
-                  <Trash2 className="size-4" />
                   Supprimer
                 </DropdownMenuItem>
               )}
@@ -351,6 +345,20 @@ export function RapportList() {
 
   const isFiltered =
     statusFilter.length > 0 || typeFilter.length > 0 || searchQuery.length > 0;
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="leading-none">Liste des rapports</CardTitle>
+          <CardDescription>Chargement des données...</CardDescription>
+        </CardHeader>
+        <CardContent className="flex h-64 items-center justify-center">
+          <Loader2 className="size-8 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>

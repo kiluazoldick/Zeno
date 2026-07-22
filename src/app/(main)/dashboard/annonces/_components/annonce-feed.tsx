@@ -6,9 +6,9 @@ import {
   Calendar,
   Tag,
   MessageSquare,
-  MoreHorizontal,
   Pin,
-  Eye,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -23,31 +23,47 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { cn, getInitials } from "@/lib/utils";
+import type { Annonce } from "@/types/database";
 
-import {
-  annoncesData,
-  importanceColors,
-  importanceIcons,
-} from "./annonce-data";
+import { importanceColors, fallbackAnnonces } from "./annonce-data";
 
-export function AnnonceFeed() {
+interface AnnonceFeedProps {
+  annonces: Annonce[];
+}
+
+export function AnnonceFeed({ annonces }: AnnonceFeedProps) {
   const [filter, setFilter] = useState<"all" | "Haute" | "Normale" | "Basse">(
     "all",
   );
 
+  const data = annonces && annonces.length > 0 ? annonces : fallbackAnnonces;
+
   const filteredAnnonces =
     filter === "all"
-      ? annoncesData
-      : annoncesData.filter((a) => a.importance === filter);
+      ? data
+      : data.filter((a) => a.importance === filter && a.statut === "Publiée");
 
-  const pinned = annoncesData.filter(
-    (a) => a.importance === "Haute" && a.status === "Publiée",
+  const pinned = data.filter(
+    (a) => a.importance === "Haute" && a.statut === "Publiée",
   );
+
+  if (!data || data.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Fil d'actualité</CardTitle>
+          <CardDescription>Aucune annonce disponible</CardDescription>
+        </CardHeader>
+        <CardContent className="flex h-32 items-center justify-center text-muted-foreground">
+          <p>Aucune annonce à afficher</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="grid gap-4 lg:grid-cols-12">
       <div className="lg:col-span-8 space-y-4">
-        {/* Fil d'actualité */}
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
@@ -55,11 +71,7 @@ export function AnnonceFeed() {
                 <Bell className="size-5 text-zeno-primary" />
                 <CardTitle>Fil d'actualité</CardTitle>
                 <Badge variant="outline" className="ml-2">
-                  {
-                    filteredAnnonces.filter((a) => a.status === "Publiée")
-                      .length
-                  }{" "}
-                  nouvelles
+                  {data.filter((a) => a.statut === "Publiée").length} nouvelles
                 </Badge>
               </div>
               <div className="flex gap-1">
@@ -101,13 +113,12 @@ export function AnnonceFeed() {
 
             {/* Liste des annonces */}
             {filteredAnnonces
-              .filter((a) => a.status === "Publiée" && a.importance !== "Haute")
+              .filter((a) => a.importance !== "Haute")
               .map((annonce) => (
                 <AnnonceItem key={annonce.id} annonce={annonce} />
               ))}
 
-            {filteredAnnonces.filter((a) => a.status === "Publiée").length ===
-              0 && (
+            {filteredAnnonces.length === 0 && (
               <div className="py-8 text-center text-muted-foreground">
                 <Bell className="mx-auto size-8 mb-2 opacity-30" />
                 <p>Aucune annonce à afficher</p>
@@ -117,7 +128,7 @@ export function AnnonceFeed() {
         </Card>
       </div>
 
-      {/* Sidebar - Filtres et récapitulatif */}
+      {/* Sidebar */}
       <div className="lg:col-span-4 space-y-4">
         <Card>
           <CardHeader>
@@ -126,7 +137,7 @@ export function AnnonceFeed() {
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm">Total annonces</span>
-              <span className="font-medium">{annoncesData.length}</span>
+              <span className="font-medium">{data.length}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-1 text-sm">
@@ -134,7 +145,7 @@ export function AnnonceFeed() {
                 Haute importance
               </span>
               <span className="font-medium">
-                {annoncesData.filter((a) => a.importance === "Haute").length}
+                {data.filter((a) => a.importance === "Haute").length}
               </span>
             </div>
             <div className="flex items-center justify-between">
@@ -143,7 +154,7 @@ export function AnnonceFeed() {
                 Importance normale
               </span>
               <span className="font-medium">
-                {annoncesData.filter((a) => a.importance === "Normale").length}
+                {data.filter((a) => a.importance === "Normale").length}
               </span>
             </div>
             <div className="flex items-center justify-between">
@@ -152,14 +163,14 @@ export function AnnonceFeed() {
                 Importance basse
               </span>
               <span className="font-medium">
-                {annoncesData.filter((a) => a.importance === "Basse").length}
+                {data.filter((a) => a.importance === "Basse").length}
               </span>
             </div>
             <Separator />
             <div className="flex items-center justify-between">
               <span className="text-sm">Brouillons</span>
               <span className="font-medium">
-                {annoncesData.filter((a) => a.status === "Brouillon").length}
+                {data.filter((a) => a.statut === "Brouillon").length}
               </span>
             </div>
           </CardContent>
@@ -170,7 +181,7 @@ export function AnnonceFeed() {
             <CardTitle className="text-sm">Tags populaires</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-1.5">
-            {Array.from(new Set(annoncesData.flatMap((a) => a.tags))).map(
+            {Array.from(new Set(data.flatMap((a) => a.tags || []))).map(
               (tag) => (
                 <Badge
                   key={tag}
@@ -192,24 +203,28 @@ function AnnonceItem({
   annonce,
   pinned = false,
 }: {
-  annonce: (typeof annoncesData)[0];
+  annonce: Annonce;
   pinned?: boolean;
 }) {
   const colorClass = importanceColors[annonce.importance];
-  const icon = importanceIcons[annonce.importance];
+  const iconMap: Record<string, string> = {
+    Haute: "🔴",
+    Normale: "🟡",
+    Basse: "🟢",
+  };
+  const icon = iconMap[annonce.importance];
 
   return (
     <div
       className={cn(
         "rounded-lg border p-4 transition-all hover:bg-muted/30",
         pinned && "border-zeno-primary/30 bg-zeno-primary/5",
-        annonce.status === "Archivée" && "opacity-60",
       )}
     >
       <div className="flex items-start gap-3">
         <Avatar className="size-9">
           <AvatarFallback className="bg-zeno-primary/10 text-zeno-primary text-xs">
-            {getInitials(annonce.auteur)}
+            {annonce.auteur ? getInitials(annonce.auteur) : "AD"}
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
@@ -227,11 +242,6 @@ function AnnonceItem({
                 Épinglée
               </Badge>
             )}
-            {annonce.status === "Archivée" && (
-              <Badge variant="outline" className="text-xs">
-                Archivée
-              </Badge>
-            )}
           </div>
           <p className="text-sm text-muted-foreground mt-1">
             {annonce.contenu}
@@ -239,22 +249,33 @@ function AnnonceItem({
           <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <span className="size-3.5" />
-              {annonce.auteur}
+              {annonce.auteur || "Admin"}
             </span>
-            <span>{annonce.date}</span>
-            {annonce.dateReunion && (
+            <span>
+              {new Date(annonce.date_annonce).toLocaleDateString("fr-FR", {
+                day: "numeric",
+                month: "short",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </span>
+            {annonce.date_reunion && (
               <span className="flex items-center gap-1">
                 <Calendar className="size-3.5" />
-                {annonce.dateReunion}
+                {new Date(annonce.date_reunion).toLocaleDateString("fr-FR", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })}
               </span>
             )}
             <span className="flex items-center gap-1">
               <MessageSquare className="size-3.5" />
-              {annonce.commentaires}
+              {annonce.commentaires_count || 0}
             </span>
           </div>
           <div className="flex flex-wrap gap-1 mt-2">
-            {annonce.tags.map((tag) => (
+            {(annonce.tags || []).map((tag) => (
               <Badge
                 key={tag}
                 variant="secondary"
@@ -266,13 +287,6 @@ function AnnonceItem({
             ))}
           </div>
         </div>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          className="text-muted-foreground shrink-0"
-        >
-          <MoreHorizontal className="size-4" />
-        </Button>
       </div>
     </div>
   );

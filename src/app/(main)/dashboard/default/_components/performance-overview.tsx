@@ -1,10 +1,18 @@
 "use client";
 
-import { addHours, endOfToday, format, parseISO, subHours } from "date-fns";
+import { format } from "date-fns";
 import { Area, CartesianGrid, ComposedChart, Line, XAxis } from "recharts";
+import { Loader2, AlertCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   type ChartConfig,
   ChartContainer,
@@ -23,41 +31,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// Données mockées pour Zeno - Chiffre d'affaires en FCFA
-const chartValues = [
-  { revenue: 1250000, expenses: 850000, tasks: 45 },
-  { revenue: 1800000, expenses: 920000, tasks: 52 },
-  { revenue: 1500000, expenses: 780000, tasks: 38 },
-  { revenue: 2200000, expenses: 1050000, tasks: 61 },
-  { revenue: 1950000, expenses: 980000, tasks: 48 },
-  { revenue: 1650000, expenses: 890000, tasks: 43 },
-  { revenue: 2400000, expenses: 1150000, tasks: 67 },
-  { revenue: 2100000, expenses: 1020000, tasks: 55 },
-  { revenue: 1850000, expenses: 950000, tasks: 49 },
-  { revenue: 2600000, expenses: 1250000, tasks: 72 },
-  { revenue: 2300000, expenses: 1180000, tasks: 58 },
-  { revenue: 2800000, expenses: 1320000, tasks: 79 },
-  { revenue: 2500000, expenses: 1220000, tasks: 63 },
-  { revenue: 3000000, expenses: 1450000, tasks: 85 },
-  { revenue: 2700000, expenses: 1280000, tasks: 71 },
-  { revenue: 3200000, expenses: 1550000, tasks: 92 },
-  { revenue: 2900000, expenses: 1380000, tasks: 76 },
-  { revenue: 3500000, expenses: 1680000, tasks: 98 },
-  { revenue: 3100000, expenses: 1480000, tasks: 82 },
-  { revenue: 3800000, expenses: 1750000, tasks: 105 },
-  { revenue: 3400000, expenses: 1580000, tasks: 88 },
-  { revenue: 4000000, expenses: 1850000, tasks: 112 },
-  { revenue: 3600000, expenses: 1650000, tasks: 95 },
-  { revenue: 4200000, expenses: 1920000, tasks: 118 },
-];
-
-const endDate = endOfToday();
-const startDate = subHours(endDate, (chartValues.length - 1) * 12);
-
-const chartData = chartValues.map((point, index) => ({
-  date: format(addHours(startDate, index * 12), "yyyy-MM-dd"),
-  ...point,
-}));
+interface PerformanceOverviewProps {
+  data?: {
+    monthly: Array<{
+      mois: string;
+      entrees: number;
+      sorties: number;
+      solde: number;
+    }>;
+  };
+  isLoading: boolean;
+}
 
 // Formater en FCFA
 const formatFCFA = (value: number) => {
@@ -69,40 +53,90 @@ const formatFCFA = (value: number) => {
   }).format(value);
 };
 
+// Données mockées en cas d'erreur ou de chargement
+const mockData = [
+  { month: "Jan", revenue: 1250000, expenses: 850000, profit: 400000 },
+  { month: "Fév", revenue: 1800000, expenses: 920000, profit: 880000 },
+  { month: "Mar", revenue: 1500000, expenses: 780000, profit: 720000 },
+  { month: "Avr", revenue: 2200000, expenses: 1050000, profit: 1150000 },
+  { month: "Mai", revenue: 1950000, expenses: 980000, profit: 970000 },
+  { month: "Juin", revenue: 1650000, expenses: 890000, profit: 760000 },
+  { month: "Juil", revenue: 2400000, expenses: 1150000, profit: 1250000 },
+  { month: "Août", revenue: 2100000, expenses: 1020000, profit: 1080000 },
+  { month: "Sep", revenue: 1850000, expenses: 950000, profit: 900000 },
+  { month: "Oct", revenue: 2600000, expenses: 1250000, profit: 1350000 },
+  { month: "Nov", revenue: 2300000, expenses: 1180000, profit: 1120000 },
+  { month: "Déc", revenue: 2800000, expenses: 1320000, profit: 1480000 },
+];
+
+// Transformer les données du backend vers le format du graphique
+const transformData = (monthlyData?: typeof mockData) => {
+  if (!monthlyData || monthlyData.length === 0) return mockData;
+
+  return monthlyData.map((item) => ({
+    month: item.mois ? format(new Date(item.mois), "MMM") : "Jan",
+    revenue: item.entrees || 0,
+    expenses: item.sorties || 0,
+    profit: item.solde || 0,
+  }));
+};
+
 const chartConfig = {
   revenue: {
     label: "Chiffre d'affaires",
-    color: "#02B3C4", // Couleur Zeno primaire
+    color: "var(--chart-1)",
   },
   expenses: {
     label: "Dépenses",
-    color: "#1D3F92", // Couleur Zeno secondaire
+    color: "var(--chart-2)",
   },
-  tasks: {
-    label: "Tâches complétées",
-    color: "#FFD50F", // Couleur Zeno accent
+  profit: {
+    label: "Bénéfice",
+    color: "var(--chart-3)",
   },
 } satisfies ChartConfig;
 
-export function PerformanceOverview() {
+export function PerformanceOverview({
+  data,
+  isLoading,
+}: PerformanceOverviewProps) {
+  const chartData = transformData(data?.monthly);
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="leading-none">Performance financière</CardTitle>
+          <CardDescription>Chargement des données...</CardDescription>
+        </CardHeader>
+        <CardContent className="flex h-80 items-center justify-center">
+          <Loader2 className="size-8 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="@container/card">
       <CardHeader>
         <CardTitle className="leading-none">Performance financière</CardTitle>
         <CardDescription>
-          <span className="@[540px]/card:block hidden">Évolution du chiffre d'affaires, dépenses et productivité</span>
-          <span className="@[540px]/card:hidden">Performance sur 3 mois</span>
+          <span className="@[540px]/card:block hidden">
+            Évolution du chiffre d'affaires, dépenses et bénéfices
+          </span>
+          <span className="@[540px]/card:hidden">Performance financière</span>
         </CardDescription>
         <CardAction className="flex items-center gap-2">
-          <Select defaultValue="quarter">
+          <Select defaultValue="yearly">
             <SelectTrigger size="sm" className="w-28">
-              <SelectValue placeholder="3 mois" />
+              <SelectValue placeholder="Annuel" />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
                 <SelectLabel>Période</SelectLabel>
-                <SelectItem value="quarter">3 mois</SelectItem>
-                <SelectItem value="month">1 mois</SelectItem>
+                <SelectItem value="yearly">Annuel</SelectItem>
+                <SelectItem value="quarterly">Trimestriel</SelectItem>
+                <SelectItem value="monthly">Mensuel</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
@@ -118,28 +152,32 @@ export function PerformanceOverview() {
       </CardHeader>
 
       <CardContent>
-        <ChartContainer config={chartConfig} className="aspect-auto h-80 w-full">
+        <ChartContainer
+          config={chartConfig}
+          className="aspect-auto h-80 w-full"
+        >
           <ComposedChart data={chartData} margin={{ top: 0 }}>
             <defs>
               <linearGradient id="fillRevenue" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#02B3C4" stopOpacity={0.36} />
-                <stop offset="95%" stopColor="#02B3C4" stopOpacity={0.04} />
+                <stop
+                  offset="5%"
+                  stopColor="var(--color-revenue)"
+                  stopOpacity={0.36}
+                />
+                <stop
+                  offset="95%"
+                  stopColor="var(--color-revenue)"
+                  stopOpacity={0.04}
+                />
               </linearGradient>
             </defs>
             <CartesianGrid vertical={false} strokeOpacity={0.5} />
 
             <XAxis
-              dataKey="date"
+              dataKey="month"
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              minTickGap={48}
-              tickFormatter={(value) =>
-                parseISO(value).toLocaleDateString("fr-FR", {
-                  month: "short",
-                  day: "numeric",
-                })
-              }
             />
 
             <ChartTooltip
@@ -148,29 +186,38 @@ export function PerformanceOverview() {
                 <ChartTooltipContent
                   className="w-60"
                   indicator="line"
-                  labelFormatter={(value) => format(parseISO(value), "d MMMM yyyy")}
-                  formatter={(value, name) => {
-                    if (name === "revenue" || name === "expenses") {
-                      return formatFCFA(Number(value));
-                    }
-                    return `${value} tâches`;
-                  }}
+                  formatter={(value) => formatFCFA(Number(value))}
                 />
               }
             />
-            <ChartLegend verticalAlign="top" content={<ChartLegendContent className="mb-5 justify-end" />} />
+            <ChartLegend
+              verticalAlign="top"
+              content={<ChartLegendContent className="mb-5 justify-end" />}
+            />
 
             <Area
               dataKey="revenue"
-              type="natural"
+              type="monotone"
               fill="url(#fillRevenue)"
-              stroke="#02B3C4"
+              stroke="var(--color-revenue)"
               strokeWidth={2}
               dot={false}
-              fillOpacity={1}
             />
-            <Line dataKey="expenses" type="natural" stroke="#1D3F92" strokeWidth={2} dot={false} />
-            <Line dataKey="tasks" type="natural" stroke="#FFD50F" strokeWidth={2} dot={false} />
+            <Line
+              dataKey="expenses"
+              type="monotone"
+              stroke="var(--color-expenses)"
+              strokeWidth={1.5}
+              dot={false}
+            />
+            <Line
+              dataKey="profit"
+              type="monotone"
+              stroke="var(--color-profit)"
+              strokeWidth={1.5}
+              dot={false}
+              strokeDasharray="5 5"
+            />
           </ComposedChart>
         </ChartContainer>
       </CardContent>
