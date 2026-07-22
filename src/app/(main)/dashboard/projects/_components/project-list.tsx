@@ -2,6 +2,7 @@
 "use no memo";
 
 import * as React from "react";
+import { useState, useEffect } from "react";
 
 import {
   type ColumnDef,
@@ -74,6 +75,12 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import type { Project } from "@/types/database";
+import { ProjectDialog } from "./project-dialog";
+import {
+  useCreateProject,
+  useUpdateProject,
+  useDeleteProject,
+} from "@/hooks/queries/use-projects";
 
 // Données mockées de fallback
 const FALLBACK_PROJECTS: Project[] = [
@@ -208,6 +215,15 @@ export function ProjectList({ projects, isLoading }: ProjectListProps) {
     pageSize: 10,
   });
 
+  // État pour les dialogues
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+
+  // Mutations
+  const createProject = useCreateProject();
+  const updateProject = useUpdateProject();
+  const deleteProject = useDeleteProject();
+
   const filteredData = React.useMemo(() => {
     if (!searchQuery) return data;
     return data.filter(
@@ -218,6 +234,35 @@ export function ProjectList({ projects, isLoading }: ProjectListProps) {
         project.id.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }, [searchQuery, data]);
+
+  const handleEditProject = (project: Project) => {
+    setEditingProject(project);
+    setDialogOpen(true);
+  };
+
+  const handleDeleteProject = (project: Project) => {
+    if (
+      window.confirm(
+        `Êtes-vous sûr de vouloir supprimer le projet "${project.nom}" ?`,
+      )
+    ) {
+      deleteProject.mutate({ id: project.id });
+    }
+  };
+
+  const handleCreateProject = () => {
+    setEditingProject(null);
+    setDialogOpen(true);
+  };
+
+  const handleDialogSave = (data: any) => {
+    if (editingProject) {
+      updateProject.mutate({ id: editingProject.id, data });
+    } else {
+      createProject.mutate(data);
+    }
+    setDialogOpen(false);
+  };
 
   const columns: ColumnDef<Project>[] = [
     {
@@ -361,10 +406,15 @@ export function ProjectList({ projects, isLoading }: ProjectListProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem>Voir le projet</DropdownMenuItem>
-            <DropdownMenuItem>Modifier</DropdownMenuItem>
-            <DropdownMenuItem>Gérer les tâches</DropdownMenuItem>
-            <DropdownMenuItem>Voir les finances</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleEditProject(row.original)}>
+              Modifier
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => handleDeleteProject(row.original)}
+              className="text-destructive"
+            >
+              Supprimer
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       ),
@@ -532,6 +582,7 @@ export function ProjectList({ projects, isLoading }: ProjectListProps) {
             <Button
               size="sm"
               className="bg-zeno-primary hover:bg-zeno-primary/90"
+              onClick={handleCreateProject}
             >
               <Plus className="size-4" />
               Nouveau projet
@@ -680,6 +731,14 @@ export function ProjectList({ projects, isLoading }: ProjectListProps) {
           </Pagination>
         </div>
       </CardContent>
+
+      {/* Dialogue de création/édition */}
+      <ProjectDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        project={editingProject}
+        onSave={handleDialogSave}
+      />
     </Card>
   );
 }

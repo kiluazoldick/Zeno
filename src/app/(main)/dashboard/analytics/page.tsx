@@ -30,6 +30,7 @@ export default function Page() {
     useProductivity();
   const { data: projectsData, isLoading: projectsLoading } = useProjects({
     includeClient: true,
+    includeTasks: false,
   });
   const { data: tasksData, isLoading: tasksLoading } = useTasks({
     includeAssignee: true,
@@ -50,28 +51,38 @@ export default function Page() {
 
   // Transformer les données pour chaque composant
   const projectsDistribution =
-    projectsData?.reduce((acc: any[], project) => {
-      const statut = project.statut || "En attente";
-      const existing = acc.find((p) => p.statut === statut);
-      if (existing) {
-        existing.count += 1;
-      } else {
-        acc.push({ statut, count: 1 });
-      }
-      return acc;
-    }, []) || [];
+    projectsData && Array.isArray(projectsData)
+      ? projectsData.reduce(
+          (acc: any[], project: any) => {
+            const statut = project?.statut || "En attente";
+            const existing = acc.find((p) => p.statut === statut);
+            if (existing) {
+              existing.count += 1;
+            } else {
+              acc.push({ statut, count: 1 });
+            }
+            return acc;
+          },
+          [],
+        )
+      : [];
 
   const tasksByStatus =
-    tasksData?.reduce((acc: any[], task) => {
-      const statut = task.statut || "À faire";
-      const existing = acc.find((p) => p.statut === statut);
-      if (existing) {
-        existing.count += 1;
-      } else {
-        acc.push({ statut, count: 1 });
-      }
-      return acc;
-    }, []) || [];
+    tasksData && Array.isArray(tasksData)
+      ? tasksData.reduce(
+          (acc: any[], task: any) => {
+            const statut = task?.statut || "À faire";
+            const existing = acc.find((p) => p.statut === statut);
+            if (existing) {
+              existing.count += 1;
+            } else {
+              acc.push({ statut, count: 1 });
+            }
+            return acc;
+          },
+          [],
+        )
+      : [];
 
   // Calculer la productivité par membre à partir des tâches
   const memberProductivity =
