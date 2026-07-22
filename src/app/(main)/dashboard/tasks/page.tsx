@@ -2,8 +2,7 @@
 
 import { useTasks } from "@/hooks/queries/use-tasks";
 import { Loader2, AlertCircle } from "lucide-react";
-import { Tasks } from "./_components/tasks";
-import { fallbackTasks } from "./_components/data";
+import { Kanban } from "./_components/kanban";
 
 export default function Page() {
   const {
@@ -34,37 +33,25 @@ export default function Page() {
     );
   }
 
-  // Transformer les données pour le format attendu par le composant Tasks
-  const formattedTasks =
-    tasks && tasks.length > 0
-      ? tasks.map((task: any) => ({
-          id: task.id.substring(0, 7).toUpperCase(),
-          title: task.titre || "Tâche sans titre",
-          status: task.statut || "À faire",
-          label: task.projet?.nom || "Sans projet",
-          priority: task.priorite?.toLowerCase() || "moyenne",
-          assignee: task.assigne?.nom || "Non assigné",
-          date: task.date_execution
-            ? new Date(task.date_execution).toLocaleDateString("fr-FR", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              })
-            : "-",
-          location: task.lieu || "-",
-          reportDone: task.rapport_effectue || false,
-        }))
-      : fallbackTasks;
+  // Format tasks for Kanban
+  const formattedTasks = tasks?.map((task: any) => ({
+    id: task.id,
+    titre: task.titre || "Tâche sans titre",
+    description: task.description,
+    statut: task.statut || "À faire",
+    priorite: task.priorite || "Moyenne",
+    date_execution: task.date_execution,
+  })) || [];
 
   return (
     <div className="flex flex-col gap-4">
       <div>
         <h2 className="text-3xl tracking-tight">Gestion des tâches</h2>
         <p className="text-muted-foreground">
-          Liste complète des tâches de l'équipe Zoldick
+          Organisez vos tâches en colonne par statut
         </p>
       </div>
-      <Tasks data={formattedTasks} />
+      <Kanban initialTasks={formattedTasks} />
     </div>
   );
 }
