@@ -126,7 +126,7 @@ export const sidebarItems: NavGroup[] = [
       {
         id: "clients",
         title: "Clients",
-        url: "/dashboard/crm",
+        url: "/dashboard/clients",
         icon: UserRound,
       },
     ],
@@ -152,7 +152,7 @@ export const sidebarItems: NavGroup[] = [
       {
         id: "factures",
         title: "Factures",
-        url: "/dashboard/invoice",
+        url: "/dashboard/factures",
         icon: ReceiptText,
       },
     ],

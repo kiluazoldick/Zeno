@@ -1,0 +1,43 @@
+import type { Facture } from "@/types/database";
+
+export const fallbackFactures: Facture[] = [
+  {
+    id: "1",
+    numero: "FAC-001",
+    client_id: "client-1",
+    montant: 500000,
+    statut: "Payée",
+    date_emission: new Date("2024-01-01").toISOString(),
+    date_echeance: new Date("2024-02-01").toISOString(),
+    description: "Facture pour services de développement",
+    projet_id: "proj-1",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "2",
+    numero: "FAC-002",
+    client_id: "client-2",
+    montant: 750000,
+    statut: "Envoyée",
+    date_emission: new Date("2024-02-15").toISOString(),
+    date_echeance: new Date("2024-03-15").toISOString(),
+    description: "Facture pour services de consultance",
+    projet_id: "proj-2",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "3",
+    numero: "FAC-003",
+    client_id: "client-3",
+    montant: 1000000,
+    statut: "En retard",
+    date_emission: new Date("2024-01-20").toISOString(),
+    date_echeance: new Date("2024-02-20").toISOString(),
+    description: "Facture pour maintenance annuelle",
+    projet_id: "proj-3",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+];
