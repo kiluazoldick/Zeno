@@ -76,7 +76,6 @@ export default function Page() {
   // Calculer la productivité par membre à partir des tâches
   const memberProductivity =
     membersData?.map((member: any) => {
-      // Compter les tâches totales et terminées pour ce membre
       const memberTasks =
         tasksData?.filter((task: any) => task.assigne_a === member.id) || [];
       const totalTaches = memberTasks.length;
@@ -84,13 +83,9 @@ export default function Page() {
         (task: any) => task.statut === "Terminé",
       ).length;
 
-      // Calculer le taux de productivité
       let taux = 0;
       if (totalTaches > 0) {
         taux = Math.round((tachesTerminees / totalTaches) * 100);
-      } else {
-        // Si pas de tâches, productivité à 0
-        taux = 0;
       }
 
       return {
@@ -103,6 +98,23 @@ export default function Page() {
         taches_terminees: tachesTerminees,
       };
     }) || [];
+
+  // Données pour les KPI
+  const kpiData = {
+    caMois:
+      statsData?.finances?.reduce(
+        (sum: number, item: any) => sum + item.entrees,
+        0,
+      ) || 0,
+    projetsActifs:
+      projectsData?.filter((p: any) => p.statut === "En cours").length || 0,
+    tachesEnCours:
+      tasksData?.filter((t: any) => t.statut === "En cours").length || 0,
+    tachesTerminees:
+      tasksData?.filter((t: any) => t.statut === "Terminé").length || 0,
+    devisEnvoyes: 0, // À implémenter avec les devis
+    devisAcceptes: 0, // À implémenter avec les devis
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -127,7 +139,7 @@ export default function Page() {
         </div>
 
         <TabsContent value="overview" className="flex flex-col gap-4">
-          <StatsKpiStrip />
+          <StatsKpiStrip data={kpiData} isLoading={isLoading} />
 
           <div className="grid grid-cols-1 items-stretch gap-4 xl:grid-cols-12">
             <div className="xl:col-span-7">

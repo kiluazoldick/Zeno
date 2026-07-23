@@ -1,6 +1,6 @@
 "use server";
 
-import { createServerClient, createAdminClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import {
   projectUpdateSchema,
   type ProjectUpdateInput,
@@ -20,6 +20,7 @@ export async function updateProject(id: string, data: ProjectUpdateInput) {
   const validated = updateProjectSchema.safeParse({ id, data });
 
   if (!validated.success) {
+    console.error("Validation error:", validated.error.flatten().fieldErrors);
     return {
       success: false,
       error: validated.error.flatten().fieldErrors,
@@ -30,7 +31,7 @@ export async function updateProject(id: string, data: ProjectUpdateInput) {
     // Vérifier que le projet existe
     const { data: existing, error: checkError } = await adminClient
       .from("projects")
-      .select("id")
+      .select("id, statut")
       .eq("id", id)
       .single();
 
@@ -42,11 +43,11 @@ export async function updateProject(id: string, data: ProjectUpdateInput) {
     }
 
     // Vérifier que le client existe si fourni
-    if (validated.data.client_id) {
+    if (validated.data.data.client_id) {
       const { data: client, error: clientError } = await adminClient
         .from("clients")
         .select("id")
-        .eq("id", validated.data.client_id)
+        .eq("id", validated.data.data.client_id)
         .single();
 
       if (clientError || !client) {
@@ -57,18 +58,49 @@ export async function updateProject(id: string, data: ProjectUpdateInput) {
       }
     }
 
+    // Construire l'objet de mise à jour avec TOUS les champs
+    const updateData: any = {};
+    const fields = [
+      "nom",
+      "client_id",
+      "description",
+      "statut",
+      "priorite",
+      "budget_total",
+      "location",
+      "date_debut",
+      "date_fin",
+      "progression", // ← AJOUTÉ !!!
+    ];
+
+    for (const field of fields) {
+      if (
+        validated.data.data[field as keyof ProjectUpdateInput] !== undefined
+      ) {
+        updateData[field] =
+          validated.data.data[field as keyof ProjectUpdateInput];
+      }
+    }
+
+    // Si le statut change vers "Terminé" ou "Annulé", ajuster la progression
+    if (updateData.statut === "Terminé") {
+      updateData.progression = 100;
+    } else if (updateData.statut === "Annulé") {
+      updateData.progression = 0;
+    }
+
+    updateData.updated_at = new Date().toISOString();
+
     // Mettre à jour le projet
     const { data: project, error } = await adminClient
       .from("projects")
-      .update({
-        ...validated.data,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq("id", id)
       .select()
       .single();
 
     if (error) {
+      console.error("Erreur updateProject:", error);
       return {
         success: false,
         error: { db: [error.message] },
@@ -84,6 +116,7 @@ export async function updateProject(id: string, data: ProjectUpdateInput) {
       data: project,
     };
   } catch (error) {
+    console.error("Erreur inattendue:", error);
     return {
       success: false,
       error: { unexpected: ["Une erreur inattendue s'est produite"] },
@@ -96,8 +129,6 @@ export async function updateProjectProgress(id: string) {
   const adminClient = await createAdminClient();
 
   try {
-    // La progression est mise à jour automatiquement via le trigger SQL
-    // On force juste le revalidate
     const { data, error } = await adminClient
       .from("projects")
       .select("progression")

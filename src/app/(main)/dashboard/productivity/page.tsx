@@ -3,16 +3,12 @@
 import { useProjects } from "@/hooks/queries/use-projects";
 import { useTasks } from "@/hooks/queries/use-tasks";
 import { useMembers } from "@/hooks/queries/use-members";
+import { useDashboardKPI } from "@/hooks/queries/use-dashboard";
 
-import { CalendarPanel } from "./_components/calendar-panel";
-import { FocusCard } from "./_components/focus-card";
 import { ProjectsSection } from "./_components/projects-section";
-import { QuickActions } from "./_components/quick-actions";
-import { QuoteCard } from "./_components/quote-card";
-import { RecentNotesCard } from "./_components/recent-notes-card";
 import { SummaryCards } from "./_components/summary-cards";
 import { TasksSection } from "./_components/tasks-section";
-import { WeeklySummaryCard } from "./_components/weekly-summary-card";
+import { FocusCard } from "./_components/focus-card";
 
 export default function Page() {
   // Récupérer les données réelles
@@ -22,18 +18,34 @@ export default function Page() {
     includeProject: true,
   });
   const { data: members, isLoading: membersLoading } = useMembers();
+  const { data: kpi, isLoading: kpiLoading } = useDashboardKPI();
 
   // Filtrer les tâches du jour
   const todayTasks =
     tasks?.filter((task: any) => {
-      // Si pas de date, on laisse passer
-      if (!task.date_execution) return true;
+      if (!task.date_execution) return false;
       const taskDate = new Date(task.date_execution);
       const today = new Date();
-      return taskDate.toDateString() === today.toDateString();
+      return (
+        taskDate.getDate() === today.getDate() &&
+        taskDate.getMonth() === today.getMonth() &&
+        taskDate.getFullYear() === today.getFullYear()
+      );
     }) || [];
 
-  const isLoading = projectsLoading || tasksLoading || membersLoading;
+  const isLoading =
+    projectsLoading || tasksLoading || membersLoading || kpiLoading;
+
+  // Construire les stats à partir des KPI
+  const stats = kpi
+    ? {
+        total_projects: kpi.projects?.total || 0,
+        total_tasks: kpi.tasks?.total || 0,
+        completed_tasks: kpi.tasks?.completed || 0,
+        total_members: kpi.members?.total || 0,
+        active_projects: kpi.projects?.active || 0,
+      }
+    : undefined;
 
   return (
     <div className="grid gap-6 lg:grid-cols-12">
@@ -41,25 +53,29 @@ export default function Page() {
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
             <h1 className="text-3xl text-foreground leading-none tracking-tight">
-              Bonjour, Équipe Zoldick
+              Vue d'ensemble
             </h1>
             <p className="text-lg text-muted-foreground leading-none">
-              Ensemble, construisons des projets d'exception.
+              Suivez l'avancement de vos projets et tâches
             </p>
           </div>
-          <SummaryCards tasks={tasks} members={members} />
+
+          <SummaryCards
+            tasks={tasks}
+            projects={projects}
+            members={members}
+            stats={stats}
+            isLoading={isLoading}
+          />
+
           <TasksSection tasks={todayTasks} isLoading={isLoading} />
+
           <ProjectsSection projects={projects} isLoading={isLoading} />
-          <QuickActions />
-          <QuoteCard />
         </div>
       </section>
 
       <section className="flex flex-col gap-6 lg:col-span-3">
-        <CalendarPanel />
         <FocusCard />
-        <RecentNotesCard />
-        <WeeklySummaryCard tasks={tasks} />
       </section>
     </div>
   );

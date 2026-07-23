@@ -1,6 +1,6 @@
 "use server";
 
-import { createServerClient, createAdminClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import {
   projectSchema,
   type ProjectInput,
@@ -14,6 +14,7 @@ export async function createProject(data: ProjectInput) {
   const validated = projectSchema.safeParse(data);
 
   if (!validated.success) {
+    console.error("Validation error:", validated.error.flatten().fieldErrors);
     return {
       success: false,
       error: validated.error.flatten().fieldErrors,
@@ -37,6 +38,14 @@ export async function createProject(data: ProjectInput) {
       }
     }
 
+    // Déterminer la progression initiale en fonction du statut
+    let progression = 0;
+    if (validated.data.statut === "Terminé") {
+      progression = 100;
+    } else if (validated.data.statut === "Annulé") {
+      progression = 0;
+    }
+
     // Créer le projet
     const { data: project, error } = await adminClient
       .from("projects")
@@ -49,13 +58,14 @@ export async function createProject(data: ProjectInput) {
         budget_total: validated.data.budget_total || null,
         date_debut: validated.data.date_debut || null,
         date_fin: validated.data.date_fin || null,
-        progression: 0,
+        progression: progression,
         location: validated.data.location || null,
       })
       .select()
       .single();
 
     if (error) {
+      console.error("Erreur createProject:", error);
       return {
         success: false,
         error: { db: [error.message] },
@@ -70,6 +80,7 @@ export async function createProject(data: ProjectInput) {
       data: project,
     };
   } catch (error) {
+    console.error("Erreur inattendue:", error);
     return {
       success: false,
       error: { unexpected: ["Une erreur inattendue s'est produite"] },

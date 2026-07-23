@@ -21,6 +21,8 @@ import {
   Plus,
   Search,
   Loader2,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -74,6 +76,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import type { Project } from "@/types/database";
+import { toast } from "sonner";
 
 // Données mockées de fallback
 const FALLBACK_PROJECTS: Project[] = [
@@ -157,6 +160,9 @@ const FALLBACK_PROJECTS: Project[] = [
 interface ProjectListProps {
   projects: Project[];
   isLoading: boolean;
+  onAdd?: () => void;
+  onEdit?: (project: Project) => void;
+  onDelete?: (id: string) => void;
 }
 
 const statusColors: Record<string, string> = {
@@ -193,7 +199,13 @@ function preventPaginationNavigation(
   event.preventDefault();
 }
 
-export function ProjectList({ projects, isLoading }: ProjectListProps) {
+export function ProjectList({
+  projects,
+  isLoading,
+  onAdd,
+  onEdit,
+  onDelete,
+}: ProjectListProps) {
   const data = projects && projects.length > 0 ? projects : FALLBACK_PROJECTS;
 
   const [rowSelection, setRowSelection] = React.useState({});
@@ -218,6 +230,34 @@ export function ProjectList({ projects, isLoading }: ProjectListProps) {
         project.id.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }, [searchQuery, data]);
+
+  // Fonction de confirmation de suppression avec toast
+  const handleDeleteClick = (id: string, name: string) => {
+    toast.custom((t) => (
+      <div className="flex flex-col gap-2 p-4 bg-white rounded-lg shadow-lg border max-w-sm">
+        <p className="font-medium">Confirmer la suppression</p>
+        <p className="text-sm text-muted-foreground">
+          Êtes-vous sûr de vouloir supprimer le projet{" "}
+          <span className="font-semibold">"{name}"</span> ?
+        </p>
+        <div className="flex gap-2 justify-end mt-2">
+          <Button variant="outline" size="sm" onClick={() => toast.dismiss(t)}>
+            Annuler
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => {
+              toast.dismiss(t);
+              if (onDelete) onDelete(id);
+            }}
+          >
+            Supprimer
+          </Button>
+        </div>
+      </div>
+    ));
+  };
 
   const columns: ColumnDef<Project>[] = [
     {
@@ -348,26 +388,36 @@ export function ProjectList({ projects, isLoading }: ProjectListProps) {
     },
     {
       id: "actions",
-      cell: ({ row }) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="text-muted-foreground"
-            >
-              <MoreHorizontal className="size-4" />
-              <span className="sr-only">Menu</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>Voir le projet</DropdownMenuItem>
-            <DropdownMenuItem>Modifier</DropdownMenuItem>
-            <DropdownMenuItem>Gérer les tâches</DropdownMenuItem>
-            <DropdownMenuItem>Voir les finances</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
+      cell: ({ row }) => {
+        const project = row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="text-muted-foreground"
+              >
+                <MoreHorizontal className="size-4" />
+                <span className="sr-only">Menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onEdit?.(project)}>
+                <Pencil className="size-4 mr-2" />
+                Modifier
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleDeleteClick(project.id, project.nom)}
+                variant="destructive"
+              >
+                <Trash2 className="size-4 mr-2" />
+                Supprimer
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
       enableHiding: false,
     },
   ];
@@ -532,6 +582,7 @@ export function ProjectList({ projects, isLoading }: ProjectListProps) {
             <Button
               size="sm"
               className="bg-zeno-primary hover:bg-zeno-primary/90"
+              onClick={onAdd}
             >
               <Plus className="size-4" />
               Nouveau projet

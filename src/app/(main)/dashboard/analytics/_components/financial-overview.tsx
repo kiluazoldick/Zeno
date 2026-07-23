@@ -1,6 +1,7 @@
 "use client";
 
-import { Ellipsis } from "lucide-react";
+import { useMemo } from "react";
+import { Ellipsis, Loader2 } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 import {
@@ -17,14 +18,16 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 
-const financialData = [
-  { month: "Jan", income: 1800000, expense: 950000 },
-  { month: "Fév", income: 2100000, expense: 1020000 },
-  { month: "Mar", income: 1950000, expense: 890000 },
-  { month: "Avr", income: 2500000, expense: 1150000 },
-  { month: "Mai", income: 2300000, expense: 1080000 },
-  { month: "Juin", income: 2800000, expense: 1250000 },
-];
+interface FinancialOverviewProps {
+  data?: Array<{
+    id: string;
+    description: string;
+    type: string;
+    montant: number;
+    date_transaction: string;
+  }>;
+  isLoading?: boolean;
+}
 
 const formatFCFA = (value: number) => {
   return new Intl.NumberFormat("fr-FR", {
@@ -46,7 +49,78 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function FinancialOverview() {
+export function FinancialOverview({ data, isLoading }: FinancialOverviewProps) {
+  const chartData = useMemo(() => {
+    if (!data || data.length === 0) {
+      // Données mockées en fallback
+      return [
+        { month: "Jan", income: 1800000, expense: 950000 },
+        { month: "Fév", income: 2100000, expense: 1020000 },
+        { month: "Mar", income: 1950000, expense: 890000 },
+        { month: "Avr", income: 2500000, expense: 1150000 },
+        { month: "Mai", income: 2300000, expense: 1080000 },
+        { month: "Juin", income: 2800000, expense: 1250000 },
+      ];
+    }
+
+    // Grouper par mois
+    const grouped: Record<string, { income: number; expense: number }> = {};
+
+    data.forEach((item) => {
+      const date = new Date(item.date_transaction);
+      const month = date.toLocaleString("fr-FR", { month: "short" });
+
+      if (!grouped[month]) {
+        grouped[month] = { income: 0, expense: 0 };
+      }
+
+      if (item.type === "Entrée Réalisée" || item.type === "Entrée Prévue") {
+        grouped[month].income += item.montant;
+      } else {
+        grouped[month].expense += item.montant;
+      }
+    });
+
+    // Trier par mois
+    const monthOrder = [
+      "Jan",
+      "Fév",
+      "Mar",
+      "Avr",
+      "Mai",
+      "Juin",
+      "Juil",
+      "Août",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Déc",
+    ];
+    return monthOrder
+      .filter((m) => grouped[m])
+      .map((m) => ({
+        month: m,
+        income: grouped[m].income,
+        expense: grouped[m].expense,
+      }));
+  }, [data]);
+
+  if (isLoading) {
+    return (
+      <Card className="h-full">
+        <CardHeader>
+          <CardTitle className="font-normal">Entrées vs Sorties</CardTitle>
+          <CardAction>
+            <Ellipsis className="size-4" />
+          </CardAction>
+        </CardHeader>
+        <CardContent className="flex h-52 items-center justify-center">
+          <Loader2 className="size-8 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="h-full">
       <CardHeader>
@@ -60,12 +134,8 @@ export function FinancialOverview() {
         <ChartContainer config={chartConfig} className="h-52 w-full">
           <BarChart
             accessibilityLayer
-            data={financialData}
-            margin={{
-              top: 0,
-              left: 0,
-              right: 0,
-            }}
+            data={chartData}
+            margin={{ top: 0, left: 0, right: 0 }}
           >
             <CartesianGrid vertical={false} />
             <XAxis

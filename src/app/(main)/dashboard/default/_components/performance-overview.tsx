@@ -1,10 +1,16 @@
 "use client";
 
-import { format } from "date-fns";
+import { useState, useMemo } from "react";
+import {
+  format,
+  subMonths,
+  startOfMonth,
+  endOfMonth,
+  isWithinInterval,
+} from "date-fns";
 import { Area, CartesianGrid, ComposedChart, Line, XAxis } from "recharts";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardAction,
@@ -26,7 +32,6 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -43,6 +48,8 @@ interface PerformanceOverviewProps {
   isLoading: boolean;
 }
 
+type PeriodeType = "yearly" | "quarterly" | "monthly";
+
 // Formater en FCFA
 const formatFCFA = (value: number) => {
   return new Intl.NumberFormat("fr-FR", {
@@ -53,32 +60,100 @@ const formatFCFA = (value: number) => {
   }).format(value);
 };
 
-// Données mockées en cas d'erreur ou de chargement
-const mockData = [
-  { month: "Jan", revenue: 1250000, expenses: 850000, profit: 400000 },
-  { month: "Fév", revenue: 1800000, expenses: 920000, profit: 880000 },
-  { month: "Mar", revenue: 1500000, expenses: 780000, profit: 720000 },
-  { month: "Avr", revenue: 2200000, expenses: 1050000, profit: 1150000 },
-  { month: "Mai", revenue: 1950000, expenses: 980000, profit: 970000 },
-  { month: "Juin", revenue: 1650000, expenses: 890000, profit: 760000 },
-  { month: "Juil", revenue: 2400000, expenses: 1150000, profit: 1250000 },
-  { month: "Août", revenue: 2100000, expenses: 1020000, profit: 1080000 },
-  { month: "Sep", revenue: 1850000, expenses: 950000, profit: 900000 },
-  { month: "Oct", revenue: 2600000, expenses: 1250000, profit: 1350000 },
-  { month: "Nov", revenue: 2300000, expenses: 1180000, profit: 1120000 },
-  { month: "Déc", revenue: 2800000, expenses: 1320000, profit: 1480000 },
-];
-
 // Transformer les données du backend vers le format du graphique
-const transformData = (monthlyData?: typeof mockData) => {
-  if (!monthlyData || monthlyData.length === 0) return mockData;
+const transformData = (
+  monthlyData?: PerformanceOverviewProps["data"]["monthly"],
+) => {
+  if (!monthlyData || monthlyData.length === 0) {
+    return [];
+  }
 
-  return monthlyData.map((item) => ({
-    month: item.mois ? format(new Date(item.mois), "MMM") : "Jan",
-    revenue: item.entrees || 0,
-    expenses: item.sorties || 0,
-    profit: item.solde || 0,
-  }));
+  // Trier par date
+  const sorted = [...monthlyData].sort(
+    (a, b) => new Date(a.mois).getTime() - new Date(b.mois).getTime(),
+  );
+
+  return sorted.map((item) => {
+    const date = new Date(item.mois);
+    const month = date.toLocaleString("fr-FR", { month: "short" });
+    return {
+      date: date,
+      month: month,
+      mois: item.mois,
+      revenue: item.entrees || 0,
+      expenses: item.sorties || 0,
+      profit: item.solde || 0,
+    };
+  });
+};
+
+// Filtrer les données par période
+const filterDataByPeriod = (data: any[], periode: PeriodeType) => {
+  if (!data || data.length === 0) return [];
+
+  const now = new Date();
+  let filtered = [...data];
+
+  switch (periode) {
+    case "monthly": {
+      // Dernier mois
+      const lastMonth = subMonths(now, 1);
+      const start = startOfMonth(lastMonth);
+      const end = endOfMonth(lastMonth);
+      filtered = data.filter((item) =>
+        isWithinInterval(item.date, { start, end }),
+      );
+      break;
+    }
+    case "quarterly": {
+      // Dernier trimestre (3 mois)
+      const threeMonthsAgo = subMonths(now, 3);
+      filtered = data.filter(
+        (item) => item.date >= threeMonthsAgo && item.date <= now,
+      );
+      break;
+    }
+    case "yearly":
+    default: {
+      // Dernière année (12 mois)
+      const twelveMonthsAgo = subMonths(now, 12);
+      filtered = data.filter(
+        (item) => item.date >= twelveMonthsAgo && item.date <= now,
+      );
+      break;
+    }
+  }
+
+  // Si le filtre ne retourne rien, retourner toutes les données
+  if (filtered.length === 0) {
+    return data.slice(-12); // Derniers 12 mois maximum
+  }
+
+  return filtered;
+};
+
+// Agréger les données par mois pour le trimestre
+const aggregateByMonth = (data: any[]) => {
+  if (!data || data.length === 0) return [];
+
+  const grouped: Record<string, any> = {};
+
+  data.forEach((item) => {
+    const key = format(item.date, "MMM yyyy");
+    if (!grouped[key]) {
+      grouped[key] = {
+        month: format(item.date, "MMM"),
+        revenue: 0,
+        expenses: 0,
+        profit: 0,
+      };
+    }
+    grouped[key].revenue += item.revenue;
+    grouped[key].expenses += item.expenses;
+    grouped[key].profit += item.profit;
+  });
+
+  return Object.values(grouped);
 };
 
 const chartConfig = {
@@ -100,7 +175,33 @@ export function PerformanceOverview({
   data,
   isLoading,
 }: PerformanceOverviewProps) {
-  const chartData = transformData(data?.monthly);
+  const [periode, setPeriode] = useState<PeriodeType>("yearly");
+
+  // Transformer les données brutes
+  const rawData = useMemo(() => transformData(data?.monthly), [data]);
+
+  // Filtrer et agréger selon la période sélectionnée
+  const chartData = useMemo(() => {
+    if (rawData.length === 0) return [];
+
+    // Filtrer par période
+    let filtered = filterDataByPeriod(rawData, periode);
+
+    // Pour trimestriel, agréger par mois
+    if (periode === "quarterly") {
+      filtered = aggregateByMonth(filtered);
+    }
+
+    return filtered;
+  }, [rawData, periode]);
+
+  const hasData = chartData.length > 0;
+  const periodeLabel =
+    periode === "yearly"
+      ? "Annuel"
+      : periode === "quarterly"
+        ? "Trimestriel"
+        : "Mensuel";
 
   if (isLoading) {
     return (
@@ -119,107 +220,119 @@ export function PerformanceOverview({
   return (
     <Card className="@container/card">
       <CardHeader>
-        <CardTitle className="leading-none">Performance financière</CardTitle>
-        <CardDescription>
-          <span className="@[540px]/card:block hidden">
-            Évolution du chiffre d'affaires, dépenses et bénéfices
-          </span>
-          <span className="@[540px]/card:hidden">Performance financière</span>
-        </CardDescription>
-        <CardAction className="flex items-center gap-2">
-          <Select defaultValue="yearly">
-            <SelectTrigger size="sm" className="w-28">
-              <SelectValue placeholder="Annuel" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Période</SelectLabel>
-                <SelectItem value="yearly">Annuel</SelectItem>
-                <SelectItem value="quarterly">Trimestriel</SelectItem>
-                <SelectItem value="monthly">Mensuel</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-
-          <Button
-            variant="outline"
-            size="sm"
-            className="border-zeno-primary/30 text-zeno-primary hover:bg-zeno-primary/10"
-          >
-            Voir le rapport
-          </Button>
-        </CardAction>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <CardTitle className="leading-none">
+              Performance financière
+            </CardTitle>
+            <CardDescription>
+              <span className="@[540px]/card:block hidden">
+                Évolution du chiffre d'affaires, dépenses et bénéfices •{" "}
+                {periodeLabel}
+              </span>
+              <span className="@[540px]/card:hidden">
+                Performance financière • {periodeLabel}
+              </span>
+            </CardDescription>
+          </div>
+          <CardAction>
+            <Select
+              value={periode}
+              onValueChange={(value) => setPeriode(value as PeriodeType)}
+            >
+              <SelectTrigger size="sm" className="w-32">
+                <SelectValue placeholder="Période" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="yearly">Annuel</SelectItem>
+                  <SelectItem value="quarterly">Trimestriel</SelectItem>
+                  <SelectItem value="monthly">Mensuel</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </CardAction>
+        </div>
       </CardHeader>
 
       <CardContent>
-        <ChartContainer
-          config={chartConfig}
-          className="aspect-auto h-80 w-full"
-        >
-          <ComposedChart data={chartData} margin={{ top: 0 }}>
-            <defs>
-              <linearGradient id="fillRevenue" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="var(--color-revenue)"
-                  stopOpacity={0.36}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="var(--color-revenue)"
-                  stopOpacity={0.04}
-                />
-              </linearGradient>
-            </defs>
-            <CartesianGrid vertical={false} strokeOpacity={0.5} />
+        {!hasData ? (
+          <div className="flex h-80 flex-col items-center justify-center text-muted-foreground">
+            <p className="text-lg">Aucune donnée financière disponible</p>
+            <p className="text-sm">
+              Les transactions seront affichées ici une fois enregistrées
+            </p>
+          </div>
+        ) : (
+          <ChartContainer
+            config={chartConfig}
+            className="aspect-auto h-80 w-full"
+          >
+            <ComposedChart data={chartData} margin={{ top: 0 }}>
+              <defs>
+                <linearGradient id="fillRevenue" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="5%"
+                    stopColor="var(--color-revenue)"
+                    stopOpacity={0.36}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor="var(--color-revenue)"
+                    stopOpacity={0.04}
+                  />
+                </linearGradient>
+              </defs>
+              <CartesianGrid vertical={false} strokeOpacity={0.5} />
 
-            <XAxis
-              dataKey="month"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-            />
+              <XAxis
+                dataKey="month"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+              />
 
-            <ChartTooltip
-              cursor={false}
-              content={
-                <ChartTooltipContent
-                  className="w-60"
-                  indicator="line"
-                  formatter={(value) => formatFCFA(Number(value))}
-                />
-              }
-            />
-            <ChartLegend
-              verticalAlign="top"
-              content={<ChartLegendContent className="mb-5 justify-end" />}
-            />
+              <ChartTooltip
+                cursor={false}
+                content={
+                  <ChartTooltipContent
+                    className="w-60"
+                    indicator="line"
+                    formatter={(value) => formatFCFA(Number(value))}
+                  />
+                }
+              />
+              <ChartLegend
+                verticalAlign="top"
+                content={<ChartLegendContent className="mb-5 justify-end" />}
+              />
 
-            <Area
-              dataKey="revenue"
-              type="monotone"
-              fill="url(#fillRevenue)"
-              stroke="var(--color-revenue)"
-              strokeWidth={2}
-              dot={false}
-            />
-            <Line
-              dataKey="expenses"
-              type="monotone"
-              stroke="var(--color-expenses)"
-              strokeWidth={1.5}
-              dot={false}
-            />
-            <Line
-              dataKey="profit"
-              type="monotone"
-              stroke="var(--color-profit)"
-              strokeWidth={1.5}
-              dot={false}
-              strokeDasharray="5 5"
-            />
-          </ComposedChart>
-        </ChartContainer>
+              <Area
+                dataKey="revenue"
+                type="monotone"
+                fill="url(#fillRevenue)"
+                stroke="var(--color-revenue)"
+                strokeWidth={2}
+                dot={false}
+              />
+              <Line
+                dataKey="expenses"
+                type="monotone"
+                stroke="var(--color-expenses)"
+                strokeWidth={1.5}
+                dot={false}
+              />
+              <Line
+                dataKey="profit"
+                type="monotone"
+                stroke="var(--color-profit)"
+                strokeWidth={1.5}
+                dot={false}
+                strokeDasharray="5 5"
+              />
+            </ComposedChart>
+          </ChartContainer>
+        )}
       </CardContent>
     </Card>
   );

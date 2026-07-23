@@ -1,6 +1,7 @@
 "use client";
 
-import { Ellipsis } from "lucide-react";
+import { useMemo } from "react";
+import { Ellipsis, Loader2 } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 import {
@@ -17,20 +18,15 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 
-const budgetData = [
-  { month: "Jan", budget: 1200000, actual: 1150000 },
-  { month: "Fév", budget: 1300000, actual: 1280000 },
-  { month: "Mar", budget: 1250000, actual: 1320000 },
-  { month: "Avr", budget: 1400000, actual: 1350000 },
-  { month: "Mai", budget: 1350000, actual: 1420000 },
-  { month: "Juin", budget: 1500000, actual: 1480000 },
-  { month: "Juil", budget: 1450000, actual: 1550000 },
-  { month: "Août", budget: 1600000, actual: 1520000 },
-  { month: "Sep", budget: 1550000, actual: 1580000 },
-  { month: "Oct", budget: 1700000, actual: 1650000 },
-  { month: "Nov", budget: 1650000, actual: 1720000 },
-  { month: "Déc", budget: 1800000, actual: 1750000 },
-];
+interface BudgetVsActualProps {
+  data?: Array<{
+    mois: string;
+    entrees: number;
+    sorties: number;
+    solde: number;
+  }>;
+  isLoading?: boolean;
+}
 
 const formatFCFA = (value: number) => {
   return new Intl.NumberFormat("fr-FR", {
@@ -52,7 +48,58 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function BudgetVsActual() {
+export function BudgetVsActual({ data, isLoading }: BudgetVsActualProps) {
+  const chartData = useMemo(() => {
+    if (!data || data.length === 0) {
+      // Données mockées en fallback
+      return [
+        { month: "Jan", budget: 1200000, actual: 1150000 },
+        { month: "Fév", budget: 1300000, actual: 1280000 },
+        { month: "Mar", budget: 1250000, actual: 1320000 },
+        { month: "Avr", budget: 1400000, actual: 1350000 },
+        { month: "Mai", budget: 1350000, actual: 1420000 },
+        { month: "Juin", budget: 1500000, actual: 1480000 },
+        { month: "Juil", budget: 1450000, actual: 1550000 },
+        { month: "Août", budget: 1600000, actual: 1520000 },
+        { month: "Sep", budget: 1550000, actual: 1580000 },
+        { month: "Oct", budget: 1700000, actual: 1650000 },
+        { month: "Nov", budget: 1650000, actual: 1720000 },
+        { month: "Déc", budget: 1800000, actual: 1750000 },
+      ];
+    }
+
+    // Utiliser les données réelles
+    return data.map((item) => {
+      const date = new Date(item.mois);
+      const month = date.toLocaleString("fr-FR", { month: "short" });
+      // Simuler un budget (à remplacer par des données réelles de budget)
+      const budget = item.entrees * 0.9;
+      return {
+        month: month,
+        budget: budget,
+        actual: item.sorties || 0,
+      };
+    });
+  }, [data]);
+
+  if (isLoading) {
+    return (
+      <Card className="h-full">
+        <CardHeader>
+          <CardTitle className="font-normal">
+            Budget vs Dépenses réelles
+          </CardTitle>
+          <CardAction>
+            <Ellipsis className="size-4" />
+          </CardAction>
+        </CardHeader>
+        <CardContent className="flex h-64 items-center justify-center">
+          <Loader2 className="size-8 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="h-full">
       <CardHeader>
@@ -68,12 +115,8 @@ export function BudgetVsActual() {
         <ChartContainer config={chartConfig} className="h-64 w-full">
           <BarChart
             accessibilityLayer
-            data={budgetData}
-            margin={{
-              top: 0,
-              left: 0,
-              right: 0,
-            }}
+            data={chartData}
+            margin={{ top: 0, left: 0, right: 0 }}
           >
             <CartesianGrid vertical={false} />
             <XAxis

@@ -1,6 +1,10 @@
 "use client";
 
-import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { GripVertical, MoreVertical, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -12,9 +16,11 @@ import type { Column, Task } from "./types";
 interface KanbanColumnProps {
   column: Column;
   tasks: Task[];
+  onAddTask?: () => void;
+  onEditTask?: (task: Task) => void;
+  onDeleteTask?: (taskId: string) => void;
 }
 
-// Couleurs des colonnes
 const columnColors: Record<string, string> = {
   todo: "border-zeno-primary/30",
   "in-progress": "border-zeno-secondary/30",
@@ -22,8 +28,22 @@ const columnColors: Record<string, string> = {
   done: "border-green-500/30",
 };
 
-export function KanbanColumn({ column, tasks }: KanbanColumnProps) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } = useSortable({
+export function KanbanColumn({
+  column,
+  tasks,
+  onAddTask,
+  onEditTask,
+  onDeleteTask,
+}: KanbanColumnProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+    isOver,
+  } = useSortable({
     id: column.id,
     data: { type: "column", columnId: column.id },
   });
@@ -32,7 +52,9 @@ export function KanbanColumn({ column, tasks }: KanbanColumnProps) {
     <section
       ref={setNodeRef}
       style={{
-        transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+        transform: transform
+          ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
+          : undefined,
         transition,
       }}
       className={cn(
@@ -53,28 +75,48 @@ export function KanbanColumn({ column, tasks }: KanbanColumnProps) {
               {...attributes}
               {...listeners}
             >
-              <GripVertical />
+              <GripVertical className="h-4 w-4" />
             </Button>
-            <h2 className="truncate font-medium text-base leading-none">{column.title}</h2>
+            <h2 className="truncate font-medium text-base leading-none">
+              {column.title}
+            </h2>
           </div>
           <p className="text-muted-foreground text-sm tabular-nums leading-none">
             {tasks.length} {tasks.length === 1 ? "tâche" : "tâches"}
           </p>
         </div>
         <div className="-mr-2 flex items-center gap-0.5 text-muted-foreground">
-          <Button variant="ghost" size="icon-sm" aria-label={`Ajouter une tâche à ${column.title}`}>
-            <Plus />
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`Ajouter une tâche à ${column.title}`}
+            onClick={onAddTask}
+          >
+            <Plus className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon-sm" aria-label={`Actions de la colonne ${column.title}`}>
-            <MoreVertical />
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`Actions de la colonne ${column.title}`}
+          >
+            <MoreVertical className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
-      <SortableContext items={tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
+      <SortableContext
+        items={tasks.map((task) => task.id)}
+        strategy={verticalListSortingStrategy}
+      >
         <div className="scrollbar-thin flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 pb-3 [scrollbar-color:var(--border)_transparent] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:w-1">
           {tasks.map((task) => (
-            <SortableTaskCard key={task.id} task={task} columnId={column.id} />
+            <SortableTaskCard
+              key={task.id}
+              task={task}
+              columnId={column.id}
+              onEdit={onEditTask}
+              onDelete={onDeleteTask}
+            />
           ))}
         </div>
       </SortableContext>

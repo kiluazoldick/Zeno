@@ -26,7 +26,8 @@ export function useClients(filters?: GetClientsFilters) {
   return useQuery({
     queryKey: clientsKeys.list(filters),
     queryFn: () => getClients(filters),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 60 * 1000, // 1 minute
+    gcTime: 5 * 60 * 1000, // 5 minutes
   });
 }
 
@@ -98,8 +99,9 @@ export function useDeleteClient() {
     mutationFn: ({ id, cascade }: { id: string; cascade?: boolean }) =>
       deleteClient(id, cascade),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: clientsKeys.lists() });
-      toast.success("Client supprimé");
+      // Invalider TOUTES les requêtes clients
+      queryClient.invalidateQueries({ queryKey: clientsKeys.all });
+      toast.success("Client supprimé avec succès");
     },
     onError: (error: Error) => {
       toast.error(`Erreur: ${error.message}`);

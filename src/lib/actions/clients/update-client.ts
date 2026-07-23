@@ -20,6 +20,7 @@ export async function updateClient(id: string, data: ClientUpdateInput) {
   const validated = updateClientSchema.safeParse({ id, data });
 
   if (!validated.success) {
+    console.error("Validation error:", validated.error.flatten().fieldErrors);
     return {
       success: false,
       error: validated.error.flatten().fieldErrors,
@@ -42,15 +43,19 @@ export async function updateClient(id: string, data: ClientUpdateInput) {
     }
 
     // Vérifier que l'email n'est pas déjà utilisé par un autre client
-    if (validated.data.email && validated.data.email !== existing.email) {
+    if (
+      validated.data.data.email &&
+      validated.data.data.email !== existing.email
+    ) {
       const { data: duplicate, error: dupError } = await adminClient
         .from("clients")
         .select("id")
-        .eq("email", validated.data.email)
+        .eq("email", validated.data.data.email)
         .neq("id", id)
         .maybeSingle();
 
       if (dupError) {
+        console.error("Erreur vérification email:", dupError);
         return {
           success: false,
           error: { db: [dupError.message] },
@@ -65,24 +70,46 @@ export async function updateClient(id: string, data: ClientUpdateInput) {
       }
     }
 
+    // Construire l'objet de mise à jour avec TOUS les champs
+    const updateData: any = {};
+    const fields = [
+      "nom",
+      "email",
+      "telephone",
+      "adresse",
+      "secteur",
+      "code_postal",
+      "ville",
+      "pays",
+      "tax_id",
+    ];
+
+    for (const field of fields) {
+      if (validated.data.data[field as keyof ClientUpdateInput] !== undefined) {
+        updateData[field] =
+          validated.data.data[field as keyof ClientUpdateInput];
+      }
+    }
+
+    updateData.updated_at = new Date().toISOString();
+
     // Mettre à jour le client
     const { data: client, error } = await adminClient
       .from("clients")
-      .update({
-        ...validated.data,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq("id", id)
       .select()
       .single();
 
     if (error) {
+      console.error("Erreur updateClient:", error);
       return {
         success: false,
         error: { db: [error.message] },
       };
     }
 
+    // Revalider les chemins
     revalidatePath("/dashboard/crm");
     revalidatePath(`/dashboard/crm/${id}`);
     revalidatePath("/dashboard/projects");
@@ -92,6 +119,7 @@ export async function updateClient(id: string, data: ClientUpdateInput) {
       data: client,
     };
   } catch (error) {
+    console.error("Erreur inattendue:", error);
     return {
       success: false,
       error: { unexpected: ["Une erreur inattendue s'est produite"] },

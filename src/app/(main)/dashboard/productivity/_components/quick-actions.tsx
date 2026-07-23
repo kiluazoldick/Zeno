@@ -1,13 +1,22 @@
-import { CheckSquare, FileText, FolderKanban, Plus, Upload } from "lucide-react";
+"use client";
+
+import {
+  CheckSquare,
+  FileText,
+  FolderKanban,
+  Plus,
+  Upload,
+} from "lucide-react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 
 const quickActions = [
-  { label: "Nouvelle note", icon: FileText },
-  { label: "Nouvelle tâche", icon: CheckSquare },
-  { label: "Nouveau projet", icon: FolderKanban },
-  { label: "Nouveau rapport", icon: Plus },
-  { label: "Importer", icon: Upload },
+  { label: "Nouvelle note", icon: FileText, href: "/dashboard/rapports" },
+  { label: "Nouvelle tâche", icon: CheckSquare, href: "/dashboard/kanban" },
+  { label: "Nouveau projet", icon: FolderKanban, href: "/dashboard/projects" },
+  { label: "Nouveau rapport", icon: Plus, href: "/dashboard/rapports" },
+  { label: "Importer", icon: Upload, href: "#" },
 ] as const;
 
 export function QuickActions() {
@@ -20,9 +29,12 @@ export function QuickActions() {
             key={action.label}
             variant="outline"
             className="justify-start hover:border-zeno-primary hover:text-zeno-primary"
+            asChild
           >
-            <action.icon data-icon="inline-start" />
-            {action.label}
+            <Link href={action.href}>
+              <action.icon data-icon="inline-start" />
+              {action.label}
+            </Link>
           </Button>
         ))}
       </div>

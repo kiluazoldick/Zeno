@@ -35,8 +35,13 @@ interface MetricCardsProps {
 }
 
 export function MetricCards({ data, isLoading, error }: MetricCardsProps) {
-  // Données par défaut (loading)
-  const defaultData = {
+  // Formatage des montants en FCFA
+  const formatFCFA = (value: number) => {
+    return new Intl.NumberFormat("fr-FR").format(value);
+  };
+
+  // Utiliser les données réelles ou 0 si non disponibles
+  const metrics = data || {
     projetsActifs: 0,
     tachesAFaire: 0,
     caMois: 0,
@@ -45,15 +50,13 @@ export function MetricCards({ data, isLoading, error }: MetricCardsProps) {
     tachesEnCours: 0,
   };
 
-  const metrics = data || defaultData;
-
   const metricItems = [
     {
       id: "revenue",
       title: "Chiffre d'affaires",
       value: metrics.caMois || 0,
       currency: "FCFA",
-      change: "+12.5%",
+      change: "+0%",
       trend: "up" as const,
       icon: Banknote,
       description: "Ce mois-ci",
@@ -62,7 +65,7 @@ export function MetricCards({ data, isLoading, error }: MetricCardsProps) {
       id: "projects",
       title: "Projets en cours",
       value: metrics.projetsActifs || 0,
-      change: "+2",
+      change: "+0",
       trend: "up" as const,
       icon: FolderKanban,
       description: "Actifs",
@@ -71,7 +74,7 @@ export function MetricCards({ data, isLoading, error }: MetricCardsProps) {
       id: "tasks",
       title: "Tâches en cours",
       value: metrics.tachesEnCours || 0,
-      change: "+5",
+      change: "+0",
       trend: "up" as const,
       icon: CheckSquare,
       description: "À réaliser",
@@ -80,17 +83,12 @@ export function MetricCards({ data, isLoading, error }: MetricCardsProps) {
       id: "quotes",
       title: "Devis en attente",
       value: metrics.devisEnvoyes || 0,
-      change: "-1",
+      change: "-0",
       trend: "down" as const,
       icon: FileText,
       description: "À traiter",
     },
   ];
-
-  // Formatage des montants en FCFA
-  const formatFCFA = (value: number) => {
-    return new Intl.NumberFormat("fr-FR").format(value);
-  };
 
   if (error) {
     return (
@@ -121,6 +119,9 @@ export function MetricCards({ data, isLoading, error }: MetricCardsProps) {
         : metricItems.map((metric) => {
             const Icon = metric.icon;
             const isUp = metric.trend === "up";
+            const displayValue = metric.currency
+              ? formatFCFA(metric.value)
+              : metric.value;
 
             return (
               <Card
@@ -133,29 +134,12 @@ export function MetricCards({ data, isLoading, error }: MetricCardsProps) {
                       <Icon className="size-4" />
                     </div>
                   </CardTitle>
-                  <Badge
-                    variant={isUp ? "default" : "destructive"}
-                    className={
-                      isUp
-                        ? "bg-zeno-primary/10 text-zeno-primary hover:bg-zeno-primary/20"
-                        : ""
-                    }
-                  >
-                    {isUp ? (
-                      <TrendingUp className="size-3" />
-                    ) : (
-                      <TrendingDown className="size-3" />
-                    )}
-                    {metric.change}
-                  </Badge>
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-col gap-1">
                     <div className="flex items-baseline gap-1">
                       <span className="font-medium text-2xl leading-none tracking-tight">
-                        {metric.currency
-                          ? formatFCFA(metric.value)
-                          : metric.value}
+                        {displayValue}
                       </span>
                       {metric.currency && (
                         <span className="text-xs font-medium text-muted-foreground">

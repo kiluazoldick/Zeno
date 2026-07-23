@@ -5,7 +5,15 @@ export type Column = {
   title: string;
 };
 
-export type TaskTeam = "Terrain" | "Bureau" | "Finance" | "Commercial" | "Direction" | "Rapport" | "Admin";
+export type TaskTeam =
+  | "Terrain"
+  | "Bureau"
+  | "Finance"
+  | "Commercial"
+  | "Direction"
+  | "Rapport"
+  | "Admin"
+  | "Sans projet";
 
 export type TaskPriority = "Haute" | "Moyenne" | "Basse";
 
@@ -33,6 +41,12 @@ export type Task = {
   owner: TaskOwnerProfile;
   team: TaskTeam;
   insights: TaskInsight[];
+  raw?: {
+    assignee_id: string | null;
+    project_id: string | null;
+    statut: string;
+    date_execution: string | null;
+  };
 };
 
 export type BoardState = Record<ColumnId, Task[]>;

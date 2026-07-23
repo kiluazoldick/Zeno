@@ -12,10 +12,6 @@ export type GetKPIOptions = z.infer<typeof getKPISchema>;
 export async function getKPI(options?: GetKPIOptions) {
   const supabase = await createServerClient();
 
-  const validated = getKPISchema.safeParse({
-    period: options?.period || "month",
-  });
-
   // Récupérer les KPI depuis la vue dashboard_kpi
   let kpiData = null;
   try {
@@ -111,47 +107,22 @@ export async function getKPI(options?: GetKPIOptions) {
     devis?.reduce((sum, d) => sum + (d.montant_total || 0), 0) || 0;
   const devisAcceptes = devis?.filter((d) => d.statut === "Accepté") || [];
 
-  // Si les données sont vides, retourner des valeurs par défaut
-  const defaultData = {
-    projetsActifs: 8,
-    projetsTermines: 12,
-    tachesAFaire: 5,
-    tachesEnCours: 8,
-    tachesTerminees: 22,
-    tachesAnnulees: 2,
-    caMois: 18450000,
-    depensesMois: 12234000,
-    beneficeMois: 6216000,
-    devisEnvoyes: 5,
-    devisAcceptes: 12,
-    facturesPayees: 8,
-    facturesImpayees: 3,
-  };
-
+  // Construire l'objet retour avec les vraies données ou 0
   return {
-    // KPI généraux
-    projetsActifs: kpiData?.projets_actifs || defaultData.projetsActifs,
-    projetsTermines: kpiData?.projets_termines || defaultData.projetsTermines,
-    tachesAFaire: kpiData?.taches_a_faire || defaultData.tachesAFaire,
-    tachesEnCours: kpiData?.taches_en_cours || defaultData.tachesEnCours,
-    tachesTerminees: kpiData?.taches_terminees || defaultData.tachesTerminees,
-    tachesAnnulees: kpiData?.taches_annulees || defaultData.tachesAnnulees,
+    projetsActifs: kpiData?.projets_actifs || 0,
+    projetsTermines: kpiData?.projets_termines || 0,
+    tachesAFaire: kpiData?.taches_a_faire || 0,
+    tachesEnCours: kpiData?.taches_en_cours || 0,
+    tachesTerminees: kpiData?.taches_terminees || 0,
+    tachesAnnulees: kpiData?.taches_annulees || 0,
+    caMois: kpiData?.ca_mois || 0,
+    depensesMois: kpiData?.depenses_mois || 0,
+    beneficeMois: (kpiData?.ca_mois || 0) - (kpiData?.depenses_mois || 0),
+    devisEnvoyes: kpiData?.devis_envoyes || 0,
+    devisAcceptes: kpiData?.devis_acceptes || 0,
+    facturesPayees: kpiData?.factures_payees || 0,
+    facturesImpayees: kpiData?.factures_impayees || 0,
 
-    // Finances
-    caMois: kpiData?.ca_mois || defaultData.caMois,
-    depensesMois: kpiData?.depenses_mois || defaultData.depensesMois,
-    beneficeMois:
-      (kpiData?.ca_mois || defaultData.caMois) -
-      (kpiData?.depenses_mois || defaultData.depensesMois),
-
-    // Devis et factures
-    devisEnvoyes: kpiData?.devis_envoyes || defaultData.devisEnvoyes,
-    devisAcceptes: kpiData?.devis_acceptes || defaultData.devisAcceptes,
-    facturesPayees: kpiData?.factures_payees || defaultData.facturesPayees,
-    facturesImpayees:
-      kpiData?.factures_impayees || defaultData.facturesImpayees,
-
-    // Détails supplémentaires
     details: {
       transactions: {
         entries: entries.length,
@@ -188,17 +159,16 @@ export async function getQuickStats() {
 
     if (error) {
       console.error("Erreur quick_stats:", error);
-      // Données par défaut
       return {
-        membres_actifs: 6,
-        projets_actifs: 8,
-        taches_terminees: 22,
-        taches_a_faire: 5,
-        total_clients: 12,
-        total_entrees: 150000000,
-        total_sorties: 98000000,
-        devis_acceptes: 12,
-        factures_payees: 8,
+        membres_actifs: 0,
+        projets_actifs: 0,
+        taches_terminees: 0,
+        taches_a_faire: 0,
+        total_clients: 0,
+        total_entrees: 0,
+        total_sorties: 0,
+        devis_acceptes: 0,
+        factures_payees: 0,
       };
     }
 
@@ -206,15 +176,15 @@ export async function getQuickStats() {
   } catch (error) {
     console.error("Erreur:", error);
     return {
-      membres_actifs: 6,
-      projets_actifs: 8,
-      taches_terminees: 22,
-      taches_a_faire: 5,
-      total_clients: 12,
-      total_entrees: 150000000,
-      total_sorties: 98000000,
-      devis_acceptes: 12,
-      factures_payees: 8,
+      membres_actifs: 0,
+      projets_actifs: 0,
+      taches_terminees: 0,
+      taches_a_faire: 0,
+      total_clients: 0,
+      total_entrees: 0,
+      total_sorties: 0,
+      devis_acceptes: 0,
+      factures_payees: 0,
     };
   }
 }

@@ -1,21 +1,31 @@
 "use client";
 
+import { useState } from "react";
 import {
   useProjects,
   useProjectsWithProgress,
+  useCreateProject,
+  useUpdateProject,
+  useDeleteProject,
 } from "@/hooks/queries/use-projects";
 import { Loader2, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 
 import { ProjectKpi } from "./_components/project-kpi";
 import { ProjectList } from "./_components/project-list";
 import { ProjectStatusChart } from "./_components/project-status-chart";
 import { ProjectProgress } from "./_components/project-progress";
+import { ProjectDialog } from "./_components/project-dialog";
 
 export default function Page() {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState<any>(null);
+
   const {
     data: projects,
     isLoading: projectsLoading,
     error: projectsError,
+    refetch,
   } = useProjects({
     includeClient: true,
   });
@@ -23,7 +33,71 @@ export default function Page() {
   const { data: progressData, isLoading: progressLoading } =
     useProjectsWithProgress();
 
+  const createProject = useCreateProject();
+  const updateProject = useUpdateProject();
+  const deleteProject = useDeleteProject();
+
   const isLoading = projectsLoading || progressLoading;
+
+  const handleAddProject = () => {
+    setEditingProject(null);
+    setDialogOpen(true);
+  };
+
+  const handleEditProject = (project: any) => {
+    setEditingProject(project);
+    setDialogOpen(true);
+  };
+
+  const handleDeleteProject = (id: string) => {
+    deleteProject.mutate(
+      { id },
+      {
+        onSuccess: () => {
+          toast.success("Projet supprimé avec succès");
+          refetch();
+        },
+        onError: (error: any) => {
+          toast.error(
+            "Erreur: " + (error.message || "Une erreur est survenue"),
+          );
+        },
+      },
+    );
+  };
+
+  const handleSaveProject = (data: any) => {
+    if (editingProject) {
+      updateProject.mutate(
+        { id: editingProject.id, data },
+        {
+          onSuccess: () => {
+            toast.success("Projet modifié avec succès");
+            setDialogOpen(false);
+            refetch();
+          },
+          onError: (error: any) => {
+            toast.error(
+              "Erreur: " + (error.message || "Une erreur est survenue"),
+            );
+          },
+        },
+      );
+    } else {
+      createProject.mutate(data, {
+        onSuccess: () => {
+          toast.success("Projet créé avec succès");
+          setDialogOpen(false);
+          refetch();
+        },
+        onError: (error: any) => {
+          toast.error(
+            "Erreur: " + (error.message || "Une erreur est survenue"),
+          );
+        },
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -69,7 +143,21 @@ export default function Page() {
         </div>
       </div>
 
-      <ProjectList projects={projects || []} isLoading={projectsLoading} />
+      <ProjectList
+        projects={projects || []}
+        isLoading={projectsLoading}
+        onAdd={handleAddProject}
+        onEdit={handleEditProject}
+        onDelete={handleDeleteProject}
+      />
+
+      <ProjectDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        project={editingProject}
+        onSave={handleSaveProject}
+        isEditing={!!editingProject}
+      />
     </div>
   );
 }
