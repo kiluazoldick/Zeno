@@ -30,6 +30,7 @@ export default function Page() {
     useProductivity();
   const { data: projectsData, isLoading: projectsLoading } = useProjects({
     includeClient: true,
+    includeTasks: false,
   });
   const { data: tasksData, isLoading: tasksLoading } = useTasks({
     includeAssignee: true,
