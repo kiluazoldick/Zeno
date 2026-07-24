@@ -1,7 +1,9 @@
+// src/app/(main)/dashboard/users/_components/users-table.tsx
 "use client";
 "use no memo";
 
 import type { MouseEvent } from "react";
+import { useEffect } from "react";
 
 import { flexRender, type Table as TableType } from "@tanstack/react-table";
 
@@ -14,11 +16,31 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 import type { UserRow } from "./data";
+
+interface UsersTableProps {
+  table: TableType<UserRow>;
+  onEdit?: (member: UserRow) => void;
+  onDelete?: (member: UserRow) => void;
+}
 
 function preventPaginationNavigation(event: MouseEvent<HTMLAnchorElement>) {
   event.preventDefault();
@@ -30,16 +52,47 @@ function getPageNumbers(currentPage: number, pageCount: number) {
   }
 
   if (currentPage <= 2) return [1, 2, 3];
-  if (currentPage >= pageCount - 1) return [pageCount - 2, pageCount - 1, pageCount];
+  if (currentPage >= pageCount - 1)
+    return [pageCount - 2, pageCount - 1, pageCount];
 
   return [currentPage - 1, currentPage, currentPage + 1];
 }
 
-export function UsersTable({ table }: { table: TableType<UserRow> }) {
+export function UsersTable({ table, onEdit, onDelete }: UsersTableProps) {
   const pageCount = Math.max(table.getPageCount(), 1);
-  const currentPage = Math.min(table.getState().pagination.pageIndex + 1, pageCount);
+  const currentPage = Math.min(
+    table.getState().pagination.pageIndex + 1,
+    pageCount,
+  );
   const pageNumbers = getPageNumbers(currentPage, pageCount);
   const rowsPerPage = `${table.getState().pagination.pageSize}`;
+
+  // Écouter les événements personnalisés
+  useEffect(() => {
+    const handleEdit = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const member = customEvent.detail as UserRow;
+      if (onEdit) {
+        onEdit(member);
+      }
+    };
+
+    const handleDelete = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const member = customEvent.detail as UserRow;
+      if (onDelete) {
+        onDelete(member);
+      }
+    };
+
+    document.addEventListener("editMemberFromTable", handleEdit);
+    document.addEventListener("deleteMemberFromTable", handleDelete);
+
+    return () => {
+      document.removeEventListener("editMemberFromTable", handleEdit);
+      document.removeEventListener("deleteMemberFromTable", handleDelete);
+    };
+  }, [onEdit, onDelete]);
 
   return (
     <div className="flex flex-1 flex-col gap-4">
@@ -50,7 +103,12 @@ export function UsersTable({ table }: { table: TableType<UserRow> }) {
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <TableHead key={header.id} className="py-4 font-normal">
-                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -67,14 +125,20 @@ export function UsersTable({ table }: { table: TableType<UserRow> }) {
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="px-3 py-4 align-middle">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={table.getVisibleLeafColumns().length} className="h-24 text-center">
+                <TableCell
+                  colSpan={table.getVisibleLeafColumns().length}
+                  className="h-24 text-center"
+                >
                   Aucun membre trouvé.
                 </TableCell>
               </TableRow>
@@ -93,7 +157,11 @@ export function UsersTable({ table }: { table: TableType<UserRow> }) {
               value={`${table.getState().pagination.pageSize}`}
               onValueChange={(value) => table.setPageSize(Number(value))}
             >
-              <SelectTrigger size="sm" className="w-20" id="users-rows-per-page">
+              <SelectTrigger
+                size="sm"
+                className="w-20"
+                id="users-rows-per-page"
+              >
                 <SelectValue placeholder={rowsPerPage} />
               </SelectTrigger>
               <SelectContent side="top">
@@ -118,7 +186,11 @@ export function UsersTable({ table }: { table: TableType<UserRow> }) {
               <PaginationPrevious
                 href="#"
                 text=""
-                className={!table.getCanPreviousPage() ? "pointer-events-none opacity-50" : undefined}
+                className={
+                  !table.getCanPreviousPage()
+                    ? "pointer-events-none opacity-50"
+                    : undefined
+                }
                 onClick={(event) => {
                   preventPaginationNavigation(event);
                   table.previousPage();
@@ -134,7 +206,9 @@ export function UsersTable({ table }: { table: TableType<UserRow> }) {
               <PaginationItem key={`page-${pageNumber}`}>
                 <PaginationLink
                   href="#"
-                  isActive={table.getState().pagination.pageIndex === pageNumber - 1}
+                  isActive={
+                    table.getState().pagination.pageIndex === pageNumber - 1
+                  }
                   onClick={(event) => {
                     preventPaginationNavigation(event);
                     table.setPageIndex(pageNumber - 1);
@@ -153,7 +227,11 @@ export function UsersTable({ table }: { table: TableType<UserRow> }) {
               <PaginationNext
                 href="#"
                 text=""
-                className={!table.getCanNextPage() ? "pointer-events-none opacity-50" : undefined}
+                className={
+                  !table.getCanNextPage()
+                    ? "pointer-events-none opacity-50"
+                    : undefined
+                }
                 onClick={(event) => {
                   preventPaginationNavigation(event);
                   table.nextPage();

@@ -1,17 +1,11 @@
+// src/app/(main)/dashboard/users/_components/users-columns.tsx
 "use client";
 "use no memo";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import { parse } from "date-fns";
-import { Check, Clock, MoreHorizontal, X } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
-import {
-  Avatar,
-  AvatarBadge,
-  AvatarFallback,
-  AvatarGroup,
-  AvatarGroupCount,
-} from "@/components/ui/avatar";
+import { Avatar, AvatarBadge, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -27,16 +21,26 @@ import { cn, getInitials } from "@/lib/utils";
 import { statusMeta, type UserRow } from "./data";
 
 function RoleCell({ role, team }: { role: string; team: string }) {
+  const roleLabels: Record<string, string> = {
+    direction: "Direction",
+    finance: "Finance",
+    commercial: "Commercial",
+    terrain: "Terrain",
+    bureau: "Bureau",
+    admin: "Admin",
+    membre: "Membre",
+  };
+
   return (
     <div className="grid gap-0.5">
-      <span className="whitespace-nowrap">{role}</span>
+      <span className="whitespace-nowrap">{roleLabels[role] || role}</span>
       <span className="text-muted-foreground text-xs">{team}</span>
     </div>
   );
 }
 
 function StatusBadge({ status }: { status: UserRow["status"] }) {
-  const meta = statusMeta[status];
+  const meta = statusMeta[status] || statusMeta["Actif"];
 
   return (
     <Badge
@@ -70,94 +74,22 @@ function getAvatarTone(name: string) {
   return tones[name.length % tones.length];
 }
 
-function getLastActiveBadge(lastActive: number) {
-  if (lastActive < 1) {
-    return {
-      className: "bg-green-600 text-green-950 [&>svg]:text-white",
-      icon: Check,
-    };
-  }
-
-  if (lastActive < 4 * 60) {
-    return {
-      className: "bg-amber-500 text-amber-950",
-      icon: Clock,
-    };
-  }
-
-  if (lastActive < 7 * 24 * 60) {
-    return {
-      className: "bg-destructive",
-      icon: null,
-    };
-  }
-
-  return {
-    className: "bg-muted-foreground text-muted",
-    icon: X,
-  };
-}
-
-function AvatarCell({
-  lastActive,
-  name,
-}: {
-  lastActive: number;
-  name: string;
-}) {
-  const badge = getLastActiveBadge(lastActive);
-  const BadgeIcon = badge.icon;
+function AvatarCell({ name }: { name: string }) {
   const safeName = name || "Membre";
 
   return (
     <Avatar size="lg" className={cn("font-medium", getAvatarTone(safeName))}>
       <AvatarFallback>{getInitials(safeName)}</AvatarFallback>
-      <AvatarBadge className={badge.className}>
-        {BadgeIcon ? <BadgeIcon /> : null}
+      <AvatarBadge className="bg-emerald-600 text-emerald-950 [&>svg]:text-white">
+        <CheckIcon />
       </AvatarBadge>
     </Avatar>
   );
 }
 
-function WorkspaceCell({ workspaces }: { workspaces: string[] }) {
-  if (!workspaces || !Array.isArray(workspaces) || workspaces.length === 0) {
-    return <div className="text-muted-foreground text-sm">-</div>;
-  }
-
-  const [firstWorkspace, ...remainingWorkspaces] = workspaces;
-  const remainingCount = remainingWorkspaces.length;
-
-  return (
-    <AvatarGroup className="*:data-[slot=avatar]:ring-0">
-      {firstWorkspace ? (
-        <Avatar className="after:rounded-sm">
-          <AvatarFallback className="rounded-sm ring-0">
-            {getInitials(firstWorkspace)}
-          </AvatarFallback>
-        </Avatar>
-      ) : null}
-      {remainingCount > 0 ? (
-        <AvatarGroupCount className="rounded-sm border ring-card">
-          +{remainingCount}
-        </AvatarGroupCount>
-      ) : null}
-    </AvatarGroup>
-  );
-}
-
-function safeParseDate(dateString: string) {
-  if (!dateString || dateString === "-") {
-    return 0;
-  }
-  try {
-    const parsed = parse(dateString, "dd MMM yyyy, h:mm a", new Date());
-    if (isNaN(parsed.getTime())) {
-      return 0;
-    }
-    return parsed.getTime();
-  } catch (e) {
-    return 0;
-  }
+// Icône Check simple
+function CheckIcon() {
+  return <span className="text-[8px] font-bold">✓</span>;
 }
 
 export const usersColumns: ColumnDef<UserRow>[] = [
@@ -198,10 +130,7 @@ export const usersColumns: ColumnDef<UserRow>[] = [
     header: "Membre",
     cell: ({ row }) => (
       <div className="flex items-center gap-3">
-        <AvatarCell
-          name={row.original.name}
-          lastActive={row.original.lastActive}
-        />
+        <AvatarCell name={row.original.name} />
         <div className="min-w-0">
           <div className="truncate font-medium text-foreground text-sm">
             {row.original.name}
@@ -215,7 +144,7 @@ export const usersColumns: ColumnDef<UserRow>[] = [
   },
   {
     accessorKey: "role",
-    header: "Rôle / Équipe",
+    header: "Rôle",
     filterFn: "equalsString",
     cell: ({ row }) => (
       <RoleCell role={row.original.role} team={row.original.team} />
@@ -228,12 +157,6 @@ export const usersColumns: ColumnDef<UserRow>[] = [
     cell: ({ row }) => <div className="text-sm">{row.original.team}</div>,
   },
   {
-    accessorKey: "workspace",
-    header: "Projets",
-    filterFn: "arrIncludes",
-    cell: ({ row }) => <WorkspaceCell workspaces={row.original.workspace} />,
-  },
-  {
     accessorKey: "status",
     header: "Statut",
     filterFn: "equalsString",
@@ -241,8 +164,8 @@ export const usersColumns: ColumnDef<UserRow>[] = [
   },
   {
     id: "joinedDate",
-    accessorFn: (row) => safeParseDate(row.joinedDate),
-    header: "Date d'arrivée",
+    accessorKey: "joinedDate",
+    header: "Date d'intégration",
     cell: ({ row }) => (
       <div className="text-foreground text-sm">{row.original.joinedDate}</div>
     ),
@@ -252,18 +175,6 @@ export const usersColumns: ColumnDef<UserRow>[] = [
     header: () => <div className="text-right">Actions</div>,
     cell: ({ row }) => {
       const member = row.original;
-
-      // Fonction pour déclencher l'édition
-      const handleEdit = () => {
-        const event = new CustomEvent("editMember", { detail: member });
-        document.dispatchEvent(event);
-      };
-
-      // Fonction pour déclencher la suppression
-      const handleDelete = () => {
-        const event = new CustomEvent("deleteMember", { detail: member });
-        document.dispatchEvent(event);
-      };
 
       return (
         <div className="text-right">
@@ -279,11 +190,28 @@ export const usersColumns: ColumnDef<UserRow>[] = [
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleEdit}>
-                Modifier le membre
+              <DropdownMenuItem
+                onClick={() => {
+                  const event = new CustomEvent("editMemberFromTable", {
+                    detail: member,
+                  });
+                  document.dispatchEvent(event);
+                }}
+              >
+                <Pencil className="size-4 mr-2" />
+                Modifier
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleDelete} variant="destructive">
+              <DropdownMenuItem
+                onClick={() => {
+                  const event = new CustomEvent("deleteMemberFromTable", {
+                    detail: member,
+                  });
+                  document.dispatchEvent(event);
+                }}
+                variant="destructive"
+              >
+                <Trash2 className="size-4 mr-2" />
                 Supprimer
               </DropdownMenuItem>
             </DropdownMenuContent>

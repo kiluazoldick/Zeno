@@ -1,3 +1,4 @@
+// src/lib/actions/members/delete-member.ts
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/server";
@@ -5,16 +6,23 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 const deleteMemberSchema = z.object({
-  id: z.string(), // Peut être email ou UUID
-  hardDelete: z.boolean().default(false),
+  id: z.string().uuid("ID membre invalide"),
 });
 
-export async function deleteMember(id: string, hardDelete: boolean = false) {
+export async function deleteMember(id: string, hardDelete: boolean = true) {
   const adminClient = await createAdminClient();
 
-  const validated = deleteMemberSchema.safeParse({ id, hardDelete });
+  console.log("🗑️ deleteMember - ID:", id);
+  console.log("🗑️ deleteMember - hardDelete:", hardDelete);
+
+  // Valider l'ID
+  const validated = deleteMemberSchema.safeParse({ id });
 
   if (!validated.success) {
+    console.error(
+      "❌ Validation error:",
+      validated.error.flatten().fieldErrors,
+    );
     return {
       success: false,
       error: validated.error.flatten().fieldErrors,
@@ -22,58 +30,30 @@ export async function deleteMember(id: string, hardDelete: boolean = false) {
   }
 
   try {
-    let error = null;
-
-    if (validated.data.hardDelete) {
-      // Suppression définitive
-      // Essayer d'abord avec l'email
-      let result = await adminClient.from("members").delete().eq("email", id);
-
-      if (result.error) {
-        // Sinon avec l'UUID
-        result = await adminClient.from("members").delete().eq("id", id);
-        error = result.error;
-      }
-    } else {
-      // Désactivation (soft delete)
-      let result = await adminClient
-        .from("members")
-        .update({
-          status: "Désactivé",
-          updated_at: new Date().toISOString(),
-        })
-        .eq("email", id);
-
-      if (result.error) {
-        result = await adminClient
-          .from("members")
-          .update({
-            status: "Désactivé",
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", id);
-        error = result.error;
-      }
-    }
+    // Suppression définitive
+    console.log("🗑️ Suppression définitive du membre:", id);
+    const { error } = await adminClient.from("members").delete().eq("id", id);
 
     if (error) {
-      console.error("Erreur deleteMember:", error);
+      console.error("❌ Erreur deleteMember:", error);
       return {
         success: false,
         error: error.message,
       };
     }
 
+    console.log("✅ Membre supprimé définitivement");
+
     revalidatePath("/dashboard/users");
 
     return {
       success: true,
     };
-  } catch (error) {
-    console.error("Erreur inattendue:", error);
+  } catch (error: any) {
+    console.error("❌ Erreur inattendue:", error);
     return {
       success: false,
-      error: "Une erreur inattendue s'est produite",
+      error: error.message || "Une erreur inattendue s'est produite",
     };
   }
 }

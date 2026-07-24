@@ -1,3 +1,4 @@
+// src/hooks/queries/use-members.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getMembers,
@@ -24,7 +25,7 @@ export function useMembers(filters?: GetMembersFilters) {
   return useQuery({
     queryKey: membersKeys.list(filters),
     queryFn: () => getMembers(),
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 2 * 60 * 1000,
   });
 }
 
@@ -48,8 +49,9 @@ export function useCreateMember() {
       queryClient.invalidateQueries({ queryKey: membersKeys.lists() });
       toast.success("Membre créé avec succès");
     },
-    onError: (error: Error) => {
-      toast.error(`Erreur: ${error.message}`);
+    onError: (error: any) => {
+      console.error("❌ Erreur création:", error);
+      toast.error(`Erreur: ${error.message || "Une erreur est survenue"}`);
     },
   });
 }
@@ -59,37 +61,39 @@ export function useUpdateMember() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: Parameters<typeof updateMember>[1];
-    }) => updateMember(id, data),
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
+      updateMember(id, data),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: membersKeys.lists() });
       queryClient.invalidateQueries({ queryKey: membersKeys.detail(id) });
-      toast.success("Membre mis à jour");
+      toast.success("Membre modifié avec succès");
     },
-    onError: (error: Error) => {
-      toast.error(`Erreur: ${error.message}`);
+    onError: (error: any) => {
+      console.error("❌ Erreur modification:", error);
+      toast.error(`Erreur: ${error.message || "Une erreur est survenue"}`);
     },
   });
 }
 
-// Mutation pour supprimer un membre
+// Mutation pour supprimer un membre - suppression définitive
 export function useDeleteMember() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, hardDelete }: { id: string; hardDelete?: boolean }) =>
-      deleteMember(id, hardDelete),
+    mutationFn: ({
+      id,
+      hardDelete = true,
+    }: {
+      id: string;
+      hardDelete?: boolean;
+    }) => deleteMember(id, hardDelete),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: membersKeys.lists() });
-      toast.success("Membre supprimé");
+      toast.success("Membre supprimé avec succès");
     },
-    onError: (error: Error) => {
-      toast.error(`Erreur: ${error.message}`);
+    onError: (error: any) => {
+      console.error("❌ Erreur suppression:", error);
+      toast.error(`Erreur: ${error.message || "Une erreur est survenue"}`);
     },
   });
 }

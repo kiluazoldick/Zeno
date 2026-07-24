@@ -1,32 +1,26 @@
+// src/app/(main)/dashboard/kanban/_components/kanban-column.tsx
 "use client";
 
-import {
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { GripVertical, MoreVertical, Plus } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
+import * as React from "react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { GripVertical, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-import { SortableTaskCard } from "./sortable-task-card";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+
+import { TaskCard } from "./task-card";
 import type { Column, Task } from "./types";
 
 interface KanbanColumnProps {
   column: Column;
   tasks: Task[];
-  onAddTask?: () => void;
-  onEditTask?: (task: Task) => void;
-  onDeleteTask?: (taskId: string) => void;
+  onAddTask: () => void;
+  onEditTask: (task: Task) => void;
+  onDeleteTask: (id: string) => void;
 }
-
-const columnColors: Record<string, string> = {
-  todo: "border-zeno-primary/30",
-  "in-progress": "border-zeno-secondary/30",
-  cancelled: "border-destructive/30",
-  done: "border-green-500/30",
-};
 
 export function KanbanColumn({
   column,
@@ -42,84 +36,105 @@ export function KanbanColumn({
     transform,
     transition,
     isDragging,
-    isOver,
   } = useSortable({
     id: column.id,
-    data: { type: "column", columnId: column.id },
+    data: {
+      type: "column",
+    },
   });
 
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const getColumnColor = (columnId: string) => {
+    switch (columnId) {
+      case "todo":
+        return "border-t-4 border-t-blue-400";
+      case "in-progress":
+        return "border-t-4 border-t-amber-400";
+      case "cancelled":
+        return "border-t-4 border-t-red-400";
+      case "done":
+        return "border-t-4 border-t-emerald-400";
+      default:
+        return "";
+    }
+  };
+
+  const getCountColor = (columnId: string) => {
+    switch (columnId) {
+      case "todo":
+        return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
+      case "in-progress":
+        return "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
+      case "cancelled":
+        return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
+      case "done":
+        return "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400";
+      default:
+        return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400";
+    }
+  };
+
   return (
-    <section
+    <div
       ref={setNodeRef}
-      style={{
-        transform: transform
-          ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
-          : undefined,
-        transition,
-      }}
+      style={style}
+      {...attributes}
+      {...listeners}
       className={cn(
-        "flex min-h-0 flex-col rounded-t-xl border bg-muted/50 transition-colors",
-        columnColors[column.id] || "border-border",
-        isOver && "bg-muted/70",
-        isDragging && "opacity-60",
+        "flex h-full min-h-[300px] w-[280px] shrink-0 flex-col rounded-lg border bg-card p-3 shadow-sm transition-shadow",
+        isDragging && "opacity-50 shadow-lg ring-2 ring-primary",
+        getColumnColor(column.id),
       )}
     >
-      <div className="flex items-start justify-between gap-3 px-4 pt-4 pb-3">
-        <div className="min-w-0 space-y-1">
-          <div className="flex items-center gap-0.5">
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              className="-ml-2 cursor-grab text-foreground/70 active:cursor-grabbing"
-              aria-label={`Déplacer la colonne ${column.title}`}
-              {...attributes}
-              {...listeners}
-            >
-              <GripVertical className="h-4 w-4" />
-            </Button>
-            <h2 className="truncate font-medium text-base leading-none">
-              {column.title}
-            </h2>
-          </div>
-          <p className="text-muted-foreground text-sm tabular-nums leading-none">
-            {tasks.length} {tasks.length === 1 ? "tâche" : "tâches"}
-          </p>
-        </div>
-        <div className="-mr-2 flex items-center gap-0.5 text-muted-foreground">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label={`Ajouter une tâche à ${column.title}`}
-            onClick={onAddTask}
+      {/* En-tête */}
+      <div className="flex items-center justify-between mb-3 shrink-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <GripVertical className="size-4 text-muted-foreground cursor-grab shrink-0" />
+          <h3 className="font-semibold text-sm truncate">{column.title}</h3>
+          <span
+            className={cn(
+              "rounded-full px-2.5 py-0.5 text-xs font-medium shrink-0",
+              getCountColor(column.id),
+            )}
           >
-            <Plus className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label={`Actions de la colonne ${column.title}`}
-          >
-            <MoreVertical className="h-4 w-4" />
-          </Button>
+            {tasks.length}
+          </span>
         </div>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="h-7 w-7 shrink-0"
+          onClick={onAddTask}
+        >
+          <Plus className="size-4" />
+        </Button>
       </div>
 
-      <SortableContext
-        items={tasks.map((task) => task.id)}
-        strategy={verticalListSortingStrategy}
-      >
-        <div className="scrollbar-thin flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 pb-3 [scrollbar-color:var(--border)_transparent] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:w-1">
-          {tasks.map((task) => (
-            <SortableTaskCard
-              key={task.id}
-              task={task}
-              columnId={column.id}
-              onEdit={onEditTask}
-              onDelete={onDeleteTask}
-            />
-          ))}
+      <Separator className="mb-3 shrink-0" />
+
+      {/* Liste des tâches avec scroll */}
+      <ScrollArea className="flex-1 min-h-0 -mr-3 pr-3">
+        <div className="space-y-2 pb-2">
+          {tasks.length === 0 ? (
+            <div className="flex h-24 items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/20 text-sm text-muted-foreground">
+              <p>Déposez une tâche</p>
+            </div>
+          ) : (
+            tasks.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                onEdit={() => onEditTask(task)}
+                onDelete={() => onDeleteTask(task.id)}
+              />
+            ))
+          )}
         </div>
-      </SortableContext>
-    </section>
+      </ScrollArea>
+    </div>
   );
 }

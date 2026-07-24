@@ -1,113 +1,52 @@
+// src/lib/actions/tasks/update-task.ts
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/server";
-import {
-  taskUpdateSchema,
-  type TaskUpdateInput,
-} from "@/lib/validations/task.schema";
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 
-const updateTaskSchema = z.object({
-  id: z.string().uuid("ID tâche invalide"),
-  data: taskUpdateSchema,
-});
-
-export async function updateTask(id: string, data: TaskUpdateInput) {
-  const adminClient = await createAdminClient();
-
-  // Valider les données
-  const validated = updateTaskSchema.safeParse({ id, data });
-
-  if (!validated.success) {
-    return {
-      success: false,
-      error: validated.error.flatten().fieldErrors,
-    };
-  }
-
+export async function updateTask(id: string, data: any) {
   try {
-    // Vérifier que la tâche existe
-    const { data: existing, error: checkError } = await adminClient
-      .from("tasks")
-      .select("id, projet_id")
-      .eq("id", id)
-      .single();
+    const supabase = await createAdminClient();
 
-    if (checkError || !existing) {
-      return {
-        success: false,
-        error: { notFound: ["Tâche non trouvée"] },
-      };
-    }
+    console.log("📝 updateTask - ID:", id);
+    console.log("📝 updateTask - Data:", JSON.stringify(data, null, 2));
 
-    // Vérifier que le projet existe si fourni
-    if (validated.data.projet_id) {
-      const { data: project, error: projectError } = await adminClient
-        .from("projects")
-        .select("id")
-        .eq("id", validated.data.projet_id)
-        .single();
-
-      if (projectError || !project) {
-        return {
-          success: false,
-          error: { projet_id: ["Projet non trouvé"] },
-        };
+    // Nettoyer les données : supprimer les champs undefined
+    const cleanData: any = {};
+    Object.keys(data).forEach((key) => {
+      if (data[key] !== undefined && data[key] !== null) {
+        // Si c'est une chaîne vide, on la garde si c'est un champ texte
+        if (data[key] === "" && (key === "description" || key === "lieu")) {
+          cleanData[key] = null;
+        } else if (data[key] !== "") {
+          cleanData[key] = data[key];
+        }
       }
-    }
+    });
 
-    // Vérifier que le membre existe si fourni
-    if (validated.data.assigne_a) {
-      const { data: member, error: memberError } = await adminClient
-        .from("members")
-        .select("id")
-        .eq("id", validated.data.assigne_a)
-        .single();
+    console.log(
+      "📝 updateTask - CleanData:",
+      JSON.stringify(cleanData, null, 2),
+    );
 
-      if (memberError || !member) {
-        return {
-          success: false,
-          error: { assigne_a: ["Membre non trouvé"] },
-        };
-      }
-    }
-
-    // Mettre à jour la tâche
-    const { data: task, error } = await adminClient
+    const { error } = await supabase
       .from("tasks")
-      .update({
-        ...validated.data,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", id)
-      .select()
-      .single();
+      .update(cleanData)
+      .eq("id", id);
 
     if (error) {
-      return {
-        success: false,
-        error: { db: [error.message] },
-      };
+      console.error("❌ Erreur updateTask:", error);
+      return { error: error.message };
     }
 
+    // Revalider les chemins
     revalidatePath("/dashboard/kanban");
     revalidatePath("/dashboard/tasks");
-    if (existing.projet_id) {
-      revalidatePath(`/dashboard/projects/${existing.projet_id}`);
-    }
-    if (validated.data.projet_id) {
-      revalidatePath(`/dashboard/projects/${validated.data.projet_id}`);
-    }
 
-    return {
-      success: true,
-      data: task,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: { unexpected: ["Une erreur inattendue s'est produite"] },
-    };
+    console.log("✅ updateTask - Succès pour l'ID:", id);
+    return { success: true };
+  } catch (error: any) {
+    console.error("❌ Erreur updateTask catch:", error);
+    return { error: error.message };
   }
 }

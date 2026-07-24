@@ -1,6 +1,10 @@
+// src/app/(main)/dashboard/kanban/_components/task-dialog.tsx
 "use client";
 
 import { useState, useEffect } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -22,19 +26,41 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useProjects } from "@/hooks/queries/use-projects";
+import { useMembers } from "@/hooks/queries/use-members";
 
-// Importer les hooks avec le bon nom
-import { useCreateTask, useUpdateTask } from "@/hooks/queries/use-tasks";
+const taskSchema = z.object({
+  titre: z.string().min(2, "Le titre est requis"),
+  description: z.string().nullable().optional(),
+  projet_id: z.string().uuid("ID projet invalide").nullable().optional(),
+  assigne_a: z.string().uuid("ID membre invalide").nullable().optional(),
+  statut: z
+    .enum(["À faire", "En cours", "Annulé", "Terminé"])
+    .default("À faire"),
+  priorite: z.enum(["Haute", "Moyenne", "Basse"]).default("Moyenne"),
+  date_execution: z.string().nullable().optional(),
+  lieu: z.string().nullable().optional(),
+});
+
+type TaskFormData = z.infer<typeof taskSchema>;
 
 interface TaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   task?: any;
-  defaultColumn?: string;
-  members?: any[];
-  projects?: any[];
-  onSuccess?: () => void;
+  defaultColumn?: "todo" | "in-progress" | "cancelled" | "done";
+  onSuccess?: (data: any) => void;
 }
+
+const columnToStatus: Record<
+  string,
+  "À faire" | "En cours" | "Annulé" | "Terminé"
+> = {
+  todo: "À faire",
+  "in-progress": "En cours",
+  cancelled: "Annulé",
+  done: "Terminé",
+};
 
 const statuts = [
   { label: "À faire", value: "À faire" },
@@ -54,267 +80,272 @@ export function TaskDialog({
   onOpenChange,
   task,
   defaultColumn = "todo",
-  members = [],
-  projects = [],
   onSuccess,
 }: TaskDialogProps) {
   const [loading, setLoading] = useState(false);
-  const createTask = useCreateTask();
-  const updateTask = useUpdateTask();
+  const { data: projects, isLoading: projectsLoading } = useProjects();
+  const { data: members, isLoading: membersLoading } = useMembers();
 
-  // État du formulaire
-  const [formData, setFormData] = useState({
-    titre: "",
-    description: "",
-    statut: "À faire",
-    priorite: "Moyenne",
-    assigne_id: null as string | null,
-    projet_id: null as string | null,
-    date_execution: "",
-    lieu: "",
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<TaskFormData>({
+    resolver: zodResolver(taskSchema),
+    defaultValues: {
+      titre: "",
+      description: "",
+      projet_id: null,
+      assigne_a: null,
+      statut: columnToStatus[defaultColumn] || "À faire",
+      priorite: "Moyenne",
+      date_execution: "",
+      lieu: "",
+    },
   });
 
-  // Mapping colonne -> statut
-  const columnToStatus: Record<string, string> = {
-    todo: "À faire",
-    "in-progress": "En cours",
-    cancelled: "Annulé",
-    done: "Terminé",
-  };
-
-  // Remplir le formulaire quand on modifie
+  // Remplir le formulaire quand on modifie une tâche
   useEffect(() => {
     if (task) {
-      setFormData({
-        titre: task.title || "",
+      console.log("📋 TaskDialog - useEffect - Task reçue:", task);
+      reset({
+        titre: task.titre || "",
         description: task.description || "",
-        statut: task.raw?.statut || columnToStatus[defaultColumn] || "À faire",
-        priorite: task.priority || "Moyenne",
-        assigne_id: task.raw?.assignee_id || null,
-        projet_id: task.raw?.project_id || null,
-        date_execution: task.raw?.date_execution || "",
-        lieu: task.location || "",
+        projet_id: task.projet_id || null,
+        assigne_a: task.assigne_a || null,
+        statut: task.statut || "À faire",
+        priorite: task.priorite || "Moyenne",
+        date_execution: task.date_execution || "",
+        lieu: task.lieu || "",
       });
     } else {
-      setFormData({
+      reset({
         titre: "",
         description: "",
+        projet_id: null,
+        assigne_a: null,
         statut: columnToStatus[defaultColumn] || "À faire",
         priorite: "Moyenne",
-        assigne_id: null,
-        projet_id: null,
         date_execution: "",
         lieu: "",
       });
     }
-  }, [task, open, defaultColumn]);
+  }, [task, open, defaultColumn, reset]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: TaskFormData) => {
     setLoading(true);
-
     try {
-      // Préparer les données
-      const data = {
-        titre: formData.titre,
-        description: formData.description || null,
-        statut: formData.statut,
-        priorite: formData.priorite,
-        assigne_id: formData.assigne_id,
-        projet_id: formData.projet_id,
-        date_execution: formData.date_execution || null,
-        lieu: formData.lieu || null,
-      };
+      console.log("📤 TaskDialog - onSubmit - Data:", data);
 
-      if (task) {
-        // Modifier - utiliser updateTask avec { id, data }
-        await updateTask.mutateAsync({
-          id: task.id,
-          data: data,
-        });
-        toast.success("Tâche modifiée avec succès");
-      } else {
-        // Créer
-        await createTask.mutateAsync(data);
-        toast.success("Tâche créée avec succès");
-      }
+      // Vérifier si c'est une modification ou une création
+      const isEditing = !!task;
+      console.log(`📤 TaskDialog - ${isEditing ? "Modification" : "Création"}`);
 
-      onOpenChange(false);
-      onSuccess?.();
+      await onSuccess?.(data);
+
+      console.log("✅ TaskDialog - onSuccess exécuté");
+      // Le dialogue sera fermé par le parent après le succès
     } catch (error: any) {
+      console.error("❌ TaskDialog - Erreur:", error);
       toast.error("Erreur: " + (error.message || "Une erreur est survenue"));
     } finally {
       setLoading(false);
     }
   };
 
-  const isEditing = !!task;
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Modifier la tâche" : "Nouvelle tâche"}
+            {task ? "Modifier la tâche" : "Ajouter une tâche"}
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Titre */}
           <Field>
             <FieldLabel>
               Titre <span className="text-destructive">*</span>
             </FieldLabel>
-            <Input
-              value={formData.titre}
-              onChange={(e) =>
-                setFormData({ ...formData, titre: e.target.value })
-              }
-              placeholder="Titre de la tâche"
-              required
+            <Controller
+              name="titre"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  placeholder="Ex: Développer la landing page"
+                />
+              )}
             />
+            {errors.titre && (
+              <p className="text-sm text-destructive">{errors.titre.message}</p>
+            )}
           </Field>
 
           {/* Description */}
           <Field>
             <FieldLabel>Description</FieldLabel>
-            <Textarea
-              value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-              placeholder="Description de la tâche..."
-              className="min-h-20 resize-none"
+            <Controller
+              name="description"
+              control={control}
+              render={({ field }) => (
+                <Textarea
+                  {...field}
+                  placeholder="Description de la tâche..."
+                  className="min-h-20 resize-none"
+                  value={field.value || ""}
+                />
+              )}
             />
           </Field>
+
+          {/* Projet et Assigné */}
+          <div className="grid grid-cols-2 gap-4">
+            <Field>
+              <FieldLabel>Projet</FieldLabel>
+              <Controller
+                name="projet_id"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    value={field.value || ""}
+                    onValueChange={(val) => field.onChange(val || null)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner un projet" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {projectsLoading ? (
+                          <SelectItem value="loading" disabled>
+                            Chargement...
+                          </SelectItem>
+                        ) : (
+                          projects?.map((project: any) => (
+                            <SelectItem key={project.id} value={project.id}>
+                              {project.nom}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </Field>
+
+            <Field>
+              <FieldLabel>Assigné à</FieldLabel>
+              <Controller
+                name="assigne_a"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    value={field.value || ""}
+                    onValueChange={(val) => field.onChange(val || null)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner un membre" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {membersLoading ? (
+                          <SelectItem value="loading" disabled>
+                            Chargement...
+                          </SelectItem>
+                        ) : (
+                          members?.map((member: any) => (
+                            <SelectItem key={member.id} value={member.id}>
+                              {member.nom}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </Field>
+          </div>
 
           {/* Statut et Priorité */}
           <div className="grid grid-cols-2 gap-4">
             <Field>
               <FieldLabel>Statut</FieldLabel>
-              <Select
-                value={formData.statut}
-                onValueChange={(val) =>
-                  setFormData({ ...formData, statut: val })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {statuts.map((s) => (
-                      <SelectItem key={s.value} value={s.value}>
-                        {s.label}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+              <Controller
+                name="statut"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {statuts.map((s) => (
+                          <SelectItem key={s.value} value={s.value}>
+                            {s.label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </Field>
 
             <Field>
               <FieldLabel>Priorité</FieldLabel>
-              <Select
-                value={formData.priorite}
-                onValueChange={(val) =>
-                  setFormData({ ...formData, priorite: val })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {priorites.map((p) => (
-                      <SelectItem key={p.value} value={p.value}>
-                        {p.label}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+              <Controller
+                name="priorite"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {priorites.map((p) => (
+                          <SelectItem key={p.value} value={p.value}>
+                            {p.label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </Field>
           </div>
 
-          {/* Assigné à et Projet */}
-          <div className="grid grid-cols-2 gap-4">
-            <Field>
-              <FieldLabel>Assigné à</FieldLabel>
-              <Select
-                value={formData.assigne_id || "null"}
-                onValueChange={(val) =>
-                  setFormData({
-                    ...formData,
-                    assigne_id: val === "null" ? null : val,
-                  })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Choisir un membre" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="null">Non assigné</SelectItem>
-                    {members.map((member) => (
-                      <SelectItem key={member.id} value={member.id}>
-                        {member.nom}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </Field>
-
-            <Field>
-              <FieldLabel>Projet</FieldLabel>
-              <Select
-                value={formData.projet_id || "null"}
-                onValueChange={(val) =>
-                  setFormData({
-                    ...formData,
-                    projet_id: val === "null" ? null : val,
-                  })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Choisir un projet" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="null">Sans projet</SelectItem>
-                    {projects.map((project) => (
-                      <SelectItem key={project.id} value={project.id}>
-                        {project.nom}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </Field>
-          </div>
-
-          {/* Date et Lieu */}
+          {/* Date d'exécution et Lieu */}
           <div className="grid grid-cols-2 gap-4">
             <Field>
               <FieldLabel>Date d'exécution</FieldLabel>
-              <Input
-                type="date"
-                value={formData.date_execution}
-                onChange={(e) =>
-                  setFormData({ ...formData, date_execution: e.target.value })
-                }
+              <Controller
+                name="date_execution"
+                control={control}
+                render={({ field }) => (
+                  <Input {...field} type="date" value={field.value || ""} />
+                )}
               />
             </Field>
 
             <Field>
               <FieldLabel>Lieu</FieldLabel>
-              <Input
-                value={formData.lieu}
-                onChange={(e) =>
-                  setFormData({ ...formData, lieu: e.target.value })
-                }
-                placeholder="Ex: Douala"
+              <Controller
+                name="lieu"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    placeholder="Ex: Douala, Yaoundé..."
+                    value={field.value || ""}
+                  />
+                )}
               />
             </Field>
           </div>
@@ -332,11 +363,7 @@ export function TaskDialog({
               disabled={loading}
               className="bg-zeno-primary hover:bg-zeno-primary/90"
             >
-              {loading
-                ? "Enregistrement..."
-                : isEditing
-                  ? "Modifier"
-                  : "Ajouter"}
+              {loading ? "Enregistrement..." : task ? "Modifier" : "Ajouter"}
             </Button>
           </DialogFooter>
         </form>

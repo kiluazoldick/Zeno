@@ -1,3 +1,6 @@
+// src/hooks/queries/use-tasks.ts
+// Ajouter ou vérifier que ce hook existe
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getTasks,
@@ -6,7 +9,7 @@ import {
   updateTask,
   deleteTask,
   updateTaskStatus,
-  updateTaskPosition,
+  updateTaskPosition, // <- Importer cette fonction
   getTasksByStatus,
   getTasksByProject,
   getTasksByMember,
@@ -33,7 +36,7 @@ export function useTasks(filters?: GetTasksFilters) {
   return useQuery({
     queryKey: tasksKeys.list(filters),
     queryFn: () => getTasks(filters),
-    staleTime: 30 * 1000, // 30 secondes (Kanban nécessite plus de fraîcheur)
+    staleTime: 30 * 1000,
   });
 }
 
@@ -83,8 +86,7 @@ export function useCreateTask() {
   return useMutation({
     mutationFn: createTask,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: tasksKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: tasksKeys.byStatus() });
+      queryClient.invalidateQueries({ queryKey: tasksKeys.all });
       toast.success("Tâche créée avec succès");
     },
     onError: (error: Error) => {
@@ -98,18 +100,12 @@ export function useUpdateTask() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: Parameters<typeof updateTask>[1];
-    }) => updateTask(id, data),
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
+      updateTask(id, data),
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: tasksKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: tasksKeys.byStatus() });
+      queryClient.invalidateQueries({ queryKey: tasksKeys.all });
       queryClient.invalidateQueries({ queryKey: tasksKeys.detail(id) });
-      toast.success("Tâche mise à jour");
+      toast.success("Tâche mise à jour avec succès");
     },
     onError: (error: Error) => {
       toast.error(`Erreur: ${error.message}`);
@@ -117,7 +113,31 @@ export function useUpdateTask() {
   });
 }
 
-// Mutation pour mettre à jour le statut d'une tâche (Drag & Drop)
+// Mutation pour mettre à jour la position (Drag & Drop) - VERSION CORRIGÉE
+export function useUpdateTaskPosition() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      taskId,
+      newPosition,
+      columnId,
+    }: {
+      taskId: string;
+      newPosition: number;
+      columnId: "À faire" | "En cours" | "Annulé" | "Terminé";
+    }) => updateTaskPosition(taskId, newPosition, columnId),
+    onSuccess: () => {
+      // Invalider toutes les requêtes de tâches
+      queryClient.invalidateQueries({ queryKey: tasksKeys.all });
+    },
+    onError: (error: Error) => {
+      toast.error(`Erreur lors du déplacement: ${error.message}`);
+    },
+  });
+}
+
+// Mutation pour mettre à jour le statut (conservé pour la compatibilité)
 export function useUpdateTaskStatus() {
   const queryClient = useQueryClient();
 
@@ -128,39 +148,14 @@ export function useUpdateTaskStatus() {
       options,
     }: {
       id: string;
-      statut: Parameters<typeof updateTaskStatus>[1];
-      options?: Parameters<typeof updateTaskStatus>[2];
+      statut: "À faire" | "En cours" | "Annulé" | "Terminé";
+      options?: any;
     }) => updateTaskStatus(id, statut, options),
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: tasksKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: tasksKeys.byStatus() });
-      queryClient.invalidateQueries({ queryKey: tasksKeys.detail(id) });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: tasksKeys.all });
     },
     onError: (error: Error) => {
       toast.error(`Erreur lors du déplacement: ${error.message}`);
-    },
-  });
-}
-
-// Mutation pour mettre à jour la position (Drag & Drop fin)
-export function useUpdateTaskPosition() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({
-      taskId,
-      newPosition,
-      columnId,
-    }: Parameters<typeof updateTaskPosition>[0] &
-      Parameters<typeof updateTaskPosition>[1] &
-      Parameters<typeof updateTaskPosition>[2]) =>
-      updateTaskPosition(taskId, newPosition, columnId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: tasksKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: tasksKeys.byStatus() });
-    },
-    onError: (error: Error) => {
-      toast.error(`Erreur lors du repositionnement: ${error.message}`);
     },
   });
 }
@@ -170,11 +165,10 @@ export function useDeleteTask() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: deleteTask,
+    mutationFn: ({ id }: { id: string }) => deleteTask(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: tasksKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: tasksKeys.byStatus() });
-      toast.success("Tâche supprimée");
+      queryClient.invalidateQueries({ queryKey: tasksKeys.all });
+      toast.success("Tâche supprimée avec succès");
     },
     onError: (error: Error) => {
       toast.error(`Erreur: ${error.message}`);

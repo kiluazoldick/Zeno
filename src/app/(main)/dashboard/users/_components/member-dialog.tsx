@@ -1,9 +1,11 @@
+// src/app/(main)/dashboard/users/_components/member-dialog.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +17,6 @@ import {
 } from "@/components/ui/dialog";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
 import {
   Select,
   SelectContent,
@@ -25,15 +26,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import type { UserRow } from "./data";
-
 // Schéma de validation
 const memberSchema = z.object({
-  name: z.string().min(2, "Le nom est requis"),
+  nom: z.string().min(2, "Le nom est requis"),
   email: z.string().email("Email invalide"),
   role: z.string().min(1, "Le rôle est requis"),
-  team: z.string().min(1, "L'équipe est requise"),
+  equipe: z.string().min(1, "L'équipe est requise"),
   status: z.string().min(1, "Le statut est requis"),
+  joined_date: z.string().nullable().optional(),
 });
 
 type MemberFormData = z.infer<typeof memberSchema>;
@@ -41,11 +41,11 @@ type MemberFormData = z.infer<typeof memberSchema>;
 interface MemberDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  member: UserRow | null;
+  member?: any;
   onSave: (data: any) => void;
+  isEditing?: boolean;
 }
 
-// Valeurs autorisées par Supabase (check constraint)
 const roles = [
   { label: "Direction", value: "direction" },
   { label: "Finance", value: "finance" },
@@ -53,10 +53,10 @@ const roles = [
   { label: "Terrain", value: "terrain" },
   { label: "Bureau", value: "bureau" },
   { label: "Admin", value: "admin" },
+  { label: "Membre", value: "membre" },
 ];
 
-// Équipes (pour l'affichage)
-const teams = [
+const equipes = [
   { label: "Direction", value: "Direction" },
   { label: "Terrain", value: "Terrain" },
   { label: "Bureau", value: "Bureau" },
@@ -78,6 +78,7 @@ export function MemberDialog({
   onOpenChange,
   member,
   onSave,
+  isEditing,
 }: MemberDialogProps) {
   const [loading, setLoading] = useState(false);
 
@@ -89,30 +90,36 @@ export function MemberDialog({
   } = useForm<MemberFormData>({
     resolver: zodResolver(memberSchema),
     defaultValues: {
-      name: "",
+      nom: "",
       email: "",
       role: "",
-      team: "",
+      equipe: "",
       status: "Actif",
+      joined_date: "",
     },
   });
 
   useEffect(() => {
     if (member) {
+      console.log("📋 MemberDialog - Membre reçu:", member);
       reset({
-        name: member.name,
-        email: member.email,
-        role: member.role.toLowerCase(),
-        team: member.team,
-        status: member.status,
+        nom: member.nom || "",
+        email: member.email || "",
+        role: member.role || "",
+        equipe: member.equipe || "",
+        status: member.status || "Actif",
+        joined_date: member.joined_date
+          ? new Date(member.joined_date).toISOString().split("T")[0]
+          : "",
       });
     } else {
       reset({
-        name: "",
+        nom: "",
         email: "",
         role: "",
-        team: "",
+        equipe: "",
         status: "Actif",
+        joined_date: "",
       });
     }
   }, [member, open, reset]);
@@ -120,41 +127,49 @@ export function MemberDialog({
   const onSubmit = async (data: MemberFormData) => {
     setLoading(true);
     try {
+      console.log("📤 MemberDialog - onSubmit - Data:", data);
       await onSave(data);
-      setLoading(false);
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: any) {
+      console.error("❌ MemberDialog - Erreur:", error);
+      toast.error("Erreur: " + (error.message || "Une erreur est survenue"));
+    } finally {
       setLoading(false);
-      console.error("Erreur:", error);
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {member ? "Modifier le membre" : "Ajouter un membre"}
+            {isEditing ? "Modifier le membre" : "Ajouter un membre"}
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {/* Nom */}
           <Field>
-            <FieldLabel>Nom</FieldLabel>
+            <FieldLabel>
+              Nom <span className="text-destructive">*</span>
+            </FieldLabel>
             <Controller
-              name="name"
+              name="nom"
               control={control}
               render={({ field }) => (
                 <Input {...field} placeholder="Nom du membre" />
               )}
             />
-            {errors.name && (
-              <p className="text-sm text-destructive">{errors.name.message}</p>
+            {errors.nom && (
+              <p className="text-sm text-destructive">{errors.nom.message}</p>
             )}
           </Field>
 
+          {/* Email - MODIFIABLE */}
           <Field>
-            <FieldLabel>Email</FieldLabel>
+            <FieldLabel>
+              Email <span className="text-destructive">*</span>
+            </FieldLabel>
             <Controller
               name="email"
               control={control}
@@ -171,8 +186,11 @@ export function MemberDialog({
             )}
           </Field>
 
+          {/* Rôle */}
           <Field>
-            <FieldLabel>Rôle</FieldLabel>
+            <FieldLabel>
+              Rôle <span className="text-destructive">*</span>
+            </FieldLabel>
             <Controller
               name="role"
               control={control}
@@ -198,10 +216,13 @@ export function MemberDialog({
             )}
           </Field>
 
+          {/* Équipe */}
           <Field>
-            <FieldLabel>Équipe</FieldLabel>
+            <FieldLabel>
+              Équipe <span className="text-destructive">*</span>
+            </FieldLabel>
             <Controller
-              name="team"
+              name="equipe"
               control={control}
               render={({ field }) => (
                 <Select value={field.value} onValueChange={field.onChange}>
@@ -210,9 +231,9 @@ export function MemberDialog({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      {teams.map((team) => (
-                        <SelectItem key={team.value} value={team.value}>
-                          {team.label}
+                      {equipes.map((equipe) => (
+                        <SelectItem key={equipe.value} value={equipe.value}>
+                          {equipe.label}
                         </SelectItem>
                       ))}
                     </SelectGroup>
@@ -220,13 +241,18 @@ export function MemberDialog({
                 </Select>
               )}
             />
-            {errors.team && (
-              <p className="text-sm text-destructive">{errors.team.message}</p>
+            {errors.equipe && (
+              <p className="text-sm text-destructive">
+                {errors.equipe.message}
+              </p>
             )}
           </Field>
 
+          {/* Statut */}
           <Field>
-            <FieldLabel>Statut</FieldLabel>
+            <FieldLabel>
+              Statut <span className="text-destructive">*</span>
+            </FieldLabel>
             <Controller
               name="status"
               control={control}
@@ -254,6 +280,23 @@ export function MemberDialog({
             )}
           </Field>
 
+          {/* Date d'intégration */}
+          <Field>
+            <FieldLabel>Date d'intégration</FieldLabel>
+            <Controller
+              name="joined_date"
+              control={control}
+              render={({ field }) => (
+                <Input {...field} type="date" value={field.value || ""} />
+              )}
+            />
+            {errors.joined_date && (
+              <p className="text-sm text-destructive">
+                {errors.joined_date.message}
+              </p>
+            )}
+          </Field>
+
           <DialogFooter>
             <Button
               type="button"
@@ -267,7 +310,11 @@ export function MemberDialog({
               disabled={loading}
               className="bg-zeno-primary hover:bg-zeno-primary/90"
             >
-              {loading ? "Enregistrement..." : member ? "Modifier" : "Ajouter"}
+              {loading
+                ? "Enregistrement..."
+                : isEditing
+                  ? "Modifier"
+                  : "Ajouter"}
             </Button>
           </DialogFooter>
         </form>

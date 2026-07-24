@@ -1,3 +1,4 @@
+// src/app/(main)/dashboard/kanban/_components/kanban.tsx
 "use client";
 
 import * as React from "react";
@@ -61,11 +62,9 @@ import { TaskDialog } from "./task-dialog";
 import type { BoardState, ColumnId, Task } from "./types";
 import { findColumnId, findTask, getStatusFromColumn } from "./utils";
 
-// Importer directement les actions
-import { updateTaskStatus } from "@/lib/actions/tasks/update-task-status";
-import { deleteTask } from "@/lib/actions/tasks/delete-task";
+// Importer le bon hook
+import { useUpdateTaskPosition } from "@/hooks/queries/use-tasks";
 
-// Définir les colonnes ici (plus d'import de data.ts)
 const columns = [
   { id: "todo", title: "À faire" },
   { id: "in-progress", title: "En cours" },
@@ -75,16 +74,45 @@ const columns = [
 
 const columnIds = columns.map((column) => column.id);
 
+// Mapping colonne -> statut
+const columnToStatus: Record<
+  string,
+  "À faire" | "En cours" | "Annulé" | "Terminé"
+> = {
+  todo: "À faire",
+  "in-progress": "En cours",
+  cancelled: "Annulé",
+  done: "Terminé",
+};
+
 interface KanbanProps {
   initialBoard: BoardState;
   members?: any[];
   projects?: any[];
+  dialogOpen: boolean;
+  setDialogOpen: (open: boolean) => void;
+  editingTask: any;
+  defaultColumn: "todo" | "in-progress" | "cancelled" | "done";
+  onAddTask: (columnId?: "todo" | "in-progress" | "cancelled" | "done") => void;
+  onEditTask: (task: Task) => void;
+  onDeleteTask: (id: string) => void;
+  onSaveTask: (data: any) => void;
+  refetch: () => void;
 }
 
 export function Kanban({
   initialBoard,
   members = [],
   projects = [],
+  dialogOpen,
+  setDialogOpen,
+  editingTask,
+  defaultColumn,
+  onAddTask,
+  onEditTask,
+  onDeleteTask,
+  onSaveTask,
+  refetch,
 }: KanbanProps) {
   const router = useRouter();
   const [board, setBoard] = React.useState<BoardState>(initialBoard);
@@ -95,66 +123,36 @@ export function Kanban({
   const [activeColumnId, setActiveColumnId] = React.useState<ColumnId | null>(
     null,
   );
-  const [dialogOpen, setDialogOpen] = React.useState(false);
-  const [editingTask, setEditingTask] = React.useState<Task | null>(null);
-  const [defaultColumn, setDefaultColumn] = React.useState<ColumnId>("todo");
   const [isUpdating, setIsUpdating] = React.useState(false);
+
+  // Utiliser le bon hook pour la mise à jour des positions
+  const updateTaskPosition = useUpdateTaskPosition();
 
   const boardBeforeDrag = React.useRef<BoardState | null>(null);
   const orderedColumns = columnOrder.flatMap(
     (columnId) => columns.find((column) => column.id === columnId) ?? [],
   );
 
+  React.useEffect(() => {
+    setBoard(initialBoard);
+  }, [initialBoard]);
+
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 5 },
+    }),
     useSensor(TouchSensor, {
-      activationConstraint: { delay: 150, tolerance: 5 },
+      activationConstraint: { delay: 100, tolerance: 5 },
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
   );
 
-  const handleCreateTask = (columnId?: ColumnId) => {
-    setEditingTask(null);
-    setDefaultColumn(columnId || "todo");
-    setDialogOpen(true);
-  };
-
-  const handleEditTask = (task: Task) => {
-    setEditingTask(task);
-    setDialogOpen(true);
-  };
-
-  const handleDeleteTask = async (taskId: string) => {
-    if (!confirm("Voulez-vous vraiment supprimer cette tâche ?")) return;
-
-    try {
-      const result = await deleteTask(taskId);
-      if (result.error) {
-        toast.error("Erreur: " + result.error);
-        return;
-      }
-
-      setBoard((current) => {
-        const newBoard = { ...current };
-        for (const colId of columnIds) {
-          newBoard[colId] = newBoard[colId].filter((t) => t.id !== taskId);
-        }
-        return newBoard;
-      });
-
-      toast.success("Tâche supprimée avec succès");
-      router.refresh();
-    } catch (error: any) {
-      toast.error("Erreur: " + error.message);
-    }
-  };
-
   function handleDragStart(event: DragStartEvent) {
     if (event.active.data.current?.type === "column") return;
 
-    boardBeforeDrag.current = board;
+    boardBeforeDrag.current = JSON.parse(JSON.stringify(board));
     const task = findTask(board, String(event.active.id));
     setActiveTask(task ?? null);
     setActiveColumnId(findColumnId(board, String(event.active.id)) ?? null);
@@ -186,23 +184,20 @@ export function Kanban({
       if (!activeColId || !overColId || activeColId === overColId)
         return currentBoard;
 
-      const activeItems = currentBoard[activeColId];
-      const overItems = currentBoard[overColId];
+      const activeItems = [...currentBoard[activeColId]];
+      const overItems = [...currentBoard[overColId]];
       const activeIndex = activeItems.findIndex((task) => task.id === activeId);
       if (activeIndex === -1) return currentBoard;
 
-      const overIndex = overItems.findIndex((task) => task.id === overId);
-      const nextIndex = overIndex >= 0 ? overIndex : overItems.length;
       const activeItem = activeItems[activeIndex];
+
+      const newActiveItems = activeItems.filter((task) => task.id !== activeId);
+      const newOverItems = [...overItems, activeItem];
 
       return {
         ...currentBoard,
-        [activeColId]: activeItems.filter((task) => task.id !== activeId),
-        [overColId]: [
-          ...overItems.slice(0, nextIndex),
-          activeItem,
-          ...overItems.slice(nextIndex),
-        ],
+        [activeColId]: newActiveItems,
+        [overColId]: newOverItems,
       };
     });
   }
@@ -215,7 +210,10 @@ export function Kanban({
     setActiveTask(null);
     setActiveColumnId(null);
 
-    if (isUpdating) return;
+    if (isUpdating) {
+      if (snapshot) setBoard(snapshot);
+      return;
+    }
 
     if (activeType === "column") {
       if (!over) return;
@@ -242,49 +240,47 @@ export function Kanban({
     const overId = String(over.id);
 
     const task = findTask(board, activeId);
-    if (!task) return;
+    if (!task) {
+      if (snapshot) setBoard(snapshot);
+      return;
+    }
 
     const activeColumnId = findColumnId(board, activeId);
     const overColumnId = findColumnId(board, overId);
 
-    if (!activeColumnId || !overColumnId) return;
+    if (!activeColumnId || !overColumnId) {
+      if (snapshot) setBoard(snapshot);
+      return;
+    }
+
+    // Déterminer la nouvelle position
+    const overTasks = board[overColumnId] || [];
+    const overIndex = overTasks.findIndex((t) => t.id === overId);
+    const newPosition = overIndex >= 0 ? overIndex : overTasks.length;
 
     if (activeColumnId !== overColumnId) {
-      const newStatus = getStatusFromColumn(overColumnId);
-
-      setBoard((currentBoard) => {
-        const activeItems = currentBoard[activeColumnId];
-        const overItems = currentBoard[overColumnId];
-        const activeIndex = activeItems.findIndex((t) => t.id === activeId);
-        if (activeIndex === -1) return currentBoard;
-
-        const overIndex = overItems.findIndex((t) => t.id === overId);
-        const nextIndex = overIndex >= 0 ? overIndex : overItems.length;
-        const activeItem = activeItems[activeIndex];
-
-        return {
-          ...currentBoard,
-          [activeColumnId]: activeItems.filter((t) => t.id !== activeId),
-          [overColumnId]: [
-            ...overItems.slice(0, nextIndex),
-            activeItem,
-            ...overItems.slice(nextIndex),
-          ],
-        };
-      });
+      // Changement de colonne
+      const newStatus = columnToStatus[overColumnId];
 
       setIsUpdating(true);
       try {
-        const result = await updateTaskStatus(activeId, newStatus);
+        const result = await updateTaskPosition.mutateAsync({
+          taskId: activeId,
+          newPosition: newPosition,
+          columnId: newStatus,
+        });
 
-        if (result.error) {
-          toast.error("Erreur: " + result.error);
+        if (result?.error) {
+          toast.error("Erreur: " + JSON.stringify(result.error));
           if (snapshot) setBoard(snapshot);
           return;
         }
 
-        toast.success("Statut mis à jour");
-        router.refresh();
+        toast.success(`Tâche déplacée vers "${getColumnLabel(overColumnId)}"`);
+
+        // Rafraîchir les données
+        await refetch();
+        setBoard(initialBoard);
       } catch (error: any) {
         toast.error("Erreur: " + error.message);
         if (snapshot) setBoard(snapshot);
@@ -294,23 +290,81 @@ export function Kanban({
       return;
     }
 
-    const columnTasks = board[activeColumnId];
+    // Réorganiser dans la même colonne
+    const columnTasks = [...board[activeColumnId]];
     const activeIndex = columnTasks.findIndex((t) => t.id === activeId);
-    const overIndex = columnTasks.findIndex((t) => t.id === overId);
-    if (activeIndex === -1 || overIndex === -1 || activeIndex === overIndex)
+    if (activeIndex === -1 || activeIndex === overIndex) {
+      if (snapshot) setBoard(snapshot);
       return;
+    }
 
-    setBoard((currentBoard) => ({
-      ...currentBoard,
-      [activeColumnId]: arrayMove(columnTasks, activeIndex, overIndex),
-    }));
+    // Mettre à jour la position dans la même colonne
+    setIsUpdating(true);
+    try {
+      const newStatus = columnToStatus[activeColumnId];
+      const result = await updateTaskPosition.mutateAsync({
+        taskId: activeId,
+        newPosition: overIndex,
+        columnId: newStatus,
+      });
+
+      if (result?.error) {
+        toast.error("Erreur: " + JSON.stringify(result.error));
+        if (snapshot) setBoard(snapshot);
+        return;
+      }
+
+      // Mettre à jour le board localement
+      setBoard((currentBoard) => ({
+        ...currentBoard,
+        [activeColumnId]: arrayMove(columnTasks, activeIndex, overIndex),
+      }));
+    } catch (error: any) {
+      toast.error("Erreur: " + error.message);
+      if (snapshot) setBoard(snapshot);
+    } finally {
+      setIsUpdating(false);
+    }
   }
+
+  function getColumnLabel(columnId: ColumnId): string {
+    const column = columns.find((c) => c.id === columnId);
+    return column?.title || columnId;
+  }
+
+  const confirmDelete = (taskId: string, taskTitle: string) => {
+    toast.custom((t) => (
+      <div className="flex flex-col gap-2 p-4 bg-white rounded-lg shadow-lg border max-w-sm dark:bg-gray-900">
+        <p className="font-medium">Confirmer la suppression</p>
+        <p className="text-sm text-muted-foreground">
+          Êtes-vous sûr de vouloir supprimer la tâche{" "}
+          <strong>"{taskTitle}"</strong> ?
+        </p>
+        <div className="flex gap-2 justify-end mt-2">
+          <Button variant="outline" size="sm" onClick={() => toast.dismiss(t)}>
+            Annuler
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => {
+              toast.dismiss(t);
+              onDeleteTask(taskId);
+            }}
+          >
+            Supprimer
+          </Button>
+        </div>
+      </div>
+    ));
+  };
 
   const hasTasks = Object.values(board).some((tasks) => tasks.length > 0);
 
   return (
     <>
       <div className="flex h-[calc(100dvh-var(--dashboard-header-height))] min-h-0 min-w-0 flex-col overflow-hidden">
+        {/* Barre d'outils */}
         <div className="flex shrink-0 flex-col gap-3 border-b px-4 py-3 lg:flex-row lg:items-center lg:justify-between lg:px-6">
           <Tabs defaultValue="board" className="min-w-0">
             <TabsList className="w-full *:data-[slot=tabs-trigger]:flex-1 sm:w-fit sm:*:data-[slot=tabs-trigger]:flex-none">
@@ -318,11 +372,15 @@ export function Kanban({
                 <KanbanIcon />
                 Tableau
               </TabsTrigger>
-              <TabsTrigger value="list" className="gap-2">
+              <TabsTrigger
+                value="list"
+                className="gap-2"
+                onClick={() => router.push("/dashboard/tasks")}
+              >
                 <List />
                 Liste
               </TabsTrigger>
-              <TabsTrigger value="table" className="gap-2">
+              <TabsTrigger value="table" className="gap-2" disabled>
                 <Table2 />
                 Tableau
               </TabsTrigger>
@@ -350,7 +408,7 @@ export function Kanban({
             <ButtonGroup className="w-full sm:w-fit">
               <Button
                 className="flex-1 sm:flex-none bg-zeno-primary hover:bg-zeno-primary/90"
-                onClick={() => handleCreateTask()}
+                onClick={() => onAddTask()}
               >
                 <Plus data-icon="inline-start" />
                 Ajouter une tâche
@@ -366,13 +424,11 @@ export function Kanban({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={() => handleCreateTask("todo")}>
+                  <DropdownMenuItem onClick={() => onAddTask("todo")}>
                     <Plus />
                     Dans "À faire"
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleCreateTask("in-progress")}
-                  >
+                  <DropdownMenuItem onClick={() => onAddTask("in-progress")}>
                     <Plus />
                     Dans "En cours"
                   </DropdownMenuItem>
@@ -394,60 +450,74 @@ export function Kanban({
           </div>
         </div>
 
-        {!hasTasks ? (
-          <div className="flex flex-1 items-center justify-center text-muted-foreground">
-            <div className="text-center">
-              <KanbanIcon className="mx-auto size-12 opacity-30" />
-              <p className="mt-2 text-sm">Aucune tâche dans le Kanban</p>
-              <Button
-                variant="link"
-                className="mt-1 text-zeno-primary"
-                onClick={() => handleCreateTask()}
-              >
-                Créer votre première tâche
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <DndContext
-            id="kanban-board"
-            sensors={sensors}
-            collisionDetection={closestCorners}
-            onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
-            onDragEnd={handleDragEnd}
-            onDragCancel={handleDragCancel}
-          >
-            <div className="scrollbar-thin min-h-0 min-w-0 flex-1 overflow-x-auto overflow-y-hidden bg-muted/25 px-4 pt-4 pb-0 [scrollbar-color:var(--border)_transparent] lg:px-5 lg:pt-5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:h-1">
-              <div className="inline-grid h-full min-w-full grid-cols-[repeat(4,minmax(20rem,1fr))] gap-4">
-                <SortableContext
-                  items={columnOrder}
-                  strategy={horizontalListSortingStrategy}
+        {/* Kanban Board avec scroll horizontal */}
+        <div className="relative flex-1 min-h-0 overflow-hidden">
+          {!hasTasks ? (
+            <div className="flex h-full items-center justify-center text-muted-foreground">
+              <div className="text-center">
+                <KanbanIcon className="mx-auto size-12 opacity-30" />
+                <p className="mt-2 text-sm">Aucune tâche dans le Kanban</p>
+                <Button
+                  variant="link"
+                  className="mt-1 text-zeno-primary"
+                  onClick={() => onAddTask()}
                 >
-                  {orderedColumns.map((column) => (
-                    <KanbanColumn
-                      key={column.id}
-                      column={column}
-                      tasks={board[column.id]}
-                      onAddTask={() => handleCreateTask(column.id)}
-                      onEditTask={handleEditTask}
-                      onDeleteTask={handleDeleteTask}
-                    />
-                  ))}
-                </SortableContext>
+                  Créer votre première tâche
+                </Button>
               </div>
             </div>
-            <DragOverlay dropAnimation={null}>
-              {activeTask ? (
-                <TaskCard
-                  task={activeTask}
-                  columnId={activeColumnId ?? undefined}
-                  isOverlay
-                />
-              ) : null}
-            </DragOverlay>
-          </DndContext>
-        )}
+          ) : (
+            <DndContext
+              id="kanban-board"
+              sensors={sensors}
+              collisionDetection={closestCorners}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDragEnd={handleDragEnd}
+              onDragCancel={handleDragCancel}
+            >
+              <div className="h-full w-full overflow-x-auto overflow-y-auto px-4 pb-4 scrollbar-thin scrollbar-thumb-rounded-full scrollbar-thumb-border scrollbar-track-transparent">
+                <div className="inline-flex h-full min-w-full gap-4 pt-4">
+                  <SortableContext
+                    items={columnOrder}
+                    strategy={horizontalListSortingStrategy}
+                  >
+                    {orderedColumns.map((column) => (
+                      <KanbanColumn
+                        key={column.id}
+                        column={column}
+                        tasks={board[column.id] || []}
+                        onAddTask={() => onAddTask(column.id)}
+                        onEditTask={(task) => {
+                          onEditTask(task);
+                        }}
+                        onDeleteTask={(taskId) => {
+                          const task = (board[column.id] || []).find(
+                            (t) => t.id === taskId,
+                          );
+                          if (task) {
+                            confirmDelete(taskId, task.title);
+                          }
+                        }}
+                      />
+                    ))}
+                  </SortableContext>
+                </div>
+              </div>
+              <DragOverlay dropAnimation={null}>
+                {activeTask ? (
+                  <div className="w-[280px]">
+                    <TaskCard
+                      task={activeTask}
+                      columnId={activeColumnId ?? undefined}
+                      isOverlay
+                    />
+                  </div>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
+          )}
+        </div>
       </div>
 
       <TaskDialog
@@ -455,11 +525,7 @@ export function Kanban({
         onOpenChange={setDialogOpen}
         task={editingTask}
         defaultColumn={defaultColumn}
-        members={members}
-        projects={projects}
-        onSuccess={() => {
-          router.refresh();
-        }}
+        onSuccess={onSaveTask}
       />
     </>
   );
