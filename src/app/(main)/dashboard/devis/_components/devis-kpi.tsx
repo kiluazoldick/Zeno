@@ -1,125 +1,97 @@
+// src/app/(main)/dashboard/devis/_components/devis-kpi.tsx
 "use client";
 
-import { ArrowUpRight, TrendingUp, TrendingDown } from "lucide-react";
-
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-} from "@/components/ui/card";
-import type { Devis } from "@/types/database";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FileText, Wallet, Clock, TrendingUp } from "lucide-react";
 
 interface DevisKpiProps {
-  devis: Devis[];
+  devis: any[];
 }
 
 export function DevisKpi({ devis }: DevisKpiProps) {
-  // Vérifier que devis est un tableau
-  const devisArray = Array.isArray(devis) ? devis : [];
+  if (!devis || devis.length === 0) {
+    return (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Chargement...
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">-</div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
 
-  // Calcul des KPI
-  const total = devisArray.length;
-  const enAttente = devisArray.filter((d) => d.statut === "Envoyé").length;
-  const acceptes = devisArray.filter((d) => d.statut === "Accepté");
-  const acceptesCount = acceptes.length;
-  const refusés = devisArray.filter((d) => d.statut === "Refusé").length;
-  const brouillons = devisArray.filter((d) => d.statut === "Brouillon").length;
-
-  // Montant total des devis acceptés
-  const montantAcceptes = acceptes.reduce(
+  const totalDevis = devis.length;
+  const montantTotal = devis.reduce(
     (sum, d) => sum + (d.montant_total || 0),
     0,
   );
+  const enAttente = devis.filter(
+    (d) => d.statut === "Brouillon" || d.statut === "Envoyé",
+  ).length;
+  const acceptes = devis.filter((d) => d.statut === "Accepté").length;
+  const tauxConversion =
+    totalDevis > 0 ? Math.round((acceptes / totalDevis) * 100) : 0;
 
-  // Données mockées de fallback
-  const fallbackData = {
-    enAttente: 5,
-    acceptes: 12,
-    montantAcceptes: 235_500_000,
-    conversionRate: 68.5,
-  };
-
-  const formatFCFA = (value: number) => {
-    return new Intl.NumberFormat("fr-FR").format(value);
-  };
-
-  const kpiData = [
+  const kpis = [
     {
-      label: "Devis en attente",
-      value: enAttente || fallbackData.enAttente,
-      change: "+2",
-      trend: "up" as const,
-      previous: "3",
-      description: "En attente de réponse",
+      title: "Total devis",
+      value: totalDevis,
+      description: "Tous statuts confondus",
+      icon: FileText,
+      color: "text-blue-500",
+      bg: "bg-blue-50 dark:bg-blue-950/20",
     },
     {
-      label: "Devis acceptés",
-      value: acceptesCount || fallbackData.acceptes,
-      change: "+4",
-      trend: "up" as const,
-      previous: "8",
-      description: "Derniers 6 mois",
+      title: "Montant total",
+      value: new Intl.NumberFormat("fr-FR").format(montantTotal),
+      description: "FCFA",
+      icon: Wallet,
+      color: "text-green-500",
+      bg: "bg-green-50 dark:bg-green-950/20",
     },
     {
-      label: "Montant total",
-      value: formatFCFA(montantAcceptes || fallbackData.montantAcceptes),
-      change: "+15.2%",
-      trend: "up" as const,
-      previous: formatFCFA(fallbackData.montantAcceptes * 0.87),
-      description: "FCFA en devis actifs",
+      title: "En attente",
+      value: enAttente,
+      description: "Brouillon + Envoyé",
+      icon: Clock,
+      color: "text-amber-500",
+      bg: "bg-amber-50 dark:bg-amber-950/20",
     },
     {
-      label: "Taux de conversion",
-      value: `${total > 0 ? Math.round((acceptesCount / total) * 100) : fallbackData.conversionRate}%`,
-      change: "-2.1%",
-      trend: "down" as const,
-      previous: "70.6%",
-      description: "Devis → Contrat",
+      title: "Taux de conversion",
+      value: `${tauxConversion}%`,
+      description: "Devis → Contrats",
+      icon: TrendingUp,
+      color: "text-purple-500",
+      bg: "bg-purple-50 dark:bg-purple-950/20",
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-      {kpiData.map((kpi) => {
-        const isUp = kpi.trend === "up";
-
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {kpis.map((kpi) => {
+        const Icon = kpi.icon;
         return (
-          <Card key={kpi.label}>
-            <CardHeader>
-              <CardDescription>{kpi.label}</CardDescription>
-              <CardAction>
-                <ArrowUpRight className="size-4" />
-              </CardAction>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="flex items-center gap-3">
-                <span className="text-3xl leading-none tracking-tight">
-                  {kpi.value}
-                </span>
-                {kpi.label === "Montant total" && (
-                  <span className="text-sm text-muted-foreground">FCFA</span>
-                )}
-                <Badge
-                  variant="outline"
-                  className={
-                    isUp
-                      ? "border-green-200 bg-green-500/10 text-green-700 dark:border-green-900/40 dark:bg-green-500/15 dark:text-green-300"
-                      : "border-destructive/20 bg-destructive/10 text-destructive"
-                  }
-                >
-                  {isUp ? <TrendingUp /> : <TrendingDown />}
-                  {kpi.change}
-                </Badge>
+          <Card key={kpi.title}>
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {kpi.title}
+              </CardTitle>
+              <div className={cn("rounded-lg p-2", kpi.bg)}>
+                <Icon className={cn("size-4", kpi.color)} />
               </div>
-              <p className="text-sm">
-                <span className="font-medium text-foreground">
-                  {kpi.previous}
-                </span>{" "}
-                <span className="text-muted-foreground">{kpi.description}</span>
-              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{kpi.value}</div>
+              <p className="text-xs text-muted-foreground">{kpi.description}</p>
             </CardContent>
           </Card>
         );
@@ -127,3 +99,6 @@ export function DevisKpi({ devis }: DevisKpiProps) {
     </div>
   );
 }
+
+// Ajouter cn import
+import { cn } from "@/lib/utils";

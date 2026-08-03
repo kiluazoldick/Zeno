@@ -257,27 +257,41 @@ export interface DevisLineItem {
   unitPrice: number;
 }
 
+// src/types/database.ts
 export interface Devis {
   id: string;
   numero: string;
   client_id: string | null;
   projet_id: string | null;
-  titre: string | null;
-  statut: DevisStatut;
-  priorite: DevisPriorite;
+  titre: string;
+  statut: "Brouillon" | "Envoyé" | "Accepté" | "Refusé";
+  priorite: "Haute" | "Moyenne" | "Basse";
   montant_total: number | null;
   date_emission: string | null;
   date_validite: string | null;
-  contenu: DevisLineItem[] | null;
+  contenu: Array<{
+    description: string;
+    quantite: number;
+    prix_unitaire: number;
+  }>;
   conditions: string | null;
   notes: string | null;
   taxe_id: string | null;
+  contexte: string | null;
+  objectifs: string | null;
+  architecture: string | null;
+  prestations: Array<{
+    titre: string;
+    description: string;
+  }> | null;
+  fonctionnalites: string[] | null;
+  planning: Array<{
+    semaine: string;
+    taches: string;
+  }> | null;
+  modalites_paiement: string | null;
   created_at: string;
   updated_at: string;
-  // Relations
-  client?: Client | null;
-  projet?: Project | null;
-  contrat?: Contrat | null;
 }
 
 export interface DevisInsert {

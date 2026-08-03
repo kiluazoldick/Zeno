@@ -1,10 +1,11 @@
+// src/hooks/queries/use-devis.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getDevis,
   getDevi,
-  createDevi,
-  updateDevi,
-  deleteDevi,
+  createDevis, // ← doit correspondre à l'export dans index.ts
+  updateDevis, // ← doit correspondre à l'export dans index.ts
+  deleteDevi, // ← Changé de deleteDevis à deleteDevi
   updateDevisStatus,
   type GetDevisFilters,
 } from "@/lib/actions/devis";
@@ -24,7 +25,7 @@ export function useDevis(filters?: GetDevisFilters) {
   return useQuery({
     queryKey: devisKeys.list(filters),
     queryFn: () => getDevis(filters),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 }
 
@@ -39,40 +40,37 @@ export function useDevi(id: string) {
 }
 
 // Mutation pour créer un devis
-export function useCreateDevi() {
+export function useCreateDevis() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: createDevi,
+    mutationFn: createDevis,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: devisKeys.lists() });
       toast.success("Devis créé avec succès");
     },
-    onError: (error: Error) => {
-      toast.error(`Erreur: ${error.message}`);
+    onError: (error: any) => {
+      console.error("❌ Erreur création:", error);
+      toast.error(`Erreur: ${error.message || "Une erreur est survenue"}`);
     },
   });
 }
 
 // Mutation pour mettre à jour un devis
-export function useUpdateDevi() {
+export function useUpdateDevis() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: Parameters<typeof updateDevi>[1];
-    }) => updateDevi(id, data),
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
+      updateDevis(id, data),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: devisKeys.lists() });
       queryClient.invalidateQueries({ queryKey: devisKeys.detail(id) });
-      toast.success("Devis mis à jour");
+      toast.success("Devis modifié avec succès");
     },
-    onError: (error: Error) => {
-      toast.error(`Erreur: ${error.message}`);
+    onError: (error: any) => {
+      console.error("❌ Erreur modification:", error);
+      toast.error(`Erreur: ${error.message || "Une erreur est survenue"}`);
     },
   });
 }
@@ -86,32 +84,36 @@ export function useUpdateDevisStatus() {
       id,
       statut,
       notes,
-    }: Parameters<typeof updateDevisStatus>[0] &
-      Parameters<typeof updateDevisStatus>[1] & { notes?: string }) =>
-      updateDevisStatus(id, statut, notes),
+    }: {
+      id: string;
+      statut: any;
+      notes?: string;
+    }) => updateDevisStatus(id, statut, notes),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: devisKeys.lists() });
       queryClient.invalidateQueries({ queryKey: devisKeys.detail(id) });
       toast.success("Statut du devis mis à jour");
     },
-    onError: (error: Error) => {
-      toast.error(`Erreur: ${error.message}`);
+    onError: (error: any) => {
+      console.error("❌ Erreur mise à jour statut:", error);
+      toast.error(`Erreur: ${error.message || "Une erreur est survenue"}`);
     },
   });
 }
 
-// Mutation pour supprimer un devis
+// Mutation pour supprimer un devis - Changé de useDeleteDevis à useDeleteDevi
 export function useDeleteDevi() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: deleteDevi,
+    mutationFn: ({ id }: { id: string }) => deleteDevi(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: devisKeys.lists() });
-      toast.success("Devis supprimé");
+      toast.success("Devis supprimé avec succès");
     },
-    onError: (error: Error) => {
-      toast.error(`Erreur: ${error.message}`);
+    onError: (error: any) => {
+      console.error("❌ Erreur suppression:", error);
+      toast.error(`Erreur: ${error.message || "Une erreur est survenue"}`);
     },
   });
 }

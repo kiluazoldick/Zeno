@@ -1,27 +1,136 @@
+// src/app/(main)/dashboard/devis/page.tsx
 "use client";
 
-import { useState } from "react";
-import { useDevis } from "@/hooks/queries/use-devis";
+import { useState, useEffect } from "react";
+import {
+  useDevis,
+  useCreateDevis,
+  useUpdateDevis,
+  useDeleteDevi,
+} from "@/hooks/queries/use-devis";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, List } from "lucide-react";
+import { Plus, List, Send, Save, ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
 
-import { DevisForm } from "./_components/devis-form";
 import { DevisList } from "./_components/devis-list";
 import { DevisKpi } from "./_components/devis-kpi";
-import { fallbackDevis } from "./_components/devis-data";
+import { Devis } from "./_components/devis";
 
 export default function Page() {
   const [activeTab, setActiveTab] = useState<"list" | "create">("list");
+  const [editingDevis, setEditingDevis] = useState<any>(null);
+
   const {
     data: devis,
     isLoading,
     error,
+    refetch,
   } = useDevis({
     includeClient: true,
     includeProjet: true,
   });
+
+  const createDevis = useCreateDevis();
+  const updateDevis = useUpdateDevis();
+  const deleteDevis = useDeleteDevi();
+
+  const handleAddDevis = () => {
+    setEditingDevis(null);
+    setActiveTab("create");
+  };
+
+  const handleEditDevis = (devis: any) => {
+    console.log("✏️ handleEditDevis - Devis reçu:", devis);
+    setEditingDevis(devis);
+    setActiveTab("create");
+  };
+
+  const handleDeleteDevis = (id: string) => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer ce devis ?")) {
+      return;
+    }
+
+    deleteDevis.mutate(
+      { id },
+      {
+        onSuccess: () => {
+          toast.success("Devis supprimé avec succès");
+          refetch();
+        },
+        onError: (error: any) => {
+          toast.error(
+            "Erreur: " + (error.message || "Une erreur est survenue"),
+          );
+        },
+      },
+    );
+  };
+
+  const handleSaveDevis = (data: any) => {
+    console.log("💾 handleSaveDevis - Data reçue:", data);
+    console.log("💾 handleSaveDevis - editingDevis:", editingDevis);
+
+    if (editingDevis) {
+      // Modification
+      const updateData = { ...data };
+      Object.keys(updateData).forEach((key) => {
+        if (
+          updateData[key] === "" ||
+          updateData[key] === null ||
+          updateData[key] === undefined
+        ) {
+          delete updateData[key];
+        }
+      });
+      delete updateData.numero;
+
+      console.log("📝 Mise à jour du devis:", editingDevis.id, updateData);
+
+      updateDevis.mutate(
+        { id: editingDevis.id, data: updateData },
+        {
+          onSuccess: () => {
+            toast.success("Devis modifié avec succès");
+            setEditingDevis(null);
+            setActiveTab("list");
+            refetch();
+          },
+          onError: (error: any) => {
+            console.error("❌ Erreur modification:", error);
+            toast.error(
+              "Erreur: " + (error.message || "Une erreur est survenue"),
+            );
+          },
+        },
+      );
+    } else {
+      // Création
+      console.log("🆕 Création d'un nouveau devis:", data);
+      delete data.numero;
+
+      createDevis.mutate(data, {
+        onSuccess: () => {
+          toast.success("Devis créé avec succès");
+          setActiveTab("list");
+          refetch();
+        },
+        onError: (error: any) => {
+          console.error("❌ Erreur création:", error);
+          toast.error(
+            "Erreur: " + (error.message || "Une erreur est survenue"),
+          );
+        },
+      });
+    }
+  };
+
+  // Revenir à la liste
+  const handleBackToList = () => {
+    setEditingDevis(null);
+    setActiveTab("list");
+  };
 
   if (isLoading) {
     return (
@@ -36,13 +145,11 @@ export default function Page() {
       <div className="flex h-64 items-center justify-center">
         <div className="flex items-center gap-2 text-destructive">
           <AlertCircle className="size-5" />
-          <span>Erreur lors du chargement des devis: {error.message}</span>
+          <span>Erreur: {error.message}</span>
         </div>
       </div>
     );
   }
-
-  const devisData = devis && devis.length > 0 ? devis : fallbackDevis;
 
   return (
     <div className="flex flex-col gap-6">
@@ -59,7 +166,10 @@ export default function Page() {
         <div className="flex flex-wrap items-center gap-3">
           <Tabs
             value={activeTab}
-            onValueChange={(v) => setActiveTab(v as "list" | "create")}
+            onValueChange={(v) => {
+              setActiveTab(v as "list" | "create");
+              if (v === "create") setEditingDevis(null);
+            }}
             className="w-auto"
           >
             <TabsList>
@@ -69,35 +179,82 @@ export default function Page() {
               </TabsTrigger>
               <TabsTrigger value="create" className="gap-2">
                 <Plus className="size-4" />
-                Nouveau devis
+                {editingDevis ? "Modifier le devis" : "Nouveau devis"}
               </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
       </div>
 
-      <DevisKpi devis={devisData} />
+      <DevisKpi devis={devis || []} />
 
       <Tabs value={activeTab} className="w-full">
         <TabsContent value="list" className="mt-0">
-          <DevisList devis={devisData} isLoading={isLoading} />
+          <DevisList
+            devis={devis || []}
+            isLoading={isLoading}
+            onAdd={handleAddDevis}
+            onEdit={handleEditDevis}
+            onDelete={handleDeleteDevis}
+          />
         </TabsContent>
         <TabsContent value="create" className="mt-0">
           <div className="flex flex-col gap-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <Button type="button" variant="outline">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleBackToList}
+                >
+                  <ArrowLeft className="size-4 mr-2" />
+                  Retour à la liste
+                </Button>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    const form = document.querySelector("form");
+                    if (form) {
+                      form.dispatchEvent(
+                        new Event("submit", {
+                          cancelable: true,
+                          bubbles: true,
+                        }),
+                      );
+                    }
+                  }}
+                >
+                  <Save className="size-4 mr-2" />
                   Sauvegarder
                 </Button>
                 <Button
                   type="button"
                   className="bg-zeno-primary hover:bg-zeno-primary/90"
+                  onClick={() => {
+                    const form = document.querySelector("form");
+                    if (form) {
+                      form.dispatchEvent(
+                        new Event("submit", {
+                          cancelable: true,
+                          bubbles: true,
+                        }),
+                      );
+                    }
+                  }}
                 >
-                  Envoyer le devis
+                  <Send className="size-4 mr-2" />
+                  {editingDevis ? "Mettre à jour" : "Créer le devis"}
                 </Button>
               </div>
             </div>
-            <DevisForm />
+            <Devis
+              devis={editingDevis}
+              onSave={handleSaveDevis}
+              isEditing={!!editingDevis}
+            />
           </div>
         </TabsContent>
       </Tabs>

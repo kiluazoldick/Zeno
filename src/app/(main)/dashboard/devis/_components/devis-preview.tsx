@@ -1,13 +1,19 @@
+// src/app/(main)/dashboard/devis/_components/devis-preview.tsx
 "use client";
 
 import * as React from "react";
-
 import { Download, Printer } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 
-import { DEVIS_PAPER_HEIGHT, DEVIS_PAPER_SCALE, DEVIS_PAPER_WIDTH, type DevisFormValues } from "./devis-data";
+import {
+  DEVIS_PAPER_HEIGHT,
+  DEVIS_PAPER_SCALE,
+  DEVIS_PAPER_WIDTH,
+  type DevisFormValues,
+} from "./devis-data";
 import { DevisPaper } from "./devis-paper";
 import { PrintDevis } from "./print-devis";
 import { useVisibleCenterPosition } from "./use-visible-center-position";
@@ -18,11 +24,56 @@ function handlePrint() {
 
 export function DevisPreview({ devis }: { devis: DevisFormValues }) {
   const previewBodyRef = React.useRef<HTMLDivElement>(null);
+  const [isLoading, setIsLoading] = React.useState(false);
+
   const paperLayout = useVisibleCenterPosition(previewBodyRef, {
     height: DEVIS_PAPER_HEIGHT,
     maxScale: DEVIS_PAPER_SCALE,
     width: DEVIS_PAPER_WIDTH,
   });
+
+  const handleDownloadPDF = async () => {
+    setIsLoading(true);
+    try {
+      const html2canvas = (await import("html2canvas")).default;
+      const { jsPDF } = await import("jspdf");
+
+      const element = document.querySelector(
+        "[data-print-paper]",
+      ) as HTMLElement;
+      if (!element) {
+        toast.error("Impossible de générer le PDF");
+        return;
+      }
+
+      toast.info("Génération du PDF en cours...");
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+        width: DEVIS_PAPER_WIDTH,
+        height: DEVIS_PAPER_HEIGHT,
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`devis-${devis.numero || "sans-numero"}.pdf`);
+      toast.success("PDF téléchargé avec succès");
+    } catch (error: any) {
+      console.error("Erreur PDF:", error);
+      toast.error(
+        "Erreur: " + (error.message || "Impossible de générer le PDF"),
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <>
@@ -35,9 +86,14 @@ export function DevisPreview({ devis }: { devis: DevisFormValues }) {
               <Printer className="size-4" />
               Imprimer
             </Button>
-            <Button type="button" variant="outline">
-              <Download className="size-4" />
-              Télécharger PDF
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleDownloadPDF}
+              disabled={isLoading}
+            >
+              {isLoading ? "Génération..." : <Download className="size-4" />}
+              {isLoading ? "Génération..." : "PDF"}
             </Button>
           </ButtonGroup>
         </div>
@@ -53,10 +109,17 @@ export function DevisPreview({ devis }: { devis: DevisFormValues }) {
           ) : null}
           <div
             style={{
-              height: paperLayout ? DEVIS_PAPER_HEIGHT * paperLayout.scale : DEVIS_PAPER_HEIGHT * DEVIS_PAPER_SCALE,
+              height: paperLayout
+                ? DEVIS_PAPER_HEIGHT * paperLayout.scale
+                : DEVIS_PAPER_HEIGHT * DEVIS_PAPER_SCALE,
               top: paperLayout?.top ?? "50%",
-              transform: paperLayout === null ? "translate(-50%, -50%)" : "translateX(-50%)",
-              width: paperLayout ? DEVIS_PAPER_WIDTH * paperLayout.scale : DEVIS_PAPER_WIDTH * DEVIS_PAPER_SCALE,
+              transform:
+                paperLayout === null
+                  ? "translate(-50%, -50%)"
+                  : "translateX(-50%)",
+              width: paperLayout
+                ? DEVIS_PAPER_WIDTH * paperLayout.scale
+                : DEVIS_PAPER_WIDTH * DEVIS_PAPER_SCALE,
             }}
             className="absolute left-1/2 opacity-0 data-[ready=true]:opacity-100"
             data-ready={paperLayout !== null}

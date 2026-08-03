@@ -1,3 +1,4 @@
+// src/lib/actions/devis/delete-devi.ts
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/server";
@@ -11,9 +12,15 @@ const deleteDeviSchema = z.object({
 export async function deleteDevi(id: string) {
   const adminClient = await createAdminClient();
 
+  console.log("🗑️ deleteDevi - ID reçu:", id);
+
   const validated = deleteDeviSchema.safeParse({ id });
 
   if (!validated.success) {
+    console.error(
+      "❌ Validation error:",
+      validated.error.flatten().fieldErrors,
+    );
     return {
       success: false,
       error: validated.error.flatten().fieldErrors,
@@ -21,7 +28,7 @@ export async function deleteDevi(id: string) {
   }
 
   try {
-    // Vérifier que le devis existe
+    // 1. Vérifier que le devis existe
     const { data: devis, error: checkError } = await adminClient
       .from("devis")
       .select("id, statut, projet_id")
@@ -29,21 +36,25 @@ export async function deleteDevi(id: string) {
       .single();
 
     if (checkError || !devis) {
+      console.error("❌ Devis non trouvé:", checkError);
       return {
         success: false,
         error: { notFound: ["Devis non trouvé"] },
       };
     }
 
-    // Vérifier qu'on ne peut pas supprimer un devis accepté
+    console.log("🗑️ Devis trouvé:", { id: devis.id, statut: devis.statut });
+
+    // 2. Vérifier qu'on ne peut pas supprimer un devis accepté
     if (devis.statut === "Accepté") {
+      console.log("⚠️ Devis accepté - suppression impossible");
       return {
         success: false,
         error: { statut: ["Un devis accepté ne peut pas être supprimé"] },
       };
     }
 
-    // Vérifier si le devis est lié à un contrat
+    // 3. Vérifier si le devis est lié à un contrat
     const { data: contrat, error: contratError } = await adminClient
       .from("contrats")
       .select("id")
@@ -51,6 +62,7 @@ export async function deleteDevi(id: string) {
       .maybeSingle();
 
     if (contratError) {
+      console.error("❌ Erreur vérification contrat:", contratError);
       return {
         success: false,
         error: { db: [contratError.message] },
@@ -58,6 +70,7 @@ export async function deleteDevi(id: string) {
     }
 
     if (contrat) {
+      console.log("⚠️ Devis lié à un contrat - suppression impossible");
       return {
         success: false,
         error: {
@@ -68,15 +81,19 @@ export async function deleteDevi(id: string) {
       };
     }
 
-    // Supprimer le devis
+    // 4. Supprimer le devis
+    console.log("🗑️ Suppression du devis:", id);
     const { error } = await adminClient.from("devis").delete().eq("id", id);
 
     if (error) {
+      console.error("❌ Erreur suppression:", error);
       return {
         success: false,
         error: { db: [error.message] },
       };
     }
+
+    console.log("✅ Devis supprimé avec succès:", id);
 
     revalidatePath("/dashboard/devis");
     if (devis.projet_id) {
@@ -86,10 +103,13 @@ export async function deleteDevi(id: string) {
     return {
       success: true,
     };
-  } catch (error) {
+  } catch (error: any) {
+    console.error("❌ Erreur inattendue:", error);
     return {
       success: false,
-      error: { unexpected: ["Une erreur inattendue s'est produite"] },
+      error: {
+        unexpected: [error.message || "Une erreur inattendue s'est produite"],
+      },
     };
   }
 }

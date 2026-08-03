@@ -1,3 +1,4 @@
+// src/app/(main)/dashboard/devis/_components/devis-list.tsx
 "use client";
 "use no memo";
 
@@ -28,6 +29,7 @@ import {
   XCircle,
   FileText,
   Loader2,
+  Pencil,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -80,69 +82,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import type { Devis } from "@/types/database";
-
-// Données mockées de fallback
-const FALLBACK_DEVIS: Devis[] = [
-  {
-    id: "DEV-001",
-    numero: "DEV-2026-001",
-    client_id: null,
-    projet_id: null,
-    titre: "Construction Immeuble Banto",
-    statut: "Accepté",
-    priorite: "Haute",
-    montant_total: 85000000,
-    date_emission: "2026-01-10",
-    date_validite: "2026-02-10",
-    contenu: [],
-    conditions: "",
-    notes: "",
-    taxe_id: "tva",
-    created_at: "",
-    updated_at: "",
-  },
-  {
-    id: "DEV-002",
-    numero: "DEV-2026-002",
-    client_id: null,
-    projet_id: null,
-    titre: "Rénovation Hôtel Royal",
-    statut: "Accepté",
-    priorite: "Haute",
-    montant_total: 42500000,
-    date_emission: "2026-02-25",
-    date_validite: "2026-03-25",
-    contenu: [],
-    conditions: "",
-    notes: "",
-    taxe_id: "tva",
-    created_at: "",
-    updated_at: "",
-  },
-  {
-    id: "DEV-003",
-    numero: "DEV-2026-003",
-    client_id: null,
-    projet_id: null,
-    titre: "Extension Hôpital Central",
-    statut: "Envoyé",
-    priorite: "Haute",
-    montant_total: 120000000,
-    date_emission: "2026-03-15",
-    date_validite: "2026-04-15",
-    contenu: [],
-    conditions: "",
-    notes: "",
-    taxe_id: "tva",
-    created_at: "",
-    updated_at: "",
-  },
-];
 
 interface DevisListProps {
-  devis: Devis[];
+  devis: any[];
   isLoading: boolean;
+  onAdd: () => void;
+  onEdit: (devis: any) => void;
+  onDelete: (id: string) => void;
 }
 
 const statusColors: Record<string, { bg: string; icon: React.ReactNode }> = {
@@ -188,9 +134,13 @@ function preventPaginationNavigation(
   event.preventDefault();
 }
 
-export function DevisList({ devis, isLoading }: DevisListProps) {
-  const data = devis && devis.length > 0 ? devis : FALLBACK_DEVIS;
-
+export function DevisList({
+  devis,
+  isLoading,
+  onAdd,
+  onEdit,
+  onDelete,
+}: DevisListProps) {
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
@@ -204,16 +154,16 @@ export function DevisList({ devis, isLoading }: DevisListProps) {
   });
 
   const filteredData = React.useMemo(() => {
-    if (!searchQuery) return data;
-    return data.filter(
-      (devis) =>
-        devis.numero.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (devis.titre?.toLowerCase().includes(searchQuery.toLowerCase()) ??
-          false),
+    if (!devis) return [];
+    if (!searchQuery) return devis;
+    return devis.filter(
+      (d) =>
+        d.numero?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        d.titre?.toLowerCase().includes(searchQuery.toLowerCase()),
     );
-  }, [searchQuery, data]);
+  }, [searchQuery, devis]);
 
-  const columns: ColumnDef<Devis>[] = [
+  const columns: ColumnDef<any>[] = [
     {
       id: "select",
       header: ({ table }) => (
@@ -254,7 +204,7 @@ export function DevisList({ devis, isLoading }: DevisListProps) {
           className="-ml-3 text-muted-foreground"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Projet
+          Titre
           <ArrowUpDown className="ml-2 size-4" />
         </Button>
       ),
@@ -273,11 +223,11 @@ export function DevisList({ devis, isLoading }: DevisListProps) {
         <Badge
           className={cn(
             "gap-1.5 rounded-sm border font-medium",
-            statusColors[row.original.statut].bg,
+            statusColors[row.original.statut]?.bg || "bg-muted",
           )}
           variant="outline"
         >
-          {statusColors[row.original.statut].icon}
+          {statusColors[row.original.statut]?.icon}
           {row.original.statut}
         </Badge>
       ),
@@ -311,28 +261,13 @@ export function DevisList({ devis, isLoading }: DevisListProps) {
       ),
     },
     {
-      accessorKey: "date_validite",
-      header: "Valide jusqu'au",
-      cell: ({ row }) => (
-        <div className="text-sm">
-          {row.original.date_validite
-            ? new Date(row.original.date_validite).toLocaleDateString("fr-FR", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              })
-            : "-"}
-        </div>
-      ),
-    },
-    {
       accessorKey: "priorite",
       header: "Priorité",
       cell: ({ row }) => (
         <div
           className={cn(
             "font-medium text-sm",
-            priorityColors[row.original.priorite],
+            priorityColors[row.original.priorite] || "text-muted-foreground",
           )}
         >
           {row.original.priorite}
@@ -343,9 +278,9 @@ export function DevisList({ devis, isLoading }: DevisListProps) {
     {
       id: "actions",
       cell: ({ row }) => {
-        const devis = row.original;
-        const isDraft = devis.statut === "Brouillon";
-        const isSent = devis.statut === "Envoyé";
+        const devisItem = row.original;
+        const isDeletable =
+          devisItem.statut !== "Accepté" && devisItem.statut !== "Envoyé";
 
         return (
           <DropdownMenu>
@@ -360,33 +295,55 @@ export function DevisList({ devis, isLoading }: DevisListProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                <Eye className="size-4" />
+              <DropdownMenuItem
+                onClick={() => {
+                  const event = new CustomEvent("previewDevis", {
+                    detail: devisItem,
+                  });
+                  document.dispatchEvent(event);
+                }}
+              >
+                <Eye className="size-4 mr-2" />
                 Voir le devis
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onEdit(devisItem)}>
+                <Pencil className="size-4 mr-2" />
+                Modifier
+              </DropdownMenuItem>
               <DropdownMenuItem>
-                <FileDown className="size-4" />
+                <FileDown className="size-4 mr-2" />
                 Télécharger PDF
               </DropdownMenuItem>
-              {isDraft && (
+              {devisItem.statut === "Brouillon" && (
                 <>
                   <DropdownMenuItem>
-                    <Send className="size-4" />
+                    <Send className="size-4 mr-2" />
                     Envoyer au client
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                 </>
               )}
-              {!isSent && !isDraft && (
-                <DropdownMenuItem>
-                  <Plus className="size-4" />
-                  Dupliquer
+              {isDeletable && (
+                <DropdownMenuItem
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        `Êtes-vous sûr de vouloir supprimer le devis "${devisItem.numero}" ?`,
+                      )
+                    ) {
+                      onDelete(devisItem.id);
+                    }
+                  }}
+                  variant="destructive"
+                >
+                  <Trash2 className="size-4 mr-2" />
+                  Supprimer
                 </DropdownMenuItem>
               )}
-              {isDraft && (
-                <DropdownMenuItem variant="destructive">
-                  <Trash2 className="size-4" />
-                  Supprimer
+              {!isDeletable && (
+                <DropdownMenuItem disabled className="text-muted-foreground">
+                  <Trash2 className="size-4 mr-2" />
+                  Supprimer (non autorisé)
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>
@@ -557,6 +514,7 @@ export function DevisList({ devis, isLoading }: DevisListProps) {
             <Button
               size="sm"
               className="bg-zeno-primary hover:bg-zeno-primary/90"
+              onClick={onAdd}
             >
               <Plus className="size-4" />
               Nouveau devis

@@ -1,3 +1,4 @@
+// src/app/(main)/dashboard/devis/_components/use-visible-center-position.ts
 "use client";
 
 import * as React from "react";
@@ -31,18 +32,35 @@ export function useVisibleCenterPosition(
       const visibleBottom = Math.min(parentRect.bottom, window.innerHeight);
       const visibleHeight = Math.max(0, visibleBottom - visibleTop);
       const visibleCenter =
-        visibleHeight > 0 ? visibleTop + visibleHeight / 2 - parentRect.top : parent.clientHeight / 2;
+        visibleHeight > 0
+          ? visibleTop + visibleHeight / 2 - parentRect.top
+          : parent.clientHeight / 2;
 
       const availableWidth = Math.max(0, parent.clientWidth - padding * 2);
       const availableHeight = Math.max(0, parent.clientHeight - padding * 2);
-      const scale = Math.min(maxScale, availableWidth / width, availableHeight / height);
-      const nextScale = Number.isFinite(scale) ? Math.max(0.1, scale) : maxScale;
+      const scale = Math.min(
+        maxScale,
+        availableWidth / width,
+        availableHeight / height,
+      );
+      const nextScale = Number.isFinite(scale)
+        ? Math.max(0.1, scale)
+        : maxScale;
       const scaledHeight = height * nextScale;
-      const maxTop = Math.max(padding, parent.clientHeight - scaledHeight - padding);
-      const nextTop = Math.min(Math.max(visibleCenter - scaledHeight / 2, padding), maxTop);
+      const maxTop = Math.max(
+        padding,
+        parent.clientHeight - scaledHeight - padding,
+      );
+      const nextTop = Math.min(
+        Math.max(visibleCenter - scaledHeight / 2, padding),
+        maxTop,
+      );
 
       setLayout((currentLayout) => {
-        if (currentLayout?.top === nextTop && currentLayout.scale === nextScale) {
+        if (
+          currentLayout?.top === nextTop &&
+          currentLayout.scale === nextScale
+        ) {
           return currentLayout;
         }
         return { scale: nextScale, top: nextTop };
