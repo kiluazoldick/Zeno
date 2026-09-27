@@ -12,6 +12,7 @@ import {
   type GetReportsFilters,
 } from "@/lib/actions/reports";
 import { toast } from "sonner";
+import { ReportStatusUpdateInput } from "@/lib/validations";
 
 // Clés de cache
 export const reportsKeys = {
@@ -122,13 +123,11 @@ export function useUpdateReportStatus() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      id,
-      statut,
-      notes,
-    }: Parameters<typeof updateReportStatus>[0] &
-      Parameters<typeof updateReportStatus>[1] & { notes?: string }) =>
-      updateReportStatus(id, statut, notes),
+    mutationFn: (params:{
+      id: string;
+      statut: ReportStatusUpdateInput['statut'];
+      notes?:string;
+    })=>updateReportStatus(params.id, params.statut, params.notes),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: reportsKeys.lists() });
       queryClient.invalidateQueries({ queryKey: reportsKeys.validated() });

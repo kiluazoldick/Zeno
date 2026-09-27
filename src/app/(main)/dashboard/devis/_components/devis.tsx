@@ -3,6 +3,7 @@
 
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { type DevisInput } from "@/lib/validations";
 import { DevisForm } from "./devis-form";
 import { DevisPreview } from "./devis-preview";
@@ -40,7 +41,7 @@ const defaultDevisValues: DevisInput = {
 };
 
 export function Devis({ devis, onSave, isEditing }: DevisProps) {
-  const form = useForm<DevisInput>({
+  const form = useForm<z.input<typeof devisSchema>, unknown, DevisInput>({
     resolver: zodResolver(devisSchema),
     defaultValues: devis || defaultDevisValues,
   });

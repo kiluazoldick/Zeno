@@ -7,7 +7,7 @@ import {
 } from "react-hook-form";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-
+import { z } from "zod";
 import { defaultInvoiceValues } from "./data";
 import { InvoiceForm } from "./invoice-form";
 import { InvoicePreview } from "./invoice-preview";
@@ -30,7 +30,7 @@ export function Invoice({
   isEditing = false,
   isPreview = false,
 }: InvoiceProps) {
-  const form = useForm<InvoiceFormValues>({
+  const form = useForm<z.input<typeof invoiceSchema>, unknown, InvoiceFormValues>({
     resolver: zodResolver(invoiceSchema),
     defaultValues: facture ?? defaultInvoiceValues,
   });

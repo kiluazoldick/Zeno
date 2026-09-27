@@ -62,9 +62,9 @@ export function ProjectProgress({ data, isLoading }: ProjectProgressProps) {
   const chartData =
     data && data.length > 0
       ? data.slice(0, 8).map((item) => ({
-          name:
+          nom:
             item.nom.length > 12 ? item.nom.substring(0, 12) + "..." : item.nom,
-          progress: item.progression || 0,
+          progression: item.progression || 0,
         }))
       : fallbackData;
 
@@ -89,7 +89,7 @@ export function ProjectProgress({ data, isLoading }: ProjectProgressProps) {
           >
             <CartesianGrid vertical={false} />
             <XAxis
-              dataKey="name"
+              dataKey="nom"
               tickLine={false}
               tickMargin={10}
               axisLine={false}
@@ -111,7 +111,7 @@ export function ProjectProgress({ data, isLoading }: ProjectProgressProps) {
               }
             />
             <Bar
-              dataKey="progress"
+              dataKey="progression"
               fill="var(--color-progression)"
               radius={[4, 4, 0, 0]}
               barSize={40}

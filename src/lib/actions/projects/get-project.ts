@@ -2,6 +2,15 @@
 
 import { createServerClient } from "@/lib/supabase/server";
 import { z } from "zod";
+import type { Project } from "@/types";
+
+export type ProjectWithRelations = Project & {
+  client?: { nom?: string | null } | null;
+  tasks?: unknown[] | null;
+  devis?: unknown[] | null;
+  contrats?: unknown[] | null;
+  invoices?: unknown[] | null;
+};
 
 const getProjectSchema = z.object({
   id: z.string().uuid("ID projet invalide"),
@@ -21,7 +30,7 @@ export async function getProject(
     includeContrats?: boolean;
     includeInvoices?: boolean;
   },
-) {
+): Promise<ProjectWithRelations | null> {
   const supabase = await createServerClient();
 
   const validated = getProjectSchema.safeParse({
@@ -78,7 +87,7 @@ export async function getProject(
     return null;
   }
 
-  return data;
+  return data as ProjectWithRelations;
 }
 
 // Récupérer l'avancement d'un projet
@@ -104,7 +113,13 @@ export async function getProjectProgress(id: string) {
       return null;
     }
 
-    const tasks = project?.tasks || [];
+    const projectRow = project as unknown as {
+      id: string;
+      nom: string;
+      progression: number | null;
+      tasks: Array<{ id: string; statut: string | null }> | null;
+    };
+    const tasks = projectRow.tasks || [];
     const totalTasks = tasks.length;
     const completedTasks = tasks.filter(
       (t: any) => t.statut === "Terminé",
@@ -113,9 +128,9 @@ export async function getProjectProgress(id: string) {
       totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 
     return {
-      id: project.id,
-      nom: project.nom,
-      progression: project.progression || 0,
+      id: projectRow.id,
+      nom: projectRow.nom,
+      progression: projectRow.progression || 0,
       total_taches: totalTasks,
       taches_terminees: completedTasks,
       avancement_taches: Math.round(avancementTaches),

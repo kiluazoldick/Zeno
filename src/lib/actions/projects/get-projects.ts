@@ -100,9 +100,20 @@ export async function getProjectsWithProgress() {
       return [];
     }
 
+    const projectRows = (projects ?? []) as unknown as Array<{
+      id: string;
+      nom: string;
+      statut: string;
+      progression: number | null;
+      date_debut: string | null;
+      date_fin: string | null;
+      client: { nom: string } | null;
+      tasks: Array<{ id: string; statut: string | null }> | null;
+    }>;
+
     // Formater les données avec les calculs
     return (
-      projects?.map((project) => {
+      projectRows.map((project) => {
         const tasks = project.tasks || [];
         const totalTasks = tasks.length;
         const completedTasks = tasks.filter(
@@ -123,7 +134,7 @@ export async function getProjectsWithProgress() {
           taches_terminees: completedTasks,
           avancement_taches: Math.round(avancementTaches),
         };
-      }) || []
+      })
     );
   } catch (error) {
     console.error("Erreur:", error);

@@ -32,7 +32,7 @@ export async function updateInvoiceStatus(
     // Vérifier que la facture existe
     const { data: existing, error: checkError } = await adminClient
       .from("invoices")
-      .select("id, client_id, projet_id, contrat_id, statut, montant_total")
+      .select("id, numero,  client_id, projet_id, contrat_id, statut, montant_total")
       .eq("id", id)
       .single();
 

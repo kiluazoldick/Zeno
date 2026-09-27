@@ -11,6 +11,7 @@ import {
 } from "@/lib/actions/contrats";
 import { toast } from "sonner";
 import { ContratInput } from "@/lib/validations/contrat.schema";
+import { ContratStatusUpdateInput } from "@/lib/validations/contrat.schema";
 
 // Clés de cache
 export const contratsKeys = {
@@ -57,7 +58,9 @@ export function useCreateContrat() {
 
   return useMutation({
     mutationFn: async (data: ContratInput) => {
-      const result = await createContrat(data);
+      const result = await createContrat(data) as
+    | { success: true; data: any }
+    | { success: false; error: string };
 
       if (!result.success) {
         throw new Error(
@@ -117,13 +120,11 @@ export function useUpdateContratStatus() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      id,
-      statut,
-      notes,
-    }: Parameters<typeof updateContratStatus>[0] &
-      Parameters<typeof updateContratStatus>[1] & { notes?: string }) =>
-      updateContratStatus(id, statut, notes),
+      mutationFn: (params: {
+      id: string;
+      statut: ContratStatusUpdateInput["statut"];
+      notes?: string;
+    }) => updateContratStatus(params.id, params.statut, params.notes),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: contratsKeys.lists() });
       queryClient.invalidateQueries({ queryKey: contratsKeys.active() });

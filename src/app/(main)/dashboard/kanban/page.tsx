@@ -248,7 +248,23 @@ function getEmptyBoard(): BoardState {
   };
 }
 
-function convertToBoard(tasksByStatus: any): BoardState {
+type TaskByStatusItem = {
+  id: string;
+  titre?: string | null;
+  description?: string | null;
+  priorite?: string | null;
+  date_execution?: string | null;
+  lieu?: string | null;
+  rapport_effectue?: boolean | null;
+  progression?: number | null;
+  statut: string;
+  assigne?: { id?: string | null; nom?: string | null } | null;
+  projet?: { id?: string | null; nom?: string | null } | null;
+};
+
+function convertToBoard(
+  tasksByStatus: Record<string, TaskByStatusItem[]> | undefined,
+): BoardState {
   const board: BoardState = {
     todo: [],
     "in-progress": [],
@@ -263,18 +279,23 @@ function convertToBoard(tasksByStatus: any): BoardState {
     Terminé: "done",
   };
 
-  Object.entries(tasksByStatus || {}).forEach(
-    ([status, tasks]: [string, any[]]) => {
+  Object.entries(tasksByStatus || {}).forEach(([status, tasks]) => {
       const columnId = statusMap[status];
       if (columnId && Array.isArray(tasks)) {
         tasks.forEach((task) => {
           const assigneeName = task.assigne?.nom || "Non assigné";
+          const priority: Task["priority"] =
+            task.priorite === "Haute" ||
+            task.priorite === "Basse" ||
+            task.priorite === "Moyenne"
+              ? task.priorite
+              : "Moyenne";
 
           board[columnId].push({
             id: task.id,
             title: task.titre || "",
             description: task.description || "",
-            priority: task.priorite || "Moyenne",
+            priority,
             dueDate: task.date_execution
               ? new Date(task.date_execution).toLocaleDateString("fr-FR", {
                   day: "numeric",
@@ -288,19 +309,18 @@ function convertToBoard(tasksByStatus: any): BoardState {
               name: assigneeName,
               tone: getToneForMember(assigneeName),
             },
-            team: task.projet?.nom || "Sans projet",
+            team: (task.projet?.nom || "Sans projet") as Task["team"],
             insights: [],
             raw: {
               assignee_id: task.assigne?.id || null,
               project_id: task.projet?.id || null,
               statut: task.statut,
-              date_execution: task.date_execution,
+              date_execution: task.date_execution ?? null,
             },
           });
         });
       }
-    },
-  );
+  });
 
   return board;
 }

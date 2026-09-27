@@ -67,7 +67,7 @@ export async function updateDevisStatus(
       .from("devis")
       .update({
         statut,
-        notes: validated.data.notes || existing.notes,
+        notes: validated.data.notes ,
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)

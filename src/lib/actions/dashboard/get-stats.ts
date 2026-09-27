@@ -68,21 +68,27 @@ export async function getChartData() {
   }
 
   // Compter manuellement les tâches par statut
-  const tasksCount = tasks?.reduce(
-    (acc, task) => {
-      const statut = task.statut || "À faire";
-      acc[statut] = (acc[statut] || 0) + 1;
-      return acc;
-    },
-    {} as Record<string, number>,
-  );
+    const taskRows: unknown[] = tasks ?? [];
 
-  const tasksResult = Object.entries(tasksCount || {}).map(
-    ([statut, count]) => ({
-      statut,
-      count,
-    }),
-  );
+  const tasksCount = taskRows.reduce<Record<string, number>>((acc, item) => {
+    if (typeof item !== "object" || item === null || !("statut" in item)) {
+      return acc;
+    }
+
+    const rawStatus = item.statut;
+    const statut =
+      typeof rawStatus === "string" && rawStatus.length > 0
+        ? rawStatus
+        : "À faire";
+
+    acc[statut] = (acc[statut] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  const tasksResult = Object.entries(tasksCount).map(([statut, count]) => ({
+    statut,
+    count,
+  }));
 
   // Récupérer les projets par statut (sans .group())
   const { data: projects, error: projectsError } = await supabase
@@ -93,13 +99,23 @@ export async function getChartData() {
     console.error("Erreur projets:", projectsError);
   }
 
-  const projectsCount = projects?.reduce(
+  function isProjectStatusRow(value: unknown): value is { statut: string | null } {
+  if (typeof value !== "object" || value === null || !("statut" in value)) {
+    return false;
+  }
+
+  return typeof value.statut === "string" || value.statut === null;
+}
+
+  const projectRows: unknown[] = Array.isArray(projects) ? projects : [];
+
+  const projectsCount = projectRows.filter(isProjectStatusRow).reduce<Record<string, number>>(
     (acc, project) => {
       const statut = project.statut || "En attente";
-      acc[statut] = (acc[statut] || 0) + 1;
+      acc[statut] = (acc[statut] ?? 0) + 1;
       return acc;
     },
-    {} as Record<string, number>,
+    {},
   );
 
   const projectsResult = Object.entries(projectsCount || {}).map(

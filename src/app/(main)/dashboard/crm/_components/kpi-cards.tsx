@@ -12,8 +12,16 @@ import {
 import type { Client } from "@/types";
 
 interface KpiCardsProps {
-  clients: Client[];
+  clients: ClientWithProjects[];
 }
+
+type ClientProject = {
+  budget_total: number | null;
+};
+
+type ClientWithProjects = Client & {
+  projects?: ClientProject[] | null;
+};
 
 export function KpiCards({ clients }: KpiCardsProps) {
   // Total des clients
@@ -33,7 +41,11 @@ export function KpiCards({ clients }: KpiCardsProps) {
   // Montant total des projets
   const totalBudget = clients.reduce((sum, c) => {
     const projectBudget =
-      c.projects?.reduce((s, p) => s + (p.budget_total || 0), 0) || 0;
+      c.projects?.reduce(
+        (projectSum: number, project: ClientProject) =>
+          projectSum + (project.budget_total || 0),
+        0,
+      ) || 0;
     return sum + projectBudget;
   }, 0);
 

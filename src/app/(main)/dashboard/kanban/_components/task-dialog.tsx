@@ -91,7 +91,7 @@ export function TaskDialog({
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<TaskFormData>({
+  } = useForm<z.input<typeof taskSchema>, unknown, TaskFormData>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
       titre: "",
