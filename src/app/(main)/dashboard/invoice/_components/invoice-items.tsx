@@ -21,17 +21,17 @@ import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn, formatCurrency } from "@/lib/utils";
-
-import { getLineAmount, type InvoiceFormValues, type InvoiceLineItem } from "./data";
+import { getLineAmount, InvoiceLineItem } from "./data";
+import type { InvoiceFormValues } from "@/lib/validations";
 
 export function InvoiceItems() {
   const { control, register } = useFormContext<InvoiceFormValues>();
   const { append, fields, move, remove } = useFieldArray({
     control,
-    name: "items",
+    name: "contenu",
     keyName: "fieldKey",
   });
-  const items = useWatch({ control, name: "items" }) ?? [];
+  const items = useWatch({ control, name: "contenu" }) ?? [];
   const sortableItemIds = fields.map((field) => field.id);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -144,21 +144,21 @@ function SortableInvoiceItemRow({
       <Input
         className="min-w-0 text-sm max-md:col-span-3"
         aria-label={`Item ${index + 1} description`}
-        {...register(`items.${index}.description` as const)}
+        {...register(`contenu.${index}.description` as const)}
       />
       <Input
         type="number"
         step="1"
         className="text-sm max-md:col-start-2 max-md:row-start-2"
         aria-label={`Item ${index + 1} quantity`}
-        {...register(`items.${index}.quantity` as const, { valueAsNumber: true })}
+        {...register(`contenu.${index}.quantity` as const, { valueAsNumber: true })}
       />
       <Input
         type="number"
         step="0.01"
         className="text-sm max-md:col-start-3 max-md:row-start-2"
         aria-label={`Item ${index + 1} unit price`}
-        {...register(`items.${index}.unitPrice` as const, { valueAsNumber: true })}
+        {...register(`contenu.${index}.unitPrice` as const, { valueAsNumber: true })}
       />
       <div className="min-w-0 text-right font-medium text-sm max-md:col-span-3 max-md:col-start-2 max-md:row-start-3 max-md:flex max-md:items-center max-md:justify-between max-md:text-left">
         <span className="hidden text-muted-foreground max-md:inline">Line total</span>

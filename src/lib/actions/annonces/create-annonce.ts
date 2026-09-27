@@ -46,10 +46,9 @@ export async function createAnnonce(data: AnnonceInput) {
         auteur: validated.data.auteur || null,
         importance: validated.data.importance || "Normale",
         statut: validated.data.statut || "Brouillon",
-        date_annonce: new Date().toISOString(),
+        date_annonce: validated.data.date_annonce || null,
         date_reunion: validated.data.date_reunion || null,
         tags: validated.data.tags || null,
-        commentaires_count: 0,
       })
       .select()
       .single();

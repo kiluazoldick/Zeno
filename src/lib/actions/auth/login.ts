@@ -1,8 +1,10 @@
 "use server";
 
-import { createServerClient } from "@/lib/supabase/server";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+
+import { auth } from "@/lib/auth";
 
 const loginSchema = z.object({
   email: z.string().email("Email invalide"),
@@ -12,8 +14,6 @@ const loginSchema = z.object({
 });
 
 export async function login(formData: FormData) {
-  const supabase = await createServerClient();
-
   const validatedFields = loginSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
@@ -27,13 +27,19 @@ export async function login(formData: FormData) {
 
   const { email, password } = validatedFields.data;
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-
-  if (error) {
-    return { error: error.message };
+  try {
+    await auth.api.signInEmail({
+      body: {
+        email,
+        password,
+        rememberMe: true,
+      },
+      headers: await headers(),
+    });
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "Identifiants invalides",
+    };
   }
 
   redirect("/dashboard/default");

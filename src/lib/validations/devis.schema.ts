@@ -8,9 +8,12 @@ export const devisLineItemSchema = z.object({
 });
 
 export const devisSchema = z.object({
-  client_id: z.string().uuid("ID client invalide").optional().nullable(),
-  projet_id: z.string().uuid("ID projet invalide").optional().nullable(),
-  titre: z.string().optional().nullable(),
+  numero: z.string().optional(),
+  client_id: z.string().uuid("ID client invalide").optional(),
+  client_nom: z.string().optional(),
+  projet_nom: z.string().optional(),
+  projet_id: z.string().uuid("ID projet invalide").optional(),
+  titre: z.string().optional(),
   statut: z
     .enum(["Brouillon", "Envoyé", "Accepté", "Refusé"])
     .default("Brouillon"),
@@ -18,13 +21,40 @@ export const devisSchema = z.object({
   montant_total: z
     .number()
     .positive("Le montant doit être positif")
-    .optional()
-    .nullable(),
-  date_emission: z.string().date("Date invalide").optional().nullable(),
-  date_validite: z.string().date("Date invalide").optional().nullable(),
-  contenu: z.array(devisLineItemSchema).optional().nullable(),
-  conditions: z.string().optional().nullable(),
-  notes: z.string().optional().nullable(),
+    .optional(),
+  date_emission: z.string().date("Date invalide").optional(),
+  date_validite: z.string().date("Date invalide").optional(),
+  contexte: z.string().optional(),
+  objectifs: z.string().nullable().optional(),
+  architecture: z.string().nullable().optional(),
+  modalites_paiement: z.string().nullable().optional(),
+  contenu: z
+    .array(
+      z.object({
+        description: z.string(),
+        quantite: z.number(),
+        prix_unitaire: z.number(),
+      }),
+    )
+    .default([]),
+  prestations: z
+    .array(
+      z.object({
+        titre: z.string(),
+        description: z.string(),
+      }),
+    )
+    .default([]),
+  planning: z
+    .array(
+      z.object({
+        semaine: z.string(),
+        taches: z.string(),
+      }),
+    )
+    .default([]),
+  conditions: z.string().optional(),
+  notes: z.string().optional(),
   taxe_id: z.string().default("tva"),
 });
 

@@ -8,7 +8,7 @@ import {
 import { useProjects } from "@/hooks/queries/use-projects";
 import { useTasks } from "@/hooks/queries/use-tasks";
 import { useMembers } from "@/hooks/queries/use-members";
-import { useTransactions } from "@/hooks/queries/use-transactions";
+// import { useTransactions } from "@/hooks/queries/use-transactions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { StatsKpiStrip } from "./_components/stats-kpi-strip";
@@ -37,8 +37,8 @@ export default function Page() {
     includeProject: true,
   });
   const { data: membersData, isLoading: membersLoading } = useMembers();
-  const { data: transactionsData, isLoading: transactionsLoading } =
-    useTransactions();
+  // const { data: transactionsData, isLoading: transactionsLoading } =
+  //   useTransactions();
 
   const isLoading =
     statsLoading ||
@@ -46,8 +46,9 @@ export default function Page() {
     productivityLoading ||
     projectsLoading ||
     tasksLoading ||
-    membersLoading ||
-    transactionsLoading;
+    membersLoading;
+    // ||
+    // transactionsLoading;
 
   // Transformer les données pour chaque composant
   const projectsDistribution =
@@ -63,7 +64,7 @@ export default function Page() {
     }, []) || [];
 
   const tasksByStatus =
-    tasksData?.reduce((acc: any[], task) => {
+    tasksData?.reduce((acc: any[], task: any) => {
       const statut = task.statut || "À faire";
       const existing = acc.find((p) => p.statut === statut);
       if (existing) {
@@ -117,6 +118,13 @@ export default function Page() {
     devisAcceptes: 0, // À implémenter avec les devis
   };
 
+  const normalizedFinances = statsData?.finances?.map((item) => ({
+    mois: item.mois ?? "",
+    entrees: item.entrees ?? 0,
+    sorties: item.sorties ?? 0,
+    solde: item.solde ?? 0,
+  }));
+
   return (
     <div className="flex flex-col gap-4">
       <div className="space-y-1">
@@ -144,7 +152,7 @@ export default function Page() {
 
           <div className="grid grid-cols-1 items-stretch gap-4 xl:grid-cols-12">
             <div className="xl:col-span-7">
-              <RevenueChart data={statsData?.finances} isLoading={isLoading} />
+              <RevenueChart data={normalizedFinances} isLoading={isLoading} />
             </div>
             <div className="xl:col-span-5">
               <ProjectsDistribution
@@ -163,7 +171,7 @@ export default function Page() {
             </div>
             <div className="xl:col-span-7">
               <BudgetVsActual
-                data={statsData?.finances}
+                data={normalizedFinances}
                 isLoading={isLoading}
               />
             </div>
@@ -173,12 +181,12 @@ export default function Page() {
             <div className="xl:col-span-6">
               <TasksStatus data={tasksByStatus} isLoading={isLoading} />
             </div>
-            <div className="xl:col-span-6">
+            {/* <div className="xl:col-span-6">
               <FinancialOverview
                 data={transactionsData}
                 isLoading={isLoading}
               />
-            </div>
+            </div> */}
           </div>
         </TabsContent>
 

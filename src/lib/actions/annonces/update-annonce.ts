@@ -50,11 +50,11 @@ export async function updateAnnonce(id: string, data: AnnonceUpdateInput) {
     }
 
     // Vérifier que le membre existe si fourni
-    if (validated.data.auteur) {
+    if (validated.data.data.auteur) {
       const { data: member, error: memberError } = await adminClient
         .from("members")
         .select("id")
-        .eq("id", validated.data.auteur)
+        .eq("id", validated.data.data.auteur)
         .single();
 
       if (memberError || !member) {
@@ -69,7 +69,7 @@ export async function updateAnnonce(id: string, data: AnnonceUpdateInput) {
     const { data: annonce, error } = await adminClient
       .from("annonces")
       .update({
-        ...validated.data,
+        ...validated.data.data,
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)

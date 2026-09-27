@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Plus, List, Send, Save, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { type DevisInput, DevisUpdateInput } from "@/lib/validations";
 
 import { DevisList } from "./_components/devis-list";
 import { DevisKpi } from "./_components/devis-kpi";
@@ -30,6 +31,7 @@ export default function Page() {
   } = useDevis({
     includeClient: true,
     includeProjet: true,
+    includeContrat: false,
   });
 
   const createDevis = useCreateDevis();
@@ -41,7 +43,7 @@ export default function Page() {
     setActiveTab("create");
   };
 
-  const handleEditDevis = (devis: any) => {
+  const handleEditDevis = (devis: DevisUpdateInput) => {
     console.log("✏️ handleEditDevis - Devis reçu:", devis);
     setEditingDevis(devis);
     setActiveTab("create");
@@ -68,22 +70,20 @@ export default function Page() {
     );
   };
 
-  const handleSaveDevis = (data: any) => {
+  const handleSaveDevis = (data: DevisInput) => {
     console.log("💾 handleSaveDevis - Data reçue:", data);
     console.log("💾 handleSaveDevis - editingDevis:", editingDevis);
 
     if (editingDevis) {
       // Modification
-      const updateData = { ...data };
-      Object.keys(updateData).forEach((key) => {
-        if (
-          updateData[key] === "" ||
-          updateData[key] === null ||
-          updateData[key] === undefined
-        ) {
-          delete updateData[key];
-        }
-      });
+      const updateData = Object.fromEntries(
+        Object.entries(data).filter(
+          ([_, value]) =>
+            value !== "" &&
+            value !== null &&
+            value !== undefined
+        )
+      );
       delete updateData.numero;
 
       console.log("📝 Mise à jour du devis:", editingDevis.id, updateData);
@@ -108,7 +108,11 @@ export default function Page() {
     } else {
       // Création
       console.log("🆕 Création d'un nouveau devis:", data);
-      delete data.numero;
+      const createData = { ...data };
+
+      delete createData.numero;
+
+      createDevis.mutate(createData);
 
       createDevis.mutate(data, {
         onSuccess: () => {
@@ -231,19 +235,9 @@ export default function Page() {
                   Sauvegarder
                 </Button>
                 <Button
-                  type="button"
+                  type="submit"
+                  form="devis-form"
                   className="bg-zeno-primary hover:bg-zeno-primary/90"
-                  onClick={() => {
-                    const form = document.querySelector("form");
-                    if (form) {
-                      form.dispatchEvent(
-                        new Event("submit", {
-                          cancelable: true,
-                          bubbles: true,
-                        }),
-                      );
-                    }
-                  }}
                 >
                   <Send className="size-4 mr-2" />
                   {editingDevis ? "Mettre à jour" : "Créer le devis"}

@@ -2,7 +2,6 @@
 "use no memo";
 
 import * as React from "react";
-
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -30,6 +29,7 @@ import {
   CreditCard,
   Loader2,
   FileText,
+  Pencil, // ← ajouté
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -82,13 +82,42 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import type { Invoice } from "@/types/database";
-
+import { deleteInvoice } from "@/lib/actions/invoices/delete-invoice";
 import { fallbackFactures, statusColors } from "./facture-data";
+
+type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
+
+export type Invoice = {
+  client_id: string | null;
+  conditions: string | null;
+  contenu: Json | null;
+  contrat_id: string | null;
+  created_at: string | null;
+  date_echeance: string | null;
+  date_emission: string | null;
+  date_paiement: string | null;
+  id: string;
+  montant_total: number | null;
+  notes: string | null;
+  numero: string;
+  priorite: string;
+  projet_id: string | null;
+  statut: string;
+  titre: string | null;
+  updated_at: string | null;
+};
 
 interface FactureListProps {
   factures: Invoice[];
   isLoading: boolean;
+  onInvoiceDeleted?: () => void;
+  onEdit?: (invoice: Invoice) => void; // ← nouveau
 }
 
 const priorityColors: Record<string, string> = {
@@ -122,28 +151,49 @@ function preventPaginationNavigation(
   event.preventDefault();
 }
 
-export function FactureList({ factures, isLoading }: FactureListProps) {
-  const data = factures && factures.length > 0 ? factures : fallbackFactures;
-
+export function FactureList({
+  factures,
+  isLoading,
+  onInvoiceDeleted,
+  onEdit,
+}: FactureListProps) {
+  const data = factures ?? [];
+  const [deletingInvoiceId, setDeletingInvoiceId] = React.useState<string | null>(null);
   const [rowSelection, setRowSelection] = React.useState({});
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    [],
-  );
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [searchQuery, setSearchQuery] = React.useState("");
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
   });
 
+  // Handler de suppression (placé avant les columns)
+  async function handleDeleteInvoice(invoice: Invoice) {
+    const confirmed = window.confirm(
+      `Voulez-vous vraiment supprimer la facture ${invoice.numero} ?\n\nCette action est irréversible.`,
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setDeletingInvoiceId(invoice.id);
+      await deleteInvoice(invoice.id);
+      onInvoiceDeleted?.();
+    } catch (error) {
+      console.error("Erreur lors de la suppression :", error);
+      alert("Impossible de supprimer la facture.");
+    } finally {
+      setDeletingInvoiceId(null);
+    }
+  }
+
   const filteredData = React.useMemo(() => {
     if (!searchQuery) return data;
     return data.filter(
       (facture) =>
         facture.numero.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (facture.titre?.toLowerCase().includes(searchQuery.toLowerCase()) ??
-          false),
+        (facture.titre?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false),
     );
   }, [searchQuery, data]);
 
@@ -309,10 +359,18 @@ export function FactureList({ factures, isLoading }: FactureListProps) {
                 <Eye className="size-4" />
                 Voir la facture
               </DropdownMenuItem>
+
+              {/* Bouton Modifier */}
+              <DropdownMenuItem onClick={() => onEdit?.(facture)}>
+                <Pencil className="size-4" />
+                Modifier
+              </DropdownMenuItem>
+
               <DropdownMenuItem>
                 <FileDown className="size-4" />
                 Télécharger PDF
               </DropdownMenuItem>
+
               {isDraft && (
                 <>
                   <DropdownMenuItem>
@@ -322,24 +380,38 @@ export function FactureList({ factures, isLoading }: FactureListProps) {
                   <DropdownMenuSeparator />
                 </>
               )}
+
               {isSent && !isPaid && (
                 <DropdownMenuItem>
                   <CreditCard className="size-4" />
                   Marquer comme payée
                 </DropdownMenuItem>
               )}
+
               {!isPaid && !isDraft && (
                 <DropdownMenuItem>
                   <Plus className="size-4" />
                   Dupliquer
                 </DropdownMenuItem>
               )}
+
               {isDraft && (
-                <DropdownMenuItem variant="destructive">
-                  <Trash2 className="size-4" />
-                  Supprimer
+                <DropdownMenuItem
+                  variant="destructive"
+                  disabled={deletingInvoiceId === facture.id}
+                  onClick={() => handleDeleteInvoice(facture)}
+                >
+                  {deletingInvoiceId === facture.id ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="size-4" />
+                  )}
+                  {deletingInvoiceId === facture.id
+                    ? "Suppression..."
+                    : "Supprimer"}
                 </DropdownMenuItem>
               )}
+
               {(isDraft || isSent) && (
                 <DropdownMenuItem
                   variant="destructive"
@@ -517,6 +589,7 @@ export function FactureList({ factures, isLoading }: FactureListProps) {
             <Button
               size="sm"
               className="bg-zeno-primary hover:bg-zeno-primary/90"
+              onClick={() => onEdit?.(null as any)} // ou une prop onCreate si vous préférez
             >
               <Plus className="size-4" />
               Nouvelle facture
@@ -524,6 +597,7 @@ export function FactureList({ factures, isLoading }: FactureListProps) {
           </div>
         </CardAction>
       </CardHeader>
+
       <CardContent className="flex flex-col gap-4 px-0">
         <div className="overflow-hidden">
           <Table className="**:data-[slot='table-cell']:px-4 **:data-[slot='table-head']:px-4 **:data-[slot='table-cell']:py-3">

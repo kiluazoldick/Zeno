@@ -34,6 +34,9 @@ export const memberSchema = z.object({
       "Suspendu",
     ])
     .default("Actif"),
+    password: z
+    .string()
+    .min(6, "Le mot de passe doit contenir au moins 6 caractères"),
 });
 
 export const memberUpdateSchema = memberSchema.partial();

@@ -15,8 +15,8 @@ import {
 
 export function FacturePaper({ facture }: { facture: FactureFormValues }) {
   const taxOption = getFactureTaxOption(facture);
-  const discountValue = Number.isFinite(facture.discountValue) ? facture.discountValue : 0;
-  const discountLabel = facture.discountType === "percent" ? `Remise ${discountValue}%` : "Remise";
+  const montant_total = Number.isFinite(facture.montant_total) ? facture.montant_total : 0;
+  const discountLabel = facture.discountType === "percent" ? `Remise ${montant_total}%` : "Remise";
 
   return (
     <article
@@ -46,10 +46,10 @@ export function FacturePaper({ facture }: { facture: FactureFormValues }) {
               N° Facture: <span className="font-normal">{facture.numero}</span>
             </p>
             <p className="font-semibold">
-              Date d'émission: <span className="font-normal">{facture.issuedDate}</span>
+              Date d'émission: <span className="font-normal">{facture.date_emission}</span>
             </p>
             <p className="font-semibold">
-              Date d'échéance: <span className="font-normal">{facture.paymentDueDate}</span>
+              Date d'échéance: <span className="font-normal">{facture.date_paiement}</span>
             </p>
           </div>
           <div className="text-right">
@@ -128,7 +128,7 @@ export function FacturePaper({ facture }: { facture: FactureFormValues }) {
               <span>Sous-total</span>
               <span>{formatFactureCurrency(getFactureSubtotal(facture))}</span>
             </div>
-            {facture.discountValue > 0 && (
+            {facture.montant_total > 0 && (
               <div className="flex justify-between gap-8 text-sm">
                 <span>{discountLabel}</span>
                 <span className="text-destructive">-{formatFactureCurrency(getFactureDiscount(facture))}</span>

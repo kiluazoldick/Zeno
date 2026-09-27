@@ -9,7 +9,7 @@ import {
   CardDescription,
   CardHeader,
 } from "@/components/ui/card";
-import type { Client } from "@/types/database";
+import type { Client } from "@/types";
 
 interface KpiCardsProps {
   clients: Client[];

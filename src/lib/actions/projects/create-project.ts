@@ -22,6 +22,59 @@ export async function createProject(data: ProjectInput) {
   }
 
   try {
+    const documents = data.documents ?? [];
+    const oversizedDocument = documents.find(
+      (document) => document.size > 10 * 1024 * 1024,
+    );
+
+    if (oversizedDocument) {
+      return {
+        success: false,
+        error: {
+          documents: [`${oversizedDocument.name} dépasse la limite de 10 Mo`],
+        },
+      };
+    }
+
+    const projectId = crypto.randomUUID();
+    const uploadedDocuments: Array<{
+      name: string;
+      path: string;
+      url: string;
+      type: string;
+    }> = [];
+
+    for (const document of documents) {
+      const extension = document.name.includes(".")
+        ? document.name.split(".").pop()?.toLowerCase() || "bin"
+        : "bin";
+      const path = `${projectId}/${crypto.randomUUID()}.${extension}`;
+      const fileBuffer = Buffer.from(await document.arrayBuffer());
+      const { error: uploadError } = await adminClient.storage
+        .from("project-documents")
+        .upload(path, fileBuffer, {
+          contentType: document.type || "application/octet-stream",
+          upsert: false,
+        });
+
+      if (uploadError) {
+        await adminClient.storage
+          .from("project-documents")
+          .remove(uploadedDocuments.map((uploaded) => uploaded.path));
+        return { success: false, error: { documents: [uploadError.message] } };
+      }
+
+      const { data: publicUrl } = adminClient.storage
+        .from("project-documents")
+        .getPublicUrl(path);
+      uploadedDocuments.push({
+        name: document.name,
+        path,
+        url: publicUrl.publicUrl,
+        type: document.type || "application/octet-stream",
+      });
+    }
+
     // Vérifier que le client existe si fourni
     if (validated.data.client_id) {
       const { data: client, error: clientError } = await adminClient
@@ -50,6 +103,7 @@ export async function createProject(data: ProjectInput) {
     const { data: project, error } = await adminClient
       .from("projects")
       .insert({
+        id: projectId,
         nom: validated.data.nom,
         client_id: validated.data.client_id || null,
         description: validated.data.description || null,
@@ -60,11 +114,15 @@ export async function createProject(data: ProjectInput) {
         date_fin: validated.data.date_fin || null,
         progression: progression,
         location: validated.data.location || null,
+        documents: uploadedDocuments,
       })
       .select()
       .single();
 
     if (error) {
+      await adminClient.storage
+        .from("project-documents")
+        .remove(uploadedDocuments.map((uploaded) => uploaded.path));
       console.error("Erreur createProject:", error);
       return {
         success: false,

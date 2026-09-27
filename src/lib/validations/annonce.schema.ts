@@ -6,8 +6,9 @@ export const annonceSchema = z.object({
   auteur: z.string().uuid("ID membre invalide").optional().nullable(),
   importance: z.enum(["Haute", "Normale", "Basse"]).default("Normale"),
   statut: z.enum(["Brouillon", "Publiée", "Archivée"]).default("Brouillon"),
+  date_annonce: z.string().date("Date invalide").optional().nullable(),
   date_reunion: z.string().date("Date invalide").optional().nullable(),
-  tags: z.array(z.string()).optional().nullable(),
+  tags: z.array(z.string()).nullable(),
 });
 
 export const annonceUpdateSchema = annonceSchema.partial();

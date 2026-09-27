@@ -28,6 +28,7 @@ export default function Page() {
     refetch,
   } = useProjects({
     includeClient: true,
+    includeTasks: false,
   });
 
   const { data: progressData, isLoading: progressLoading } =

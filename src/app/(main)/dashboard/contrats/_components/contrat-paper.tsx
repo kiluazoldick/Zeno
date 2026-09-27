@@ -12,11 +12,9 @@ import {
   getContratTotal,
   getLineAmount,
 } from "./contrat-data";
+import type { ContratInput } from "@/lib/validations";
 
-export function ContratPaper({ contrat }: { contrat: ContratFormValues }) {
-  const taxOption = getContratTaxOption(contrat);
-  const discountValue = Number.isFinite(contrat.discountValue) ? contrat.discountValue : 0;
-  const discountLabel = contrat.discountType === "percent" ? `Remise ${discountValue}%` : "Remise";
+export function ContratPaper({ contrat }: { contrat: ContratInput }) {
 
   return (
     <article
@@ -46,22 +44,22 @@ export function ContratPaper({ contrat }: { contrat: ContratFormValues }) {
               N° Contrat: <span className="font-normal">{contrat.numero}</span>
             </p>
             <p className="font-semibold">
-              Date d'émission: <span className="font-normal">{contrat.issuedDate}</span>
+              Date d'émission: <span className="font-normal">{contrat.date_emission}</span>
             </p>
             <p className="font-semibold">
-              Date de signature: <span className="font-normal">{contrat.signatureDate}</span>
+              Date de signature: <span className="font-normal">{contrat.date_signature}</span>
             </p>
             <p className="font-semibold">
               Période:{" "}
               <span className="font-normal">
-                {contrat.dateDebut} → {contrat.dateFin}
+                {contrat.date_debut} → {contrat.date_fin}
               </span>
             </p>
           </div>
           <div className="text-right">
             <p className="font-semibold">Émis par:</p>
-            <p>{contrat.from.issuerName}</p>
-            <p className="text-xs text-muted-foreground">{contrat.from.email}</p>
+            <p>{contrat.from?.issuerName}</p>
+            <p className="text-xs text-muted-foreground">{contrat.from?.email}</p>
           </div>
         </section>
 
@@ -69,100 +67,40 @@ export function ContratPaper({ contrat }: { contrat: ContratFormValues }) {
         <section className="grid grid-cols-2 gap-14 text-sm leading-relaxed">
           <div>
             <p className="mb-2 font-semibold uppercase text-xs tracking-wider text-zeno-secondary">De</p>
-            <p className="font-medium">{contrat.from.name}</p>
-            {contrat.from.addressLines.map((line) => (
-              <p key={line} className="text-muted-foreground">
+            <p className="font-medium">{contrat.from?.name}</p>
+            {contrat.from?.addressLines.map((line, index) => (
+              <p key={`from-address-${index}`} className="text-muted-foreground">
                 {line}
               </p>
             ))}
-            <p className="text-xs text-muted-foreground">Tél: {contrat.from.phone}</p>
-            <p className="text-xs text-muted-foreground">Email: {contrat.from.email}</p>
-            <p className="text-xs text-muted-foreground">N° RC: {contrat.from.taxId}</p>
+            <p className="text-xs text-muted-foreground">Tél: {contrat.from?.phone}</p>
+            <p className="text-xs text-muted-foreground">Email: {contrat.from?.email}</p>
+            <p className="text-xs text-muted-foreground">N° RC: {contrat.from?.taxId}</p>
           </div>
           <div>
             <p className="mb-2 font-semibold uppercase text-xs tracking-wider text-zeno-secondary">Pour</p>
-            <p className="font-medium">{contrat.to.name}</p>
-            {contrat.to.addressLines.map((line) => (
-              <p key={line} className="text-muted-foreground">
+            <p className="font-medium">{contrat.to?.name}</p>
+            {contrat.to?.addressLines.map((line, index) => (
+              <p key={`to-address-${index}`} className="text-muted-foreground">
                 {line}
               </p>
             ))}
-            <p className="text-xs text-muted-foreground">Tél: {contrat.to.telephone}</p>
-            <p className="text-xs text-muted-foreground">Email: {contrat.to.email}</p>
-            <p className="text-xs text-muted-foreground">N° RC: {contrat.to.taxId}</p>
+            <p className="text-xs text-muted-foreground">Tél: {contrat.to?.telephone}</p>
+            <p className="text-xs text-muted-foreground">Email: {contrat.to?.email}</p>
+            <p className="text-xs text-muted-foreground">N° RC: {contrat.to?.taxId}</p>
           </div>
         </section>
       </header>
 
       {/* Tableau des prestations */}
-      <div className="flex flex-col gap-5">
-        <section className="text-sm">
-          <div className="grid grid-cols-[1fr_74px_116px_116px] bg-zeno-primary/10 px-3 py-3 font-semibold uppercase text-zeno-secondary">
-            <span>Description des prestations</span>
-            <span className="text-right">Qté</span>
-            <span className="text-right">Prix unitaire</span>
-            <span className="text-right">Total</span>
-          </div>
-          {getContratItems(contrat).map((item) => (
-            <div key={item.id} className="grid grid-cols-[1fr_74px_116px_116px] border-b border-border/50 px-3 py-4">
-              <span>{item.description || "—"}</span>
-              <span className="text-right">{item.quantity}</span>
-              <span className="text-right">{formatContratCurrency(item.unitPrice)}</span>
-              <span className="text-right font-medium">{formatContratCurrency(getLineAmount(item))}</span>
-            </div>
-          ))}
-        </section>
-
-        {/* Totaux */}
-        <div className="grid grid-cols-2 gap-14 text-sm">
-          <div>
-            {contrat.clauses && (
-              <div className="mb-4">
-                <p className="font-semibold text-xs uppercase tracking-wider text-zeno-secondary">
-                  Clauses particulières
-                </p>
-                <p className="text-muted-foreground text-sm">{contrat.clauses}</p>
-              </div>
-            )}
-            {contrat.conditions && (
-              <div className="mb-4">
-                <p className="font-semibold text-xs uppercase tracking-wider text-zeno-secondary">
-                  Conditions générales
-                </p>
-                <p className="text-muted-foreground text-sm">{contrat.conditions}</p>
-              </div>
-            )}
-            {contrat.notes && (
-              <div>
-                <p className="font-semibold text-xs uppercase tracking-wider text-zeno-secondary">Notes</p>
-                <p className="text-muted-foreground text-sm">{contrat.notes}</p>
-              </div>
-            )}
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between gap-8 text-sm">
-              <span>Sous-total</span>
-              <span>{formatContratCurrency(getContratSubtotal(contrat))}</span>
-            </div>
-            {contrat.discountValue > 0 && (
-              <div className="flex justify-between gap-8 text-sm">
-                <span>{discountLabel}</span>
-                <span className="text-destructive">-{formatContratCurrency(getContratDiscount(contrat))}</span>
-              </div>
-            )}
-            <div className="flex justify-between gap-8 text-sm">
-              <span>
-                {taxOption.name} ({taxOption.rate}%)
-              </span>
-              <span>{formatContratCurrency(getContratTax(contrat))}</span>
-            </div>
-            <div className="border-t-2 border-zeno-primary pt-3">
-              <div className="flex justify-between gap-8 text-base font-bold">
-                <span className="uppercase text-zeno-secondary">Total TTC</span>
-                <span className="text-zeno-primary">{formatContratCurrency(getContratTotal(contrat))}</span>
-              </div>
-            </div>
-          </div>
+      <div>
+        <div>
+          <p>ARTICLE 1 -- OBJET DU CONTRAT</p>
+          <p>
+            Le présent contrat a pour objet de définir les conditions dans lesquelles <span className="text-bold">{contrat.from.name}</span> s'engage à concevoir, développer et livrer 
+            <span className="text-bold">{contrat.project_id}</span> pour le compte de <span className="text-bold">{contrat.to.name}</span>, conformément au <span className="text-bold">{contrat.numero}</span>
+            daté du <span className="text-bold">{contrat.date_emission}</span>, dûment validé par le client
+          </p>
         </div>
       </div>
 

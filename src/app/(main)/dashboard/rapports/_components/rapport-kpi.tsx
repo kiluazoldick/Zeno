@@ -4,7 +4,7 @@ import { FileText, CheckCircle, Clock, Archive, Loader2 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import type { Report } from "@/types/database";
+import type { Report } from "@/types";
 
 interface RapportKpiProps {
   rapports: Report[];

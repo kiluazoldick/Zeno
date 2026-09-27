@@ -4,19 +4,18 @@ import {
   getInvoiceDiscount,
   getInvoiceItems,
   getInvoiceSubtotal,
-  getInvoiceTax,
-  getInvoiceTaxOption,
   getInvoiceTotal,
   getLineAmount,
   INVOICE_PAPER_HEIGHT,
   INVOICE_PAPER_WIDTH,
-  type InvoiceFormValues,
 } from "./data";
+import { InvoiceFormValues } from "@/lib/validations";
 
 export function InvoicePaper({ invoice }: { invoice: InvoiceFormValues }) {
-  const taxOption = getInvoiceTaxOption(invoice);
-  const discountValue = Number.isFinite(invoice.discountValue) ? invoice.discountValue : 0;
-  const discountLabel = invoice.discountType === "percent" ? `Discount ${discountValue}%` : "Discount";
+  const montant_total = Number.isFinite(invoice.montant_total) ? invoice.montant_total : 0;
+  console.log("contenu brut :", invoice?.contenu);
+console.log("type de contenu :", typeof invoice?.contenu);
+console.log("est un tableau ?", Array.isArray(invoice?.contenu));
 
   return (
     <article
@@ -37,9 +36,9 @@ export function InvoicePaper({ invoice }: { invoice: InvoiceFormValues }) {
 
         <section className="grid grid-cols-2 gap-14 text-sm leading-relaxed">
           <div>
-            <p>Reference: {invoice.referenceNumber}</p>
-            <p>Issued: {invoice.issuedDate}</p>
-            <p>Payment due: {invoice.paymentDueDate}</p>
+            {/* <p>Reference: {invoice.numero}</p> */}
+            <p>Issued: {invoice.date_emission}</p>
+            <p>Payment due: {invoice.date_paiement}</p>
           </div>
           <div>
             <p>Payment account</p>
@@ -59,11 +58,9 @@ export function InvoicePaper({ invoice }: { invoice: InvoiceFormValues }) {
           </div>
           <div>
             <p className="mb-4 font-semibold uppercase">Bill to</p>
-            <p>{invoice.to.name}</p>
-            {invoice.to.addressLines.map((line) => (
-              <p key={line}>{line}</p>
-            ))}
-            <p>Tax ID: {invoice.to.taxId}</p>
+            <p>{invoice.to.nom}</p>
+            {/* <p> {invoice.to.addressLines}</p>
+            <p>Tax ID: {invoice.to.taxId}</p> */}
           </div>
         </section>
       </header>
@@ -76,9 +73,9 @@ export function InvoicePaper({ invoice }: { invoice: InvoiceFormValues }) {
             <span className="text-right">Unit cost</span>
             <span className="text-right">Line total</span>
           </div>
-          {getInvoiceItems(invoice).map((item) => (
+          {getInvoiceItems(invoice).map((item, index) => (
             <div
-              key={item.id}
+              key={item.id ?? `item-${index}`}
               className="grid grid-cols-[1fr_74px_116px_116px] border-[oklch(0.86_0_0)] border-b px-3 py-4"
             >
               <span>{item.description}</span>
@@ -95,16 +92,6 @@ export function InvoicePaper({ invoice }: { invoice: InvoiceFormValues }) {
               <div className="flex justify-between gap-8">
                 <span>Net amount</span>
                 <span>{formatInvoiceCurrency(getInvoiceSubtotal(invoice))}</span>
-              </div>
-              <div className="flex justify-between gap-8">
-                <span>{discountLabel}</span>
-                <span>{formatInvoiceCurrency(getInvoiceDiscount(invoice))}</span>
-              </div>
-              <div className="flex justify-between gap-8">
-                <span>
-                  {taxOption.name} {taxOption.rate}%
-                </span>
-                <span>{formatInvoiceCurrency(getInvoiceTax(invoice))}</span>
               </div>
             </div>
             <div className="border-current border-y-2 py-3">

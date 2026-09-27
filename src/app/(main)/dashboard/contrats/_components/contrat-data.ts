@@ -1,5 +1,11 @@
 import { addDays, format } from "date-fns";
-import type { Contrat } from "@/types/database";
+import type { Contrat } from "@/types";
+import type { ContratInput } from "@/lib/validations";
+
+// Dimensions du papier A4 en pixels (pour l'aperçu)
+export const CONTRAT_PAPER_WIDTH = 794;
+export const CONTRAT_PAPER_HEIGHT = 1123;
+export const CONTRAT_PAPER_SCALE = 0.7;
 
 // ============ TYPES ============
 export type ContratStatus = "Brouillon" | "En cours" | "Signé" | "Annulé";
@@ -43,7 +49,7 @@ export interface ContratToDetails {
 export interface ContratFormValues {
   id: string;
   numero: string;
-  issuedDate: string;
+ date: string;
   signatureDate: string;
   dateDebut: string;
   dateFin: string;
@@ -51,7 +57,7 @@ export interface ContratFormValues {
   to: ContratToDetails;
   taxId: string;
   discountType: ContratDiscountType;
-  discountValue: number;
+  montant_total: number;
   items: ContratLineItem[];
   notes: string;
   conditions: string;
@@ -66,6 +72,17 @@ export const contratTaxOptions: ContratTaxOption[] = [
   { id: "tva-reduite", name: "TVA Réduite", rate: 5.5 },
   { id: "aucune", name: "Aucune taxe", rate: 0 },
 ];
+
+const ContratFrom : ContratFromDetails = {
+  name: "Zeno Solutions",
+  issuerName: "Zeno Solutions",
+  email: "contact@zenosolutions.cm",
+  phone: "+237 6XX XXX XXX",
+  website: "https://www.zenosolutions.cm",
+  addressLines: ["BP 1234", "Douala", "Cameroun"],
+  taxId: "RC-123456789",
+  signature: "",
+};
 
 export const contratClients: ContratToDetails[] = [
   {
@@ -102,149 +119,145 @@ export const contratClients: ContratToDetails[] = [
   },
 ];
 
-export const defaultContratValues: ContratFormValues = {
-  id: "",
-  numero: `CTR-${format(today, "yyyy")}-001`,
-  issuedDate: format(today, "yyyy-MM-dd"),
-  signatureDate: format(addDays(today, 15), "yyyy-MM-dd"),
-  dateDebut: format(addDays(today, 30), "yyyy-MM-dd"),
-  dateFin: format(addDays(today, 365), "yyyy-MM-dd"),
-  from: {
-    name: "Zoldick Entreprise",
-    email: "contact@zoldick.cm",
-    phone: "+237 6XX XXX XXX",
-    website: "www.zoldick.cm",
-    addressLines: ["BP 7890", "Douala", "Cameroun"],
-    taxId: "RC-123456789",
-    issuerName: "Nanga Doumer",
-    signature: "Nanga Doumer",
+export const defaultContratValues: ContratInput = {
+  numero: undefined,
+  project_id: undefined,
+  client_id: undefined,
+  devis_id: undefined,
+  from: ContratFrom,
+  prestations: [{ title: "", items: [""] }],
+  livrables: [{ name: "" }],
+  date_debut: undefined,
+  date_fin: undefined,
+  montant_total: 0,
+  paiements: [{ 
+    label: "", 
+    percentage: 100,
+    montant: 0 
+  }],
+  priorite: "Moyenne",
+  statut: "Brouillon",
+  taxId: "",
+  titre: "",
+  date_emission: format(today, "yyyy-MM-dd"),
+  date_signature: undefined,
+  to: {
+    name: "",
+    addressLines: [""],
+    telephone: "",
+    email: "",
+    taxId: "",
   },
-  to: contratClients[0],
-  taxId: "tva",
-  discountType: "fixed",
-  discountValue: 0,
-  items: [
-    {
-      id: "item-1",
-      description: "Prestation de service",
-      quantity: 1,
-      unitPrice: 1000000,
-    },
-  ],
-  notes:
-    "Merci de nous faire part de votre décision dans les meilleurs délais.",
-  conditions: "Contrat valable 1 an. Renouvelable par tacite reconduction.",
-  clauses: "Clause de confidentialité et de non-concurrence applicables.",
 };
 
 // ============ DONNÉES MOCKÉES DE FALLBACK ============
-export const fallbackContrats: Contrat[] = [
-  {
-    id: "CTR-001",
-    numero: "CTR-2026-001",
-    client_id: null,
-    projet_id: null,
-    devis_id: null,
-    titre: "Construction Immeuble Banto",
-    statut: "En cours",
-    priorite: "Haute",
-    montant_total: 85000000,
-    date_emission: "2026-02-15",
-    date_signature: "2026-03-15",
-    date_debut: "2026-03-15",
-    date_fin: "2027-03-15",
-    contenu: [],
-    conditions: "",
-    clauses: "",
-    notes: "",
-    created_at: "",
-    updated_at: "",
-  },
-  {
-    id: "CTR-002",
-    numero: "CTR-2026-002",
-    client_id: null,
-    projet_id: null,
-    devis_id: null,
-    titre: "Rénovation Hôtel Royal",
-    statut: "Signé",
-    priorite: "Haute",
-    montant_total: 42500000,
-    date_emission: "2026-04-01",
-    date_signature: "2026-04-15",
-    date_debut: "2026-04-15",
-    date_fin: "2026-10-15",
-    contenu: [],
-    conditions: "",
-    clauses: "",
-    notes: "",
-    created_at: "",
-    updated_at: "",
-  },
-  {
-    id: "CTR-003",
-    numero: "CTR-2026-003",
-    client_id: null,
-    projet_id: null,
-    devis_id: null,
-    titre: "Extension Hôpital Central",
-    statut: "Brouillon",
-    priorite: "Haute",
-    montant_total: 120000000,
-    date_emission: "2026-04-15",
-    date_signature: null,
-    date_debut: "2026-06-01",
-    date_fin: "2027-06-01",
-    contenu: [],
-    conditions: "",
-    clauses: "",
-    notes: "",
-    created_at: "",
-    updated_at: "",
-  },
-  {
-    id: "CTR-004",
-    numero: "CTR-2026-004",
-    client_id: null,
-    projet_id: null,
-    devis_id: null,
-    titre: "Complexe Sportif",
-    statut: "En cours",
-    priorite: "Haute",
-    montant_total: 95000000,
-    date_emission: "2026-06-01",
-    date_signature: "2026-06-15",
-    date_debut: "2026-06-15",
-    date_fin: "2027-06-15",
-    contenu: [],
-    conditions: "",
-    clauses: "",
-    notes: "",
-    created_at: "",
-    updated_at: "",
-  },
-  {
-    id: "CTR-005",
-    numero: "CTR-2026-005",
-    client_id: null,
-    projet_id: null,
-    devis_id: null,
-    titre: "Rénovation SIEM",
-    statut: "Annulé",
-    priorite: "Basse",
-    montant_total: 15000000,
-    date_emission: "2026-01-15",
-    date_signature: "2026-01-30",
-    date_debut: "2026-02-01",
-    date_fin: "2026-08-01",
-    contenu: [],
-    conditions: "",
-    clauses: "",
-    notes: "",
-    created_at: "",
-    updated_at: "",
-  },
-];
+// export const fallbackContrats: Contrat[] = [
+//   {
+//     id: "CTR-001",
+//     numero: "CTR-2026-001",
+//     client_id: null,
+//     projet_id: null,
+//     devis_id: null,
+//     titre: "Construction Immeuble Banto",
+//     statut: "En cours",
+//     priorite: "Haute",
+//     montant_total: 85000000,
+//     date_emission: "2026-02-15",
+//     date_signature: "2026-03-15",
+//     date_debut: "2026-03-15",
+//     date_fin: "2027-03-15",
+//     contenu: [],
+//     conditions: "",
+//     clauses: "",
+//     notes: "",
+//     created_at: "",
+//     updated_at: "",
+//   },
+//   {
+//     id: "CTR-002",
+//     numero: "CTR-2026-002",
+//     client_id: null,
+//     projet_id: null,
+//     devis_id: null,
+//     titre: "Rénovation Hôtel Royal",
+//     statut: "Signé",
+//     priorite: "Haute",
+//     montant_total: 42500000,
+//     date_emission: "2026-04-01",
+//     date_signature: "2026-04-15",
+//     date_debut: "2026-04-15",
+//     date_fin: "2026-10-15",
+//     contenu: [],
+//     conditions: "",
+//     clauses: "",
+//     notes: "",
+//     created_at: "",
+//     updated_at: "",
+//   },
+//   {
+//     id: "CTR-003",
+//     numero: "CTR-2026-003",
+//     client_id: null,
+//     projet_id: null,
+//     devis_id: null,
+//     titre: "Extension Hôpital Central",
+//     statut: "Brouillon",
+//     priorite: "Haute",
+//     montant_total: 120000000,
+//     date_emission: "2026-04-15",
+//     date_signature: null,
+//     date_debut: "2026-06-01",
+//     date_fin: "2027-06-01",
+//     contenu: [],
+//     conditions: "",
+//     clauses: "",
+//     notes: "",
+//     created_at: "",
+//     updated_at: "",
+//   },
+//   {
+//     id: "CTR-004",
+//     numero: "CTR-2026-004",
+//     client_id: null,
+//     projet_id: null,
+//     devis_id: null,
+//     titre: "Complexe Sportif",
+//     statut: "En cours",
+//     priorite: "Haute",
+//     montant_total: 95000000,
+//     date_emission: "2026-06-01",
+//     date_signature: "2026-06-15",
+//     date_debut: "2026-06-15",
+//     date_fin: "2027-06-15",
+//     contenu: [],
+//     conditions: "",
+//     clauses: "",
+//     notes: "",
+//     created_at: "",
+//     updated_at: "",
+//   },
+//   {
+//     id: "CTR-005",
+//     numero: "CTR-2026-005",
+//     client_id: null,
+//     projet_id: null,
+//     devis_id: null,
+//     titre: "Rénovation SIEM",
+//     statut: "Annulé",
+//     priorite: "Basse",
+//     montant_total: 15000000,
+//     date_emission: "2026-01-15",
+//     date_signature: "2026-01-30",
+//     date_debut: "2026-02-01",
+//     date_fin: "2026-08-01",
+//     contenu: [],
+//     conditions: "",
+//     clauses: "",
+//     notes: "",
+//     created_at: "",
+//     updated_at: "",
+//   },
+// ];
 
 // ============ COULEURS DES STATUTS ============
 export const statusColors: Record<string, string> = {
@@ -292,13 +305,13 @@ export function getContratTax(contrat: ContratFormValues) {
 
 export function getContratDiscount(contrat: ContratFormValues) {
   const subtotal = getContratSubtotal(contrat);
-  const discountValue = Number.isFinite(contrat.discountValue)
-    ? contrat.discountValue
+  const montant_total = Number.isFinite(contrat.montant_total)
+    ? contrat.montant_total
     : 0;
   const discount =
     contrat.discountType === "percent"
-      ? subtotal * (discountValue / 100)
-      : discountValue;
+      ? subtotal * (montant_total / 100)
+      : montant_total;
   return Math.min(Math.max(discount, 0), subtotal);
 }
 

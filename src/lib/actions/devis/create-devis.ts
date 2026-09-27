@@ -3,58 +3,16 @@
 
 import { createAdminClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
+import { devisSchema } from "@/lib/validations"; // Import du schéma partagé
+import {type DevisInput} from "@/lib/validations";
 
-const createDevisSchema = z.object({
-  titre: z.string().min(2, "Le titre est requis"),
-  client_id: z.string().uuid("ID client invalide").nullable().optional(),
-  projet_id: z.string().uuid("ID projet invalide").nullable().optional(),
-  statut: z
-    .enum(["Brouillon", "Envoyé", "Accepté", "Refusé"])
-    .default("Brouillon"),
-  priorite: z.enum(["Haute", "Moyenne", "Basse"]).default("Moyenne"),
-  montant_total: z.number().nullable().optional(),
-  date_emission: z.string().nullable().optional(),
-  date_validite: z.string().nullable().optional(),
-  conditions: z.string().nullable().optional(),
-  notes: z.string().nullable().optional(),
-  contexte: z.string().nullable().optional(),
-  objectifs: z.string().nullable().optional(),
-  architecture: z.string().nullable().optional(),
-  modalites_paiement: z.string().nullable().optional(),
-  contenu: z
-    .array(
-      z.object({
-        description: z.string(),
-        quantite: z.number(),
-        prix_unitaire: z.number(),
-      }),
-    )
-    .default([]),
-  prestations: z
-    .array(
-      z.object({
-        titre: z.string(),
-        description: z.string(),
-      }),
-    )
-    .default([]),
-  planning: z
-    .array(
-      z.object({
-        semaine: z.string(),
-        taches: z.string(),
-      }),
-    )
-    .default([]),
-});
-
-export async function createDevis(data: any) {
+export async function createDevis(data: DevisInput) {
   const supabase = await createAdminClient();
 
   console.log("📝 Tentative de création du devis:", data);
 
-  const validated = createDevisSchema.safeParse(data);
+  // Utilisation du même schéma que le formulaire
+  const validated = devisSchema.safeParse(data);
 
   if (!validated.success) {
     console.error(
@@ -121,22 +79,22 @@ export async function createDevis(data: any) {
     const insertData = {
       numero,
       titre: validated.data.titre,
-      client_id: validated.data.client_id || null,
-      projet_id: validated.data.projet_id || null,
+      client_id: validated.data.client_id,
+      projet_id: validated.data.projet_id,
       client_nom,
       projet_nom,
       statut: validated.data.statut,
       priorite: validated.data.priorite,
-      montant_total: montantTotal || null,
+      montant_total: montantTotal,
       date_emission:
         validated.data.date_emission || new Date().toISOString().split("T")[0],
-      date_validite: validated.data.date_validite || null,
-      conditions: validated.data.conditions || null,
-      notes: validated.data.notes || null,
-      contexte: validated.data.contexte || null,
-      objectifs: validated.data.objectifs || null,
-      architecture: validated.data.architecture || null,
-      modalites_paiement: validated.data.modalites_paiement || null,
+      date_validite: validated.data.date_validite,
+      conditions: validated.data.conditions,
+      notes: validated.data.notes,
+      contexte: validated.data.contexte,
+      objectifs: validated.data.objectifs,
+      architecture: validated.data.architecture,
+      modalites_paiement: validated.data.modalites_paiement,
       contenu: validated.data.contenu || [],
       prestations: validated.data.prestations || [],
       planning: validated.data.planning || [],

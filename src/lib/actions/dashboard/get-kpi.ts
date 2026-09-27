@@ -2,12 +2,16 @@
 
 import { createServerClient } from "@/lib/supabase/server";
 import { z } from "zod";
+import { Devis } from "@/types";
+import { Transaction } from "@/types";
 
 const getKPISchema = z.object({
   period: z.enum(["day", "week", "month", "year"]).default("month"),
 });
 
-export type GetKPIOptions = z.infer<typeof getKPISchema>;
+export type GetKPIOptions = {
+  period?: "day" | "week" | "month" | "year";
+};
 
 export async function getKPI(options?: GetKPIOptions) {
   const supabase = await createServerClient();
@@ -34,7 +38,7 @@ export async function getKPI(options?: GetKPIOptions) {
   startOfPeriod.setDate(1);
   startOfPeriod.setHours(0, 0, 0, 0);
 
-  let transactions = [];
+  let transactions: Transaction[] = [];
   try {
     const { data, error } = await supabase
       .from("transactions")
@@ -61,7 +65,7 @@ export async function getKPI(options?: GetKPIOptions) {
   const totalExpenses = expenses.reduce((sum, t) => sum + t.montant, 0);
 
   // Récupérer les tâches
-  let tasks = [];
+  let tasks: { statut: string | null }[] = [];
   try {
     const { data, error } = await supabase
       .from("tasks")
@@ -71,7 +75,7 @@ export async function getKPI(options?: GetKPIOptions) {
     if (error) {
       console.error("Erreur tâches:", error);
     } else {
-      tasks = data || [];
+      tasks = (data ?? []) as unknown as { statut: string | null }[];
     }
   } catch (error) {
     console.error("Erreur:", error);
@@ -87,7 +91,7 @@ export async function getKPI(options?: GetKPIOptions) {
   );
 
   // Récupérer les devis
-  let devis = [];
+  let devis: Devis[] = [];
   try {
     const { data, error } = await supabase
       .from("devis")

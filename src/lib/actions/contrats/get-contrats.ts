@@ -2,6 +2,7 @@
 
 import { createServerClient } from "@/lib/supabase/server";
 import { z } from "zod";
+import { Contrat } from "@/types";
 
 // Schéma pour les filtres
 const getContratsFiltersSchema = z.object({
@@ -20,7 +21,7 @@ const getContratsFiltersSchema = z.object({
 
 export type GetContratsFilters = z.infer<typeof getContratsFiltersSchema>;
 
-export async function getContrats(filters?: GetContratsFilters) {
+export async function getContrats(filters?: GetContratsFilters): Promise<Contrat[]> {
   const supabase = await createServerClient();
 
   // Construire la sélection

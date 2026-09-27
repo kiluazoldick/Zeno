@@ -2,6 +2,7 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/server";
+import { hashPassword } from "@/lib/security/password";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -30,13 +31,17 @@ const updateMemberSchema = z.object({
     ])
     .optional(),
   joined_date: z.string().nullable().optional(),
+  password: z
+    .string()
+    .min(6, "Le mot de passe doit contenir au moins 6 caractères")
+    .optional(),
 });
 
 export async function updateMember(id: string, data: any) {
   const adminClient = await createAdminClient();
 
   console.log("📝 updateMember - ID:", id);
-  console.log("📝 updateMember - Data:", data);
+  console.log("📝 updateMember - Mise à jour demandée");
 
   const validated = updateMemberSchema.safeParse(data);
 
@@ -62,10 +67,13 @@ export async function updateMember(id: string, data: any) {
     if (fields.status !== undefined) cleanData.status = fields.status;
     if (fields.joined_date !== undefined)
       cleanData.joined_date = fields.joined_date || null;
+    if (fields.password !== undefined && fields.password !== "") {
+      cleanData.password = await hashPassword(fields.password);
+    }
 
     cleanData.updated_at = new Date().toISOString();
 
-    console.log("📝 updateMember - CleanData:", cleanData);
+    console.log("📝 updateMember - Données préparées");
 
     const { data: member, error } = await adminClient
       .from("members")
@@ -82,7 +90,7 @@ export async function updateMember(id: string, data: any) {
       };
     }
 
-    console.log("✅ Membre mis à jour:", member);
+    console.log("✅ Membre mis à jour");
 
     revalidatePath("/dashboard/users");
 

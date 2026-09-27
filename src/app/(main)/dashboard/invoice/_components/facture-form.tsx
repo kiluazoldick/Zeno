@@ -121,15 +121,15 @@ function FactureDetails() {
         </Field>
 
         <div className="grid gap-5 md:grid-cols-2">
-          <DatePickerField name="issuedDate" label="Date d'émission" id="issued-date" />
-          <DatePickerField name="paymentDueDate" label="Date d'échéance" id="payment-due-date" />
+          <DatePickerField name="date_emission" label="Date d'émission" id="issued-date" />
+          <DatePickerField name="date_paiement" label="Date d'échéance" id="payment-due-date" />
         </div>
       </FieldGroup>
     </section>
   );
 }
 
-function DatePickerField({ name, label, id }: { name: "issuedDate" | "paymentDueDate"; label: string; id: string }) {
+function DatePickerField({ name, label, id }: { name: "date_emission" | "date_paiement"; label: string; id: string }) {
   const { control } = useFormContext<FactureFormValues>();
   const [open, setOpen] = React.useState(false);
 
@@ -469,7 +469,7 @@ function FactureAdjustments() {
                 type="number"
                 step="0.01"
                 aria-label="Valeur de la remise"
-                {...register("discountValue", { valueAsNumber: true })}
+                {...register("montant_total", { valueAsNumber: true })}
               />
               <InputGroupAddon align="inline-end">{discountType === "fixed" ? "FCFA" : "%"}</InputGroupAddon>
             </InputGroup>

@@ -4,7 +4,6 @@ import { useState } from "react";
 import {
   useAnnonces,
   usePublishedAnnonces,
-  useImportantAnnonces,
 } from "@/hooks/queries/use-annonces";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,30 +19,35 @@ export default function Page() {
     "feed",
   );
 
-  // Récupérer les annonces publiées pour le fil d'actualité
+  const [selectedAnnonceId, setSelectedAnnonceId] = useState<string | null>(
+    null,
+  );
+
   const {
     data: published,
     isLoading: publishedLoading,
     error: publishedError,
   } = usePublishedAnnonces();
 
-  // Récupérer toutes les annonces pour la liste
   const {
     data: allAnnonces,
     isLoading: allLoading,
-    error: allError,
+    error: allError,  
   } = useAnnonces({
     includeAuteur: true,
+    includeComments: false,
   });
 
   const isLoading = publishedLoading || allLoading;
   const error = publishedError || allError;
 
-  // Données de fallback
-  const feedData =
-    published && published.length > 0 ? published : fallbackAnnonces;
-  const listData =
-    allAnnonces && allAnnonces.length > 0 ? allAnnonces : fallbackAnnonces;
+  const feedData = Array.isArray(published) && published.length > 0
+    ? published
+    : fallbackAnnonces;
+
+  const listData = Array.isArray(allAnnonces) && allAnnonces.length > 0
+    ? allAnnonces
+    : fallbackAnnonces;
 
   if (isLoading) {
     return (
@@ -58,7 +62,9 @@ export default function Page() {
       <div className="flex h-64 items-center justify-center">
         <div className="flex items-center gap-2 text-destructive">
           <AlertCircle className="size-5" />
-          <span>Erreur lors du chargement des annonces: {error.message}</span>
+          <span>
+            Erreur lors du chargement des annonces: {error.message}
+          </span>
         </div>
       </div>
     );
@@ -71,6 +77,7 @@ export default function Page() {
           <h1 className="font-medium text-3xl leading-none tracking-tight">
             Annonces
           </h1>
+
           <p className="text-muted-foreground text-sm">
             Communications officielles, réunions, reports et informations
           </p>
@@ -79,7 +86,15 @@ export default function Page() {
         <div className="flex flex-wrap items-center gap-3">
           <Tabs
             value={activeTab}
-            onValueChange={(v) => setActiveTab(v as "list" | "create" | "feed")}
+            onValueChange={(v) => {
+              setActiveTab(v as "list" | "create" | "feed");
+
+              // Si on clique sur Nouvelle annonce,
+              // on quitte le mode modification.
+              if (v === "create") {
+                setSelectedAnnonceId(null);
+              }
+            }}
             className="w-auto"
           >
             <TabsList>
@@ -87,10 +102,12 @@ export default function Page() {
                 <Megaphone className="size-4" />
                 Fil
               </TabsTrigger>
+
               <TabsTrigger value="list" className="gap-2">
                 <List className="size-4" />
                 Liste
               </TabsTrigger>
+
               <TabsTrigger value="create" className="gap-2">
                 <Plus className="size-4" />
                 Nouvelle annonce
@@ -104,11 +121,26 @@ export default function Page() {
         <TabsContent value="feed" className="mt-0">
           <AnnonceFeed annonces={feedData} />
         </TabsContent>
+
         <TabsContent value="list" className="mt-0">
-          <AnnonceList annonces={listData} isLoading={allLoading} />
+          <AnnonceList
+            annonces={listData}
+            isLoading={allLoading}
+            onEditAnnonce={(id) => {
+              setSelectedAnnonceId(id);
+              setActiveTab("create");
+            }}
+          />
         </TabsContent>
+
         <TabsContent value="create" className="mt-0">
-          <AnnonceForm />
+          <AnnonceForm
+            annonceId={selectedAnnonceId}
+            onSuccess={() => {
+              setSelectedAnnonceId(null);
+              setActiveTab("list");
+            }}
+          />
         </TabsContent>
       </Tabs>
     </div>

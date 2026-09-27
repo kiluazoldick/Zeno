@@ -6,8 +6,8 @@ export const projectSchema = z.object({
   description: z.string().optional().nullable(),
   statut: z
     .enum(["En cours", "En attente", "Terminé", "Annulé"])
-    .default("En cours"),
-  priorite: z.enum(["Haute", "Moyenne", "Basse"]).default("Moyenne"),
+    .optional(),
+  priorite: z.enum(["Haute", "Moyenne", "Basse"]).optional(),
   budget_total: z
     .number()
     .positive("Le budget doit être positif")
@@ -15,8 +15,9 @@ export const projectSchema = z.object({
     .nullable(),
   date_debut: z.string().date("Date invalide").optional().nullable(),
   date_fin: z.string().date("Date invalide").optional().nullable(),
-  progression: z.number().min(0).max(100).default(0),
+  progression: z.number().min(0).max(100).optional(),
   location: z.string().optional().nullable(),
+  documents: z.array(z.instanceof(File)).optional(),
 });
 
 export const projectUpdateSchema = projectSchema.partial();

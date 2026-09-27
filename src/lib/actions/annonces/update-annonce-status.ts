@@ -1,7 +1,6 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/server";
-import { annonceStatusUpdateSchema } from "@/lib/validations/annonce.schema";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -10,14 +9,19 @@ const updateAnnonceStatusSchema = z.object({
   statut: z.enum(["Brouillon", "Publiée", "Archivée"]),
 });
 
+type AnnonceStatut = "Brouillon" | "Publiée" | "Archivée";
+
 export async function updateAnnonceStatus(
   id: string,
-  statut: "Brouillon" | "Publiée" | "Archivée",
+  statut: AnnonceStatut,
 ) {
   const adminClient = await createAdminClient();
 
-  // Valider les données
-  const validated = updateAnnonceStatusSchema.safeParse({ id, statut });
+  // Validation
+  const validated = updateAnnonceStatusSchema.safeParse({
+    id,
+    statut,
+  });
 
   if (!validated.success) {
     return {
@@ -27,7 +31,7 @@ export async function updateAnnonceStatus(
   }
 
   try {
-    // Vérifier que l'annonce existe
+    // Récupérer l'annonce
     const { data: existing, error: checkError } = await adminClient
       .from("annonces")
       .select("id, statut")
@@ -37,39 +41,59 @@ export async function updateAnnonceStatus(
     if (checkError || !existing) {
       return {
         success: false,
-        error: { notFound: ["Annonce non trouvée"] },
+        error: {
+          notFound: ["Annonce non trouvée"],
+        },
       };
     }
 
-    // Vérifier la transition de statut
-    const validTransitions: Record<string, string[]> = {
+    // Vérifier que le statut actuel n'est pas null
+    if (!existing.statut) {
+      return {
+        success: false,
+        error: {
+          statut: ["Le statut actuel de l'annonce est invalide."],
+        },
+      };
+    }
+
+    // Vérifier que le statut actuel est valide
+    const currentStatut = existing.statut as AnnonceStatut;
+
+    const validTransitions: Record<AnnonceStatut, AnnonceStatut[]> = {
       Brouillon: ["Publiée", "Archivée"],
       Publiée: ["Archivée"],
       Archivée: [],
     };
 
-    if (!validTransitions[existing.statut]?.includes(statut)) {
+    // Vérifier la transition
+    if (!validTransitions[currentStatut]?.includes(statut)) {
       return {
         success: false,
         error: {
           statut: [
-            `Transition de "${existing.statut}" vers "${statut}" non autorisée`,
+            `Transition de "${currentStatut}" vers "${statut}" non autorisée`,
           ],
         },
       };
     }
 
-    // Mettre à jour le statut
-    const updateData: any = {
+    // Données à mettre à jour
+    const updateData: {
+      statut: AnnonceStatut;
+      updated_at: string;
+      date_annonce?: string;
+    } = {
       statut,
       updated_at: new Date().toISOString(),
     };
 
-    // Si l'annonce est publiée, mettre à jour la date
-    if (statut === "Publiée" && existing.statut !== "Publiée") {
+    // Si on publie l'annonce, mettre à jour sa date
+    if (statut === "Publiée" && currentStatut !== "Publiée") {
       updateData.date_annonce = new Date().toISOString();
     }
 
+    // Mise à jour
     const { data: annonce, error } = await adminClient
       .from("annonces")
       .update(updateData)
@@ -80,10 +104,13 @@ export async function updateAnnonceStatus(
     if (error) {
       return {
         success: false,
-        error: { db: [error.message] },
+        error: {
+          db: [error.message],
+        },
       };
     }
 
+    // Rafraîchir les pages concernées
     revalidatePath("/dashboard/annonces");
     revalidatePath(`/dashboard/annonces/${id}`);
     revalidatePath("/dashboard/annonces?feed=true");
@@ -93,9 +120,13 @@ export async function updateAnnonceStatus(
       data: annonce,
     };
   } catch (error) {
+    console.error("Erreur updateAnnonceStatus:", error);
+
     return {
       success: false,
-      error: { unexpected: ["Une erreur inattendue s'est produite"] },
+      error: {
+        unexpected: ["Une erreur inattendue s'est produite"],
+      },
     };
   }
 }

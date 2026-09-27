@@ -51,12 +51,14 @@ export async function updateReportStatus(
       Archivé: [],
     };
 
-    if (!validTransitions[existing.statut]?.includes(statut)) {
+    const currentStatus = existing.statut;
+
+    if (!currentStatus || !validTransitions[currentStatus]?.includes(statut)) {
       return {
         success: false,
         error: {
           statut: [
-            `Transition de "${existing.statut}" vers "${statut}" non autorisée`,
+            `Transition de "${currentStatus}" vers "${statut}" non autorisée`,
           ],
         },
       };

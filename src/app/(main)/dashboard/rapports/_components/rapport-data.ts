@@ -1,4 +1,4 @@
-import type { Report } from "@/types/database";
+import type { Report } from "@/types";
 
 export const fallbackRapports: Report[] = [
   {

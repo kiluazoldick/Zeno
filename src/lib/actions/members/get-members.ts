@@ -2,6 +2,13 @@
 
 import { createAdminClient } from "@/lib/supabase/server";
 
+export type GetMembersFilters = {
+  search?: string;
+  role?: string;
+  equipe?: string;
+  status?: string;
+};
+
 export async function getMembers() {
   const adminClient = await createAdminClient();
 

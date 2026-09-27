@@ -9,6 +9,7 @@ import {
   type GetClientsFilters,
 } from "@/lib/actions/clients";
 import { toast } from "sonner";
+import { type ClientInput } from "@/lib/validations";
 
 // Clés de cache
 export const clientsKeys = {

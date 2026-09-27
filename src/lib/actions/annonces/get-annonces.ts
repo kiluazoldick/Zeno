@@ -2,6 +2,7 @@
 
 import { createServerClient } from "@/lib/supabase/server";
 import { z } from "zod";
+import { Annonce } from "@/types";
 
 // Schéma pour les filtres
 const getAnnoncesFiltersSchema = z.object({
@@ -18,7 +19,9 @@ const getAnnoncesFiltersSchema = z.object({
 
 export type GetAnnoncesFilters = z.infer<typeof getAnnoncesFiltersSchema>;
 
-export async function getAnnonces(filters?: GetAnnoncesFilters) {
+export async function getAnnonces(
+  filters?: GetAnnoncesFilters,
+): Promise<Annonce[]> {
   const supabase = await createServerClient();
 
   // Construire la sélection
@@ -85,7 +88,7 @@ export async function getAnnonces(filters?: GetAnnoncesFilters) {
 }
 
 // Récupérer les annonces publiées (pour le fil d'actualité)
-export async function getPublishedAnnonces() {
+export async function getPublishedAnnonces(): Promise<Annonce[]> {
   const supabase = await createServerClient();
 
   const { data, error } = await supabase
@@ -105,11 +108,11 @@ export async function getPublishedAnnonces() {
     );
   }
 
-  return data;
+  return Array.isArray(data) ? (data as Annonce[]) : [];
 }
 
 // Récupérer les annonces importantes (épinglées)
-export async function getImportantAnnonces() {
+export async function getImportantAnnonces(): Promise<Annonce[]> {
   const supabase = await createServerClient();
 
   const { data, error } = await supabase
@@ -130,7 +133,7 @@ export async function getImportantAnnonces() {
     );
   }
 
-  return data;
+  return Array.isArray(data) ? (data as Annonce[]) : [];
 }
 
 // Récupérer les tags distincts
@@ -148,7 +151,10 @@ export async function getAnnonceTags() {
     );
   }
 
-  const allTags = data.flatMap((d) => d.tags || []).filter(Boolean);
+  const tagRows = (data ?? []) as unknown as Array<{
+    tags: string[] | null;
+  }>;
+  const allTags = tagRows.flatMap((row) => row.tags || []).filter(Boolean);
   const uniqueTags = [...new Set(allTags)];
   return uniqueTags.sort();
 }

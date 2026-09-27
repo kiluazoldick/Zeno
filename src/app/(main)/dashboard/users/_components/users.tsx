@@ -82,6 +82,7 @@ export function Users({
       role: member.role || "Membre",
       status: member.status || "Actif",
       team: member.equipe || "Non assigné",
+      password: member.password || null,
       workspace: member.projets || ["Tous les projets"],
       joinedDate: member.joined_date
         ? new Date(member.joined_date).toLocaleDateString("fr-FR", {
@@ -167,7 +168,9 @@ export function Users({
         `Êtes-vous sûr de vouloir supprimer définitivement le membre "${member.name}" ?`,
       )
     ) {
-      onDeleteMember(member.id);
+      if (member.id) {
+        onDeleteMember(member.id);
+      }
     }
   };
 

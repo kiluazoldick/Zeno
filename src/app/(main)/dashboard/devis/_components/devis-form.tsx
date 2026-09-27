@@ -125,8 +125,8 @@ export function DevisForm() {
                 />
               )}
             />
-            {errors.titre && (
-              <p className="text-sm text-destructive">{errors.titre.message}</p>
+            {errors.titre?.message && (
+              <p className="text-sm text-destructive">{String(errors.titre.message)}</p>
             )}
           </Field>
 
@@ -152,7 +152,7 @@ export function DevisForm() {
                           </SelectItem>
                         ) : (
                           clients?.map((client: any) => (
-                            <SelectItem key={client.id} value={client.id}>
+                            <SelectItem key={client.id} value={client.id} >
                               {client.nom}
                             </SelectItem>
                           ))

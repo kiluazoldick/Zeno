@@ -2,6 +2,7 @@
 
 import { createServerClient } from "@/lib/supabase/server";
 import { z } from "zod";
+import { Client } from "@/types";
 
 // Schéma pour les filtres
 const getClientsFiltersSchema = z.object({
@@ -12,9 +13,13 @@ const getClientsFiltersSchema = z.object({
   includeProjects: z.boolean().default(false),
 });
 
+type ProjectClient = {
+    client_id: string | null;
+};
+
 export type GetClientsFilters = z.infer<typeof getClientsFiltersSchema>;
 
-export async function getClients(filters?: GetClientsFilters) {
+export async function getClients(filters?: GetClientsFilters): Promise<Client[]> {
   const supabase = await createServerClient();
 
   // Construire la sélection
@@ -82,7 +87,7 @@ export async function getClients(filters?: GetClientsFilters) {
     );
   }
 
-  return data;
+  return data ?? [];
 }
 
 // Récupérer les secteurs d'activité distincts

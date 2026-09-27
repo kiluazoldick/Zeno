@@ -34,13 +34,14 @@ const projectSchema = z.object({
   description: z.string().nullable().optional(),
   statut: z
     .enum(["En cours", "En attente", "Terminé", "Annulé"])
-    .default("En cours"),
-  priorite: z.enum(["Haute", "Moyenne", "Basse"]).default("Moyenne"),
+    .optional(),
+  priorite: z.enum(["Haute", "Moyenne", "Basse"]).optional(),
   budget_total: z.number().nullable().optional(),
   location: z.string().nullable().optional(),
   date_debut: z.string().nullable().optional(),
   date_fin: z.string().nullable().optional(),
-  progression: z.number().min(0).max(100).default(0).optional(),
+  progression: z.number().min(0).max(100).optional(),
+  documents: z.array(z.instanceof(File)).optional(),
 });
 
 type ProjectFormData = z.infer<typeof projectSchema>;
@@ -94,6 +95,7 @@ export function ProjectDialog({
       date_debut: "",
       date_fin: "",
       progression: 0,
+      documents: [],
     },
   });
 
@@ -111,6 +113,7 @@ export function ProjectDialog({
         date_debut: project.date_debut || "",
         date_fin: project.date_fin || "",
         progression: project.progression || 0,
+        documents: [],
       });
     } else {
       reset({
@@ -124,6 +127,7 @@ export function ProjectDialog({
         date_debut: "",
         date_fin: "",
         progression: 0,
+        documents: [],
       });
     }
   }, [project, open, reset]);
@@ -370,6 +374,25 @@ export function ProjectDialog({
               />
             </Field>
           </div>
+
+          <Field>
+            <FieldLabel>Documents du projet</FieldLabel>
+            <Controller
+              name="documents"
+              control={control}
+              render={({ field: { onChange } }) => (
+                <Input
+                  type="file"
+                  multiple
+                  onChange={(event) => onChange(Array.from(event.target.files ?? []))}
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.png,.jpg,.jpeg"
+                />
+              )}
+            />
+            <p className="text-muted-foreground text-xs">
+              PDF, documents, tableurs ou images. 10 Mo maximum par fichier.
+            </p>
+          </Field>
 
           <DialogFooter>
             <Button

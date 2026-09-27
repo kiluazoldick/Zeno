@@ -30,6 +30,7 @@ import {
   Ban,
   Loader2,
   FileText,
+  Pencil,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -82,13 +83,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import type { Contrat } from "@/types/database";
+import type { Contrat } from "@/types";
 
-import { fallbackContrats, statusColors } from "./contrat-data";
+import { statusColors } from "./contrat-data";
 
 interface ContratListProps {
   contrats: Contrat[];
   isLoading: boolean;
+  onAdd: () => void;
+  onEdit: (contrat: Contrat) => void;
+  onDelete: (id: string) => void;
 }
 
 const priorityColors: Record<string, string> = {
@@ -115,8 +119,8 @@ function preventPaginationNavigation(
   event.preventDefault();
 }
 
-export function ContratList({ contrats, isLoading }: ContratListProps) {
-  const data = contrats && contrats.length > 0 ? contrats : fallbackContrats;
+export function ContratList({ contrats, isLoading, onAdd, onEdit, onDelete }: ContratListProps) {
+  const data = contrats && contrats.length > 0 ? contrats : [];
 
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -278,9 +282,9 @@ export function ContratList({ contrats, isLoading }: ContratListProps) {
     {
       id: "actions",
       cell: ({ row }) => {
-        const contrat = row.original;
-        const isDraft = contrat.statut === "Brouillon";
-        const isSigned = contrat.statut === "Signé";
+        const contratItem = row.original;
+        const isDraft = contratItem.statut === "Brouillon";
+        const isSigned = contratItem.statut === "Signé";
 
         return (
           <DropdownMenu>
@@ -299,6 +303,10 @@ export function ContratList({ contrats, isLoading }: ContratListProps) {
                 <Eye className="size-4" />
                 Voir le contrat
               </DropdownMenuItem>
+               <DropdownMenuItem onClick={() => onEdit(contratItem)}>
+                              <Pencil className="size-4 mr-2" />
+                              Modifier
+                            </DropdownMenuItem>
               <DropdownMenuItem>
                 <FileDown className="size-4" />
                 Télécharger PDF
@@ -319,7 +327,18 @@ export function ContratList({ contrats, isLoading }: ContratListProps) {
                 </DropdownMenuItem>
               )}
               {isDraft && (
-                <DropdownMenuItem variant="destructive">
+                <DropdownMenuItem 
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        `Êtes-vous sûr de vouloir supprimer le devis "${contratItem.numero}" ?`,
+                      )
+                    ) {
+                      onDelete(contratItem.id);
+                    }
+                  }}
+                  variant="destructive"
+                >
                   <Trash2 className="size-4" />
                   Supprimer
                 </DropdownMenuItem>
@@ -501,6 +520,7 @@ export function ContratList({ contrats, isLoading }: ContratListProps) {
             <Button
               size="sm"
               className="bg-zeno-primary hover:bg-zeno-primary/90"
+              onClick={onAdd}
             >
               <Plus className="size-4" />
               Nouveau contrat

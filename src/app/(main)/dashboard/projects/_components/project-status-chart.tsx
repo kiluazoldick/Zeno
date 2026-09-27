@@ -15,7 +15,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import type { Project } from "@/types/database";
+import type { Project } from "@/types";
 
 interface ProjectStatusChartProps {
   projects: Project[];

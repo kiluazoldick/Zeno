@@ -4,21 +4,34 @@ import { Controller, useFormContext } from "react-hook-form";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { getInitials } from "@/lib/utils";
-
-import { type InvoiceFormValues, invoiceClients } from "./data";
+import { type InvoiceFormValues } from "@/lib/validations";
+import { useClients } from "@/hooks/queries";
 
 export function ClientSelector() {
   const { control } = useFormContext<InvoiceFormValues>();
 
+  const {
+    data: clients = [],
+    isLoading,
+    error,
+  } = useClients();
+
   return (
     <section className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="font-medium tracking-tight">Billed To</h2>
+        <h2 className="font-medium tracking-tight">Sélectionnez le client</h2>
         <Button type="button" variant="ghost" size="sm">
           <Plus data-icon="inline-start" />
-          Add New Client
+          Ajouter un client
         </Button>
       </div>
 
@@ -31,39 +44,63 @@ export function ClientSelector() {
           return (
             <Field className="gap-1">
               <FieldLabel className="text-xs">Client</FieldLabel>
+
               <Select
-                value={selectedClient.id}
+                value={selectedClient?.id ?? ""}
                 onValueChange={(clientId) => {
-                  const nextClient = invoiceClients.find((item) => item.id === clientId);
+                  const nextClient = clients.find(
+                    (client) => client.id === clientId,
+                  );
 
                   if (nextClient) {
+                    // On stocke l'objet complet pour l'UI / preview
                     field.onChange(nextClient);
                   }
                 }}
+                disabled={isLoading}
               >
                 <SelectTrigger className="w-full data-[size=default]:h-auto">
-                  <SelectValue placeholder="Select client">
-                    <div className="flex items-center gap-1.5">
-                      <Avatar className="after:rounded-md">
-                        <AvatarFallback className="rounded-md bg-card text-foreground">
-                          {getInitials(selectedClient.name).slice(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
+                  <SelectValue placeholder="Sélectionner un client">
+                    {selectedClient ? (
+                      <div className="flex items-center gap-1.5">
+                        <Avatar className="after:rounded-md">
+                          <AvatarFallback className="rounded-md bg-card text-foreground">
+                            {getInitials(selectedClient.nom || "").slice(0, 2)}
+                          </AvatarFallback>
+                        </Avatar>
 
-                      <div className="text-left text-xs">
-                        <div>{selectedClient.name}</div>
-                        <div className="text-muted-foreground">{selectedClient.email}</div>
+                        <div className="text-left text-xs">
+                          <div>{selectedClient.nom}</div>
+                          <div className="text-muted-foreground">
+                            {selectedClient.email}
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    ) : null}
                   </SelectValue>
                 </SelectTrigger>
+
                 <SelectContent position="popper">
                   <SelectGroup>
-                    {invoiceClients.map((clientOption) => (
-                      <SelectItem key={clientOption.id} value={clientOption.id}>
-                        {clientOption.name}
-                      </SelectItem>
-                    ))}
+                    {isLoading && (
+                      <div className="p-2 text-sm text-muted-foreground">
+                        Chargement des clients...
+                      </div>
+                    )}
+
+                    {error && (
+                      <div className="p-2 text-sm text-destructive">
+                        Impossible de charger les clients
+                      </div>
+                    )}
+
+                    {!isLoading &&
+                      !error &&
+                      clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.nom}
+                        </SelectItem>
+                      ))}
                   </SelectGroup>
                 </SelectContent>
               </Select>

@@ -10,11 +10,14 @@ import {
   getLineAmount,
   formatDevisCurrency,
 } from "./devis-data";
+import { useClient } from "@/hooks/queries";
+import { useProject} from "@/hooks/queries";
+import {type DevisInput} from "@/lib/validations";
 
 export function DevisPaper({
   devis,
 }: {
-  devis: DevisFormValues | null | undefined;
+  devis: DevisFormValues;
 }) {
   if (!devis) {
     return (
@@ -29,6 +32,17 @@ export function DevisPaper({
 
   const items = getDevisItems(devis);
   const total = getDevisTotal(devis);
+  const clientId = devis.client_id ?? "";
+  const clientQuery = useClient(clientId);
+  const client_name =
+    clientQuery.data?.nom ||
+    "Non spécifié";
+
+  const projetId = devis.projet_id ?? "";
+  const projetQuery = useProject(projetId);
+  const projet_name =
+    projetQuery.data?.nom ||
+    "Non spécifié";
 
   return (
     <article
@@ -80,10 +94,10 @@ export function DevisPaper({
         <div className="flex justify-between items-center">
           <div>
             <p className="font-medium text-sm">
-              Client: {devis.client_nom || "Non spécifié"}
+              Client: {client_name || "Non spécifié"}
             </p>
             <p className="text-xs text-muted-foreground">
-              Projet: {devis.projet_nom || "Non spécifié"}
+              Projet: {projet_name || "Non spécifié"}
             </p>
           </div>
           <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-zeno-primary/10 text-zeno-primary">

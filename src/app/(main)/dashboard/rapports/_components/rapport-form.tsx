@@ -3,11 +3,11 @@
 import * as React from "react";
 import { useForm, FormProvider, Controller } from "react-hook-form";
 import { format } from "date-fns";
-import { CalendarIcon, Save, Send } from "lucide-react";
+import { CalendarIcon, Save, Send, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
   InputGroup,
@@ -30,57 +30,155 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { createReport } from "@/lib/actions/reports"; // adaptez le chemin si besoin
+import type { ReportInput } from "@/lib/validations/report.schema";
+import { useProjects } from "@/hooks/queries"; // ou le bon chemin de votre hook
+import { getReport } from "@/lib/actions/reports"; // adaptez le chemin si besoin
+import { updateReport } from "@/lib/actions/reports"; // adaptez le chemin si besoin
 
-type RapportFormValues = {
-  titre: string;
-  type: string;
-  projet: string;
-  periode: string;
-  date: string;
-  description: string;
-  contenu: string;
-  tachesCompletees: number;
-  budgetUtilise: number;
-  budgetTotal: number;
-  progression: number;
-  prochainesEtapes: string;
-  problemes: string;
-};
-
-const defaultValues: RapportFormValues = {
+const defaultValues: ReportInput = {
   titre: "",
   type: "Hebdomadaire",
-  projet: "",
+  projet_id: null,
+  task_id: null,
+  auteur: null,
   periode: "",
-  date: format(new Date(), "yyyy-MM-dd"),
+  date_rapport: format(new Date(), "yyyy-MM-dd"),
+  statut: "Brouillon",
   description: "",
   contenu: "",
-  tachesCompletees: 0,
-  budgetUtilise: 0,
-  budgetTotal: 0,
-  progression: 0,
-  prochainesEtapes: "",
-  problemes: "",
+  metriques: {
+    tachesCompletees: 0,
+    budgetUtilise: 0,
+    budgetTotal: 0,
+    progression: 0,
+  },
+  prochaines_etapes: [],
+  problemes: [],
 };
 
-const projets = [
-  "Construction Immeuble Banto",
-  "Rénovation Hôtel Royal",
-  "Extension Hôpital Central",
-  "Complexe Sportif",
-  "Aéroport International",
-];
-const types = ["Quotidien", "Hebdomadaire", "Mensuel", "Réunion"];
+const types = ["Quotidien", "Hebdomadaire", "Mensuel", "Réunion"] as const;
 
-export function RapportForm() {
-  const form = useForm<RapportFormValues>({
+export function RapportForm({ onSuccess, rapportId }: { onSuccess?: () => void; rapportId: string | null;}) {
+  const form = useForm<ReportInput>({
     defaultValues,
   });
 
-  function onSubmit(data: RapportFormValues) {
-    console.log("Rapport créé:", data);
-    // Ici, on ajoutera la logique de sauvegarde
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isLoadingRapport, setIsLoadingRapport] = React.useState(false);
+
+  // Champs locaux pour les textareas qui doivent devenir des tableaux
+  const [prochainesEtapesText, setProchainesEtapesText] = React.useState("");
+  const [problemesText, setProblemesText] = React.useState("");
+
+  const isEditMode = Boolean(rapportId);
+
+  React.useEffect(() => {
+    if (!rapportId) {
+      form.reset(defaultValues);
+      setProchainesEtapesText("");
+      setProblemesText("");
+      return;
+    }
+
+    async function loadRapport() {
+      try {
+        setIsLoadingRapport(true);
+        const data = await getReport(rapportId!) as any;
+
+        form.reset({
+          titre: data.titre ?? "",
+          type: data.type ?? "Hebdomadaire",
+          projet_id: data.projet_id ?? null,
+          task_id: data.task_id ?? null,
+          periode: data.periode ?? "",
+          date_rapport: data.date_rapport
+            ? format(new Date(data.date_rapport), "yyyy-MM-dd")
+            : format(new Date(), "yyyy-MM-dd"),
+          statut: data.statut ?? "Brouillon",
+          description: data.description ?? "",
+          contenu: data.contenu ?? "",
+          metriques: data.metriques ?? {
+            tachesCompletees: 0,
+            budgetUtilise: 0,
+            budgetTotal: 0,
+            progression: 0,
+          },
+          prochaines_etapes: data.prochaines_etapes ?? [],
+          problemes: data.problemes ?? [],
+        });
+
+        setProchainesEtapesText(
+          (data.prochaines_etapes ?? []).join("\n"),
+        );
+        setProblemesText((data.problemes ?? []).join("\n"));
+      } catch (error) {
+        console.error("Erreur chargement rapport :", error);
+      } finally {
+        setIsLoadingRapport(false);
+      }
+    }
+
+    loadRapport();
+  }, [rapportId, form]);
+
+  const { data: projects = [], isLoading: projectsLoading } = useProjects();
+
+  async function onSubmit(data: ReportInput) {
+  try {
+    setIsSubmitting(true);
+
+    const payload: ReportInput = {
+      ...data,
+      prochaines_etapes: prochainesEtapesText
+        .split("\n")
+        .map((s) => s.trim())
+        .filter(Boolean),
+      problemes: problemesText
+        .split("\n")
+        .map((s) => s.trim())
+        .filter(Boolean),
+      metriques: {
+        tachesCompletees: Number(data.metriques?.tachesCompletees) || 0,
+        budgetUtilise: Number(data.metriques?.budgetUtilise) || undefined,
+        budgetTotal: Number(data.metriques?.budgetTotal) || undefined,
+        progression: Number(data.metriques?.progression) || undefined,
+      },
+    };
+
+    let result;
+
+    if (isEditMode && rapportId) {
+      result = await updateReport(rapportId, payload);
+    } else {
+      result = await createReport(payload);
+    }
+
+    if (!result.success) {
+      console.error("Erreur :", result.error);
+      return;
+    }
+
+    console.log(isEditMode ? "✅ Rapport mis à jour" : "✅ Rapport créé", result.data);
+
+    form.reset(defaultValues);
+    setProchainesEtapesText("");
+    setProblemesText("");
+    onSuccess?.();
+  } catch (error) {
+    console.error("Erreur inattendue :", error);
+  } finally {
+    setIsSubmitting(false);
   }
+}
+
+  if (isLoadingRapport) {
+  return (
+    <div className="flex h-64 items-center justify-center rounded-xl border bg-card">
+      <Loader2 className="size-8 animate-spin text-muted-foreground" />
+    </div>
+  );
+}
 
   return (
     <FormProvider {...form}>
@@ -91,25 +189,39 @@ export function RapportForm() {
         <div className="rounded-xl border bg-card p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-medium tracking-tight">
-              Nouveau rapport
+              {isEditMode ? "Voir / Modifier le rapport" : "Nouveau rapport"}
             </h2>
             <div className="flex gap-2">
-              <Button type="button" variant="outline">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isSubmitting}
+                onClick={() => {
+                  form.setValue("statut", "Brouillon");
+                  form.handleSubmit(onSubmit)();
+                }}
+              >
                 <Save className="size-4" />
-                Sauvegarder
+                {isEditMode ? "Enregistrer" : "Sauvegarder"}
               </Button>
               <Button
                 type="submit"
                 className="bg-zeno-primary hover:bg-zeno-primary/90"
+                disabled={isSubmitting}
+                onClick={() => form.setValue("statut", "En cours")}
               >
-                <Send className="size-4" />
-                Publier
+                {isSubmitting ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Send className="size-4" />
+                )}
+                {isEditMode ? "Mettre à jour" : "Publier"}
               </Button>
             </div>
           </div>
 
           <div className="grid gap-6">
-            {/* Informations générales */}
+            {/* Titre + Type */}
             <div className="grid gap-4 md:grid-cols-2">
               <Field className="gap-1">
                 <FieldLabel className="text-xs">Titre du rapport</FieldLabel>
@@ -123,7 +235,9 @@ export function RapportForm() {
                 <FieldLabel className="text-xs">Type de rapport</FieldLabel>
                 <Select
                   value={form.watch("type")}
-                  onValueChange={(value) => form.setValue("type", value)}
+                  onValueChange={(value) =>
+                    form.setValue("type", value as ReportInput["type"])
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionner un type" />
@@ -141,21 +255,25 @@ export function RapportForm() {
               </Field>
             </div>
 
+            {/* Projet + Période */}
             <div className="grid gap-4 md:grid-cols-2">
               <Field className="gap-1">
                 <FieldLabel className="text-xs">Projet lié</FieldLabel>
                 <Select
-                  value={form.watch("projet")}
-                  onValueChange={(value) => form.setValue("projet", value)}
+                  value={form.watch("projet_id") ?? ""}
+                  onValueChange={(value) =>
+                    form.setValue("projet_id", value || null)
+                  }
+                  disabled={projectsLoading}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionner un projet" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      {projets.map((projet) => (
-                        <SelectItem key={projet} value={projet}>
-                          {projet}
+                      {projects.map((project: any) => (
+                        <SelectItem key={project.id} value={project.id}>
+                          {project.nom}
                         </SelectItem>
                       ))}
                     </SelectGroup>
@@ -172,12 +290,13 @@ export function RapportForm() {
               </Field>
             </div>
 
+            {/* Date */}
             <div className="grid gap-4 md:grid-cols-2">
               <Field className="gap-1">
                 <FieldLabel className="text-xs">Date</FieldLabel>
                 <Controller
                   control={form.control}
-                  name="date"
+                  name="date_rapport"
                   render={({ field }) => {
                     const date = field.value
                       ? new Date(field.value)
@@ -222,7 +341,7 @@ export function RapportForm() {
 
             <Separator />
 
-            {/* Description et contenu */}
+            {/* Description + Contenu */}
             <Field className="gap-1">
               <FieldLabel className="text-xs">Description</FieldLabel>
               <Textarea
@@ -249,7 +368,7 @@ export function RapportForm() {
                 <FieldLabel className="text-xs">Tâches complétées</FieldLabel>
                 <Input
                   type="number"
-                  {...form.register("tachesCompletees", {
+                  {...form.register("metriques.tachesCompletees", {
                     valueAsNumber: true,
                   })}
                 />
@@ -262,7 +381,9 @@ export function RapportForm() {
                 <InputGroup>
                   <InputGroupInput
                     type="number"
-                    {...form.register("budgetUtilise", { valueAsNumber: true })}
+                    {...form.register("metriques.budgetUtilise", {
+                      valueAsNumber: true,
+                    })}
                   />
                   <InputGroupAddon align="inline-end">FCFA</InputGroupAddon>
                 </InputGroup>
@@ -273,7 +394,9 @@ export function RapportForm() {
                 <InputGroup>
                   <InputGroupInput
                     type="number"
-                    {...form.register("budgetTotal", { valueAsNumber: true })}
+                    {...form.register("metriques.budgetTotal", {
+                      valueAsNumber: true,
+                    })}
                   />
                   <InputGroupAddon align="inline-end">FCFA</InputGroupAddon>
                 </InputGroup>
@@ -285,28 +408,36 @@ export function RapportForm() {
                   type="number"
                   min="0"
                   max="100"
-                  {...form.register("progression", { valueAsNumber: true })}
+                  {...form.register("metriques.progression", {
+                    valueAsNumber: true,
+                  })}
                 />
               </Field>
             </div>
 
             <Separator />
 
-            {/* Prochaines étapes et problèmes */}
+            {/* Prochaines étapes & Problèmes (text → array) */}
             <Field className="gap-1">
-              <FieldLabel className="text-xs">Prochaines étapes</FieldLabel>
+              <FieldLabel className="text-xs">
+                Prochaines étapes (une par ligne)
+              </FieldLabel>
               <Textarea
-                {...form.register("prochainesEtapes")}
-                placeholder="Liste des prochaines actions à entreprendre..."
+                value={prochainesEtapesText}
+                onChange={(e) => setProchainesEtapesText(e.target.value)}
+                placeholder={"Coulage du béton - Semaine 26\nInstallation des armatures"}
                 className="min-h-20 resize-none"
               />
             </Field>
 
             <Field className="gap-1">
-              <FieldLabel className="text-xs">Problèmes rencontrés</FieldLabel>
+              <FieldLabel className="text-xs">
+                Problèmes rencontrés (un par ligne)
+              </FieldLabel>
               <Textarea
-                {...form.register("problemes")}
-                placeholder="Difficultés, retards, obstacles..."
+                value={problemesText}
+                onChange={(e) => setProblemesText(e.target.value)}
+                placeholder={"Retard de livraison des ciments\nManque de main d'œuvre"}
                 className="min-h-20 resize-none"
               />
             </Field>

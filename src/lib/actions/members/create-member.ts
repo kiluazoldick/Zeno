@@ -1,10 +1,11 @@
 // src/lib/actions/members/create-member.ts
 "use server";
 
-import { createAdminClient } from "@/lib/supabase/server";
+import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { auth } from "@/lib/auth";
 // Schéma de validation
 const createMemberSchema = z.object({
   nom: z.string().min(2, "Le nom est requis"),
@@ -28,13 +29,12 @@ const createMemberSchema = z.object({
       "Suspendu",
     ])
     .default("Actif"),
+  password: z
+    .string()
+    .min(6, "Le mot de passe doit contenir au moins 6 caractères"),
 });
 
 export async function createMember(data: any) {
-  const adminClient = await createAdminClient();
-
-  console.log("📝 Tentative de création du membre:", data);
-
   // Valider les données
   const validated = createMemberSchema.safeParse(data);
 
@@ -50,58 +50,24 @@ export async function createMember(data: any) {
   }
 
   try {
-    const { nom, email, role, equipe, status } = validated.data;
-
-    // Vérifier si l'email existe déjà
-    const { data: existing, error: checkError } = await adminClient
-      .from("members")
-      .select("id")
-      .eq("email", email)
-      .single();
-
-    if (existing) {
-      console.error("❌ Email déjà utilisé:", email);
-      return {
-        success: false,
-        error: "Cet email est déjà utilisé par un autre membre",
-      };
-    }
-
-    // Insérer le nouveau membre - utiliser les colonnes qui existent
-    const insertData = {
-      id: crypto.randomUUID(),
-      nom: nom,
-      email: email,
-      role: role,
-      equipe: equipe,
-      status: status,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-
-    console.log("📝 Données d'insertion:", insertData);
-
-    const { data: member, error } = await adminClient
-      .from("members")
-      .insert(insertData)
-      .select()
-      .single();
-
-    if (error) {
-      console.error("❌ Erreur insertion membre:", error);
-      return {
-        success: false,
-        error: error.message,
-      };
-    }
-
-    console.log("✅ Membre créé avec succès:", member);
+    const { nom, email, role, equipe, status, password } = validated.data;
+    const result = await auth.api.signUpEmail({
+      body: {
+        name: nom,
+        email,
+        password,
+        role,
+        equipe,
+        status,
+      },
+      headers: await headers(),
+    });
 
     revalidatePath("/dashboard/users");
 
     return {
       success: true,
-      data: member,
+      data: result.user,
     };
   } catch (error: any) {
     console.error("❌ Erreur inattendue:", error);

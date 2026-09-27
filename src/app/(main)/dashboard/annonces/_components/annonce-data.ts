@@ -1,4 +1,17 @@
-import type { Annonce } from "@/types/database";
+type Annonce = {
+  auteur?: string | null
+  commentaires_count?: number | null
+  contenu: string
+  created_at?: string | null
+  date_annonce?: string | null
+  date_reunion?: string | null
+  id?: string
+  importance?: string | null
+  statut?: string | null
+  tags?: string[] | null
+  titre: string
+  updated_at?: string | null
+}
 
 export const fallbackAnnonces: Annonce[] = [
   {

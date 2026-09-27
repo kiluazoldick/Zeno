@@ -63,7 +63,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { Client } from "@/types/database";
+import type { Client } from "@/types";
 import { toast } from "sonner";
 
 interface OpportunitiesSectionProps {

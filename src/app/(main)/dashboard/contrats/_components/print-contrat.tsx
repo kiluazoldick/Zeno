@@ -6,8 +6,9 @@ import { createPortal } from "react-dom";
 
 import type { ContratFormValues } from "./contrat-data";
 import { ContratPaper } from "./contrat-paper";
+import { ContratInput } from "@/lib/validations/contrat.schema";
 
-export function PrintContrat({ contrat }: { contrat: ContratFormValues }) {
+export function PrintContrat({ contrat }: { contrat: ContratInput }) {
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {

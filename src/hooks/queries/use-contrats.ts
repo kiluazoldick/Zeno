@@ -10,6 +10,7 @@ import {
   type GetContratsFilters,
 } from "@/lib/actions/contrats";
 import { toast } from "sonner";
+import { ContratInput } from "@/lib/validations/contrat.schema";
 
 // Clés de cache
 export const contratsKeys = {
@@ -55,14 +56,34 @@ export function useCreateContrat() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: createContrat,
+    mutationFn: async (data: ContratInput) => {
+      const result = await createContrat(data);
+
+      if (!result.success) {
+        throw new Error(
+          typeof result.error === "string"
+            ? result.error
+            : "Erreur lors de la création du contrat"
+        );
+      }
+
+      return result.data;
+    },
+
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: contratsKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: contratsKeys.active() });
+      queryClient.invalidateQueries({
+        queryKey: contratsKeys.lists(),
+      });
+
       toast.success("Contrat créé avec succès");
     },
-    onError: (error: Error) => {
-      toast.error(`Erreur: ${error.message}`);
+
+    onError: (error) => {
+      console.error("❌ Erreur création:", error);
+
+      toast.error(
+        error.message || "Une erreur est survenue"
+      );
     },
   });
 }

@@ -52,11 +52,11 @@ export async function updateReport(id: string, data: ReportUpdateInput) {
     }
 
     // Vérifier que le projet existe si fourni
-    if (validated.data.projet_id) {
+    if (validated.data.data.projet_id) {
       const { data: project, error: projectError } = await adminClient
         .from("projects")
         .select("id")
-        .eq("id", validated.data.projet_id)
+        .eq("id", validated.data.data.projet_id)
         .single();
 
       if (projectError || !project) {
@@ -68,11 +68,11 @@ export async function updateReport(id: string, data: ReportUpdateInput) {
     }
 
     // Vérifier que le membre existe si fourni
-    if (validated.data.auteur) {
+    if (validated.data.data.auteur) {
       const { data: member, error: memberError } = await adminClient
         .from("members")
         .select("id")
-        .eq("id", validated.data.auteur)
+        .eq("id", validated.data.data.auteur)
         .single();
 
       if (memberError || !member) {
@@ -84,11 +84,11 @@ export async function updateReport(id: string, data: ReportUpdateInput) {
     }
 
     // Vérifier que la tâche existe si fournie
-    if (validated.data.task_id) {
+    if (validated.data.data.task_id) {
       const { data: task, error: taskError } = await adminClient
         .from("tasks")
         .select("id")
-        .eq("id", validated.data.task_id)
+        .eq("id", validated.data.data.task_id)
         .single();
 
       if (taskError || !task) {
@@ -103,7 +103,7 @@ export async function updateReport(id: string, data: ReportUpdateInput) {
     const { data: report, error } = await adminClient
       .from("reports")
       .update({
-        ...validated.data,
+        ...validated.data.data,
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)

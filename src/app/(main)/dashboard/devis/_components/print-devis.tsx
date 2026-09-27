@@ -6,8 +6,9 @@ import { createPortal } from "react-dom";
 
 import type { DevisFormValues } from "./devis-data";
 import { DevisPaper } from "./devis-paper";
+import { DevisInput } from "@/lib/validations";
 
-export function PrintDevis({ devis }: { devis: DevisFormValues }) {
+export function PrintDevis({ devis }: { devis: DevisInput }) {
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {

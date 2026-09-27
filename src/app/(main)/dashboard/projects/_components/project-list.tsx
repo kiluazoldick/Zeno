@@ -75,7 +75,7 @@ import {
 } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import type { Project } from "@/types/database";
+import type { Project } from "@/types";
 import { toast } from "sonner";
 
 // Données mockées de fallback

@@ -9,7 +9,11 @@ const getProductivitySchema = z.object({
   projectId: z.string().uuid("ID projet invalide").optional(),
 });
 
-export type GetProductivityOptions = z.infer<typeof getProductivitySchema>;
+export type GetProductivityOptions = {
+  period?: "week" | "month" | "quarter" | "year";
+  memberId?: string;
+  projectId?: string;
+};
 
 export async function getProductivity(options?: GetProductivityOptions) {
   const supabase = await createServerClient();
@@ -20,10 +24,14 @@ export async function getProductivity(options?: GetProductivityOptions) {
     projectId: options?.projectId,
   });
 
+  if (!validated.success) {
+    throw new Error(`Paramètres de productivité invalides: ${validated.error.message}`);
+  }
+
   // Récupérer la productivité par membre
   let memberQuery = supabase.from("member_productivity").select("*");
 
-  if (validated.data.memberId) {
+  if (validated.data?.memberId) {
     memberQuery = memberQuery.eq("id", validated.data.memberId);
   }
 
@@ -38,7 +46,7 @@ export async function getProductivity(options?: GetProductivityOptions) {
   // Récupérer la productivité par projet
   let projectQuery = supabase.from("project_progress").select("*");
 
-  if (validated.data.projectId) {
+  if (validated.data?.projectId) {
     projectQuery = projectQuery.eq("id", validated.data.projectId);
   }
 
@@ -69,22 +77,27 @@ export async function getProductivity(options?: GetProductivityOptions) {
       break;
   }
 
-  const { data: trends, error: trendsError } = await supabase
+  const trendsResult = await supabase
     .from("tasks")
     .select("created_at, statut")
     .gte("created_at", startDate.toISOString())
     .order("created_at", { ascending: true });
 
-  if (trendsError) {
+  if (trendsResult.error) {
     throw new Error(
-      `Erreur lors de la récupération des tendances: ${trendsError.message}`,
+      `Erreur lors de la récupération des tendances: ${trendsResult.error.message}`,
     );
   }
 
+  const trends = (trendsResult.data ?? []) as unknown as Array<{
+    created_at: string;
+    statut: string | null;
+  }>;
+
   // Calculer les métriques globales
-  const totalTasks = trends?.length || 0;
+  const totalTasks = trends.length;
   const completedTasks =
-    trends?.filter((t) => t.statut === "Terminé").length || 0;
+    trends.filter((task) => task.statut === "Terminé").length;
   const completionRate =
     totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 
@@ -96,7 +109,7 @@ export async function getProductivity(options?: GetProductivityOptions) {
   return {
     members: memberProductivity || [],
     projects: projectProductivity || [],
-    trends: trends || [],
+    trends,
     summary: {
       totalTasks,
       completedTasks,
@@ -132,28 +145,48 @@ export async function getProductivityStats() {
   const supabase = await createServerClient();
 
   // Nombre total de tâches par statut
-  const { data: tasksByStatus, error: tasksError } = await supabase
+  const tasksResult = await supabase
     .from("tasks")
-    .select("statut, count(*)")
-    .group("statut");
+    .select("statut");
 
-  if (tasksError) {
+  if (tasksResult.error) {
     throw new Error(
-      `Erreur lors de la récupération des statistiques: ${tasksError.message}`,
+      `Erreur lors de la récupération des statistiques: ${tasksResult.error.message}`,
     );
   }
 
+  const taskRows = (tasksResult.data ?? []) as unknown as Array<{
+    statut: string | null;
+  }>;
+  const taskCounts = taskRows.reduce(
+    (counts, task) => {
+      const status = task.statut || "À faire";
+      counts[status] = (counts[status] || 0) + 1;
+      return counts;
+    },
+    {} as Record<string, number>,
+  );
+  const tasksByStatus = Object.entries(taskCounts).map(([statut, count]) => ({
+    statut,
+    count,
+  }));
+
   // Temps moyen de complétion (approximatif)
-  const { data: completedTasks, error: completedError } = await supabase
+  const completedResult = await supabase
     .from("tasks")
     .select("created_at, updated_at")
     .eq("statut", "Terminé");
 
-  if (completedError) {
+  if (completedResult.error) {
     throw new Error(
-      `Erreur lors de la récupération des tâches terminées: ${completedError.message}`,
+      `Erreur lors de la récupération des tâches terminées: ${completedResult.error.message}`,
     );
   }
+
+  const completedTasks = (completedResult.data ?? []) as unknown as Array<{
+    created_at: string;
+    updated_at: string;
+  }>;
 
   let avgCompletionTime = 0;
   if (completedTasks && completedTasks.length > 0) {

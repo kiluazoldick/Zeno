@@ -1,16 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { LockKeyhole, Mail } from "lucide-react";
 import { login } from "@/lib/actions/auth/login";
 
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 
 export function LoginForm() {
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -31,35 +33,46 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <Field>
-        <FieldLabel htmlFor="email">Email address</FieldLabel>
-        <InputGroup>
+        <FieldLabel htmlFor="email">Adresse email</FieldLabel>
+        <InputGroup className="h-11 bg-muted/30 transition-colors focus-within:bg-background">
+          <InputGroupAddon>
+            <Mail className="size-4" aria-hidden="true" />
+          </InputGroupAddon>
           <InputGroupInput
             id="email"
             name="email"
             type="email"
-            placeholder="m@example.com"
+            placeholder="vous@exemple.com"
+            autoComplete="email"
             required
           />
         </InputGroup>
       </Field>
 
       <Field>
-        <FieldLabel htmlFor="password">Password</FieldLabel>
-        <InputGroup>
+        <FieldLabel htmlFor="password">Mot de passe</FieldLabel>
+        <InputGroup className="h-11 bg-muted/30 transition-colors focus-within:bg-background">
+          <InputGroupAddon>
+            <LockKeyhole className="size-4" aria-hidden="true" />
+          </InputGroupAddon>
           <InputGroupInput
             id="password"
             name="password"
             type="password"
-            placeholder="••••••••"
+            placeholder="Votre mot de passe"
+            autoComplete="current-password"
             required
           />
         </InputGroup>
       </Field>
 
       {error && (
-        <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+        <div
+          role="alert"
+          className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2.5 text-destructive text-sm"
+        >
           {error}
         </div>
       )}
@@ -67,9 +80,9 @@ export function LoginForm() {
       <Button
         type="submit"
         disabled={loading}
-        className="w-full bg-zeno-primary hover:bg-zeno-primary/90"
+        className="h-11 w-full bg-zeno-primary font-semibold text-white shadow-sm transition-transform hover:bg-zeno-primary/90 active:scale-[0.99]"
       >
-        {loading ? "Connexion..." : "Login"}
+        {loading ? "Connexion..." : "Se connecter"}
       </Button>
     </form>
   );

@@ -6,6 +6,7 @@ import { APP_CONFIG } from "@/config/app-config";
 
 import { RegisterForm } from "../../_components/register-form";
 import { GoogleButton } from "../../_components/social-auth/google-button";
+import Image from "next/image";
 
 export default function RegisterV2() {
   return (
@@ -16,7 +17,10 @@ export default function RegisterV2() {
           <p className="text-muted-foreground text-sm">Please enter your details to register.</p>
         </div>
         <div className="space-y-4">
-          <GoogleButton className="w-full" />
+          <div className="flex items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground shadow-sm transition-colors hover:bg-accent/50">
+            <Image src="https://img.icons8.com/?size=100&id=17949&format=png&color=000000" alt="Logo" width={30} height={30} />
+            <p>Register with Google</p>
+          </div>
           <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-border after:border-t">
             <span className="relative z-10 bg-background px-2 text-muted-foreground">Or continue with</span>
           </div>

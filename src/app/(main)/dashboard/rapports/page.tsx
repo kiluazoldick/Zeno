@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useReports } from "@/hooks/queries/use-reports";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import { Plus, List } from "lucide-react";
 
 import { RapportList } from "./_components/rapport-list";
@@ -14,13 +13,17 @@ import { fallbackRapports } from "./_components/rapport-data";
 
 export default function Page() {
   const [activeTab, setActiveTab] = useState<"list" | "create">("list");
+  const [selectedRapportId, setSelectedRapportId] = useState<string | null>(null);
+
   const {
     data: reports,
     isLoading,
     error,
+    refetch,
   } = useReports({
     includeProjet: true,
     includeAuteur: true,
+    includeTask: false,
   });
 
   if (isLoading) {
@@ -60,7 +63,14 @@ export default function Page() {
         <div className="flex flex-wrap items-center gap-3">
           <Tabs
             value={activeTab}
-            onValueChange={(v) => setActiveTab(v as "list" | "create")}
+            onValueChange={(v) => {
+              const tab = v as "list" | "create";
+              setActiveTab(tab);
+              if (tab === "create") {
+                // Nouveau rapport = on sort du mode édition
+                setSelectedRapportId(null);
+              }
+            }}
             className="w-auto"
           >
             <TabsList>
@@ -70,7 +80,7 @@ export default function Page() {
               </TabsTrigger>
               <TabsTrigger value="create" className="gap-2">
                 <Plus className="size-4" />
-                Nouveau rapport
+                {selectedRapportId ? "Voir / Modifier" : "Nouveau rapport"}
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -80,10 +90,26 @@ export default function Page() {
       <Tabs value={activeTab} className="w-full">
         <TabsContent value="list" className="mt-0 space-y-4">
           <RapportKpi rapports={rapportData} />
-          <RapportList rapports={rapportData} isLoading={isLoading} />
+          <RapportList
+            rapports={rapportData}
+            isLoading={isLoading}
+            onStatusUpdated={() => refetch?.()}
+            onViewRapport={(id) => {
+              setSelectedRapportId(id);
+              setActiveTab("create");
+            }}
+          />
         </TabsContent>
+
         <TabsContent value="create" className="mt-0">
-          <RapportForm />
+          <RapportForm
+            rapportId={selectedRapportId}
+            onSuccess={() => {
+              setSelectedRapportId(null);
+              setActiveTab("list");
+              refetch?.();
+            }}
+          />
         </TabsContent>
       </Tabs>
     </div>

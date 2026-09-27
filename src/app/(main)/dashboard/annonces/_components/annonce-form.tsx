@@ -3,17 +3,12 @@
 import * as React from "react";
 import { useForm, FormProvider, Controller } from "react-hook-form";
 import { format } from "date-fns";
-import { CalendarIcon, Save, Send, Pin, X } from "lucide-react";
+import { CalendarIcon, Save, Send, X, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@/components/ui/input-group";
 import {
   Popover,
   PopoverContent,
@@ -31,26 +26,10 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-
-type AnnonceFormValues = {
-  titre: string;
-  contenu: string;
-  importance: string;
-  status: string;
-  date: string;
-  dateReunion: string;
-  tags: string[];
-};
-
-const defaultValues: AnnonceFormValues = {
-  titre: "",
-  contenu: "",
-  importance: "Normale",
-  status: "Brouillon",
-  date: format(new Date(), "yyyy-MM-dd"),
-  dateReunion: "",
-  tags: [],
-};
+import { createAnnonce } from "@/lib/actions/annonces";
+import { updateAnnonce } from "@/lib/actions/annonces/update-annonce";
+import { getAnnonce } from "@/lib/actions/annonces/get-annonce";
+import type { AnnonceInput } from "@/lib/validations/annonce.schema";
 
 const importanceOptions = [
   { value: "Haute", label: "🔴 Haute", color: "text-destructive" },
@@ -62,6 +41,16 @@ const statusOptions = [
   { value: "Brouillon", label: "Brouillon" },
   { value: "Publiée", label: "Publier directement" },
 ];
+
+const defaultValues: AnnonceInput = {
+  titre: "",
+  contenu: "",
+  importance: "Normale",
+  statut: "Brouillon",
+  date_annonce: format(new Date(), "yyyy-MM-dd"),
+  date_reunion: "",
+  tags: [],
+};
 
 const suggestedTags = [
   "Réunion",
@@ -76,15 +65,87 @@ const suggestedTags = [
   "Planning",
 ];
 
-export function AnnonceForm() {
-  const form = useForm<AnnonceFormValues>({
+export function AnnonceForm({
+  annonceId,
+  onSuccess,
+}: {
+  annonceId?: string | null;
+  onSuccess?: () => void;
+}) {
+  const form = useForm<AnnonceInput>({
     defaultValues,
   });
-  const [tagInput, setTagInput] = React.useState("");
-  const tags = form.watch("tags");
 
-  function onSubmit(data: AnnonceFormValues) {
-    console.log("Annonce créée:", data);
+  const [tagInput, setTagInput] = React.useState("");
+  const tags = form.watch("tags") ?? [];
+  const [isLoadingAnnonce, setIsLoadingAnnonce] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  const isEditMode = Boolean(annonceId);
+
+  // Charger l'annonce quand on est en mode édition
+  React.useEffect(() => {
+    if (!annonceId) {
+      form.reset(defaultValues);
+      setTagInput("");
+      return;
+    }
+
+    async function loadAnnonce() {
+      try {
+        setIsLoadingAnnonce(true);
+        const data = await getAnnonce(annonceId!) as unknown as AnnonceInput;
+
+        form.reset({
+          titre: data.titre ?? "",
+          contenu: data.contenu ?? "",
+          importance: data.importance ?? "Normale",
+          statut: data.statut ?? "Brouillon",
+          date_annonce: data.date_annonce
+            ? format(new Date(data.date_annonce), "yyyy-MM-dd")
+            : format(new Date(), "yyyy-MM-dd"),
+          date_reunion: data.date_reunion
+            ? format(new Date(data.date_reunion), "yyyy-MM-dd")
+            : "",
+          tags: data.tags ?? [],
+        });
+      } catch (error) {
+        console.error("Erreur chargement annonce :", error);
+      } finally {
+        setIsLoadingAnnonce(false);
+      }
+    }
+
+    loadAnnonce();
+  }, [annonceId, form]);
+
+  async function onSubmit(data: AnnonceInput) {
+    try {
+      setIsSubmitting(true);
+
+      let result;
+
+      if (isEditMode && annonceId) {
+        result = await updateAnnonce(annonceId, data);
+      } else {
+        result = await createAnnonce(data);
+      }
+
+      if (!result.success) {
+        console.error(result.error);
+        return;
+      }
+
+      console.log(isEditMode ? "Annonce mise à jour :" : "Annonce créée :", result.data);
+
+      form.reset(defaultValues);
+      setTagInput("");
+      onSuccess?.();
+    } catch (error) {
+      console.error("Erreur lors de la soumission :", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   function addTag(tag: string) {
@@ -101,6 +162,14 @@ export function AnnonceForm() {
     );
   }
 
+  if (isLoadingAnnonce) {
+    return (
+      <div className="flex h-64 items-center justify-center rounded-xl border bg-card">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <FormProvider {...form}>
       <form
@@ -110,25 +179,37 @@ export function AnnonceForm() {
         <div className="rounded-xl border bg-card p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-medium tracking-tight">
-              Nouvelle annonce
+              {isEditMode ? "Modifier l'annonce" : "Nouvelle annonce"}
             </h2>
+
             <div className="flex gap-2">
-              <Button type="button" variant="outline">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isSubmitting}
+                onClick={() => form.handleSubmit(onSubmit)()}
+              >
                 <Save className="size-4" />
                 Sauvegarder
               </Button>
+
               <Button
                 type="submit"
                 className="bg-zeno-primary hover:bg-zeno-primary/90"
+                disabled={isSubmitting}
               >
-                <Send className="size-4" />
-                Publier
+                {isSubmitting ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Send className="size-4" />
+                )}
+                {isEditMode ? "Mettre à jour" : "Publier"}
               </Button>
             </div>
           </div>
 
           <div className="grid gap-6">
-            {/* Informations générales */}
+            {/* Titre + Importance */}
             <div className="grid gap-4 md:grid-cols-2">
               <Field className="gap-1">
                 <FieldLabel className="text-xs">Titre de l'annonce</FieldLabel>
@@ -142,7 +223,12 @@ export function AnnonceForm() {
                 <FieldLabel className="text-xs">Importance</FieldLabel>
                 <Select
                   value={form.watch("importance")}
-                  onValueChange={(value) => form.setValue("importance", value)}
+                  onValueChange={(value) =>
+                    form.setValue(
+                      "importance",
+                      value as AnnonceInput["importance"],
+                    )
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionner l'importance" />
@@ -160,12 +246,13 @@ export function AnnonceForm() {
               </Field>
             </div>
 
+            {/* Dates */}
             <div className="grid gap-4 md:grid-cols-2">
               <Field className="gap-1">
                 <FieldLabel className="text-xs">Date</FieldLabel>
                 <Controller
                   control={form.control}
-                  name="date"
+                  name="date_annonce"
                   render={({ field }) => {
                     const date = field.value
                       ? new Date(field.value)
@@ -213,7 +300,7 @@ export function AnnonceForm() {
                 </FieldLabel>
                 <Controller
                   control={form.control}
-                  name="dateReunion"
+                  name="date_reunion"
                   render={({ field }) => {
                     const date = field.value
                       ? new Date(field.value)
@@ -256,12 +343,15 @@ export function AnnonceForm() {
               </Field>
             </div>
 
+            {/* Statut */}
             <div className="grid gap-4 md:grid-cols-2">
               <Field className="gap-1">
                 <FieldLabel className="text-xs">Statut</FieldLabel>
                 <Select
-                  value={form.watch("status")}
-                  onValueChange={(value) => form.setValue("status", value)}
+                  value={form.watch("statut")}
+                  onValueChange={(value) =>
+                    form.setValue("statut", value as AnnonceInput["statut"])
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionner le statut" />

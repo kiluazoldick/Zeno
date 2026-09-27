@@ -18,6 +18,7 @@ import {
   ArrowUpDown,
   ChevronDown,
   Eye,
+  Pencil,
   MoreHorizontal,
   Search,
   Pin,
@@ -75,7 +76,22 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import type { Annonce } from "@/types/database";
+import { deleteAnnonce } from "@/lib/actions/annonces";
+import { updateAnnonceStatus } from "@/lib/actions/annonces/update-annonce-status";
+import { useRouter } from "next/navigation";
+
+type Annonce = {
+  auteur?: string | null
+  contenu: string
+  created_at?: string | null
+  date_annonce: string
+  date_reunion?: string | null
+  id: string
+  importance: string
+  statut: string
+  tags?: string[] | null
+  titre: string
+}
 
 import {
   fallbackAnnonces,
@@ -86,6 +102,7 @@ import {
 interface AnnonceListProps {
   annonces: Annonce[];
   isLoading: boolean;
+  onEditAnnonce: (id: string) => void;
 }
 
 const importanceOptions = ["Tous", "Haute", "Normale", "Basse"];
@@ -107,8 +124,12 @@ function preventPaginationNavigation(
   event.preventDefault();
 }
 
-export function AnnonceList({ annonces, isLoading }: AnnonceListProps) {
-  const data = annonces && annonces.length > 0 ? annonces : fallbackAnnonces;
+export function AnnonceList({ annonces, isLoading, onEditAnnonce }: AnnonceListProps) {
+  const router = useRouter();
+  const data: Annonce[] =
+    annonces && annonces.length > 0
+      ? annonces
+      : (fallbackAnnonces as Annonce[]);
 
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -233,15 +254,6 @@ export function AnnonceList({ annonces, isLoading }: AnnonceListProps) {
       ),
     },
     {
-      accessorKey: "commentaires_count",
-      header: "Commentaires",
-      cell: ({ row }) => (
-        <div className="text-sm text-center">
-          {row.original.commentaires_count || 0}
-        </div>
-      ),
-    },
-    {
       id: "actions",
       cell: ({ row }) => {
         const annonce = row.original;
@@ -260,13 +272,17 @@ export function AnnonceList({ annonces, isLoading }: AnnonceListProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                <Eye className="size-4" />
-                Voir l'annonce
+              <DropdownMenuItem
+                onClick={() => onEditAnnonce(annonce.id)}
+              >
+                <Pencil className="size-4" />
+                Modifier
               </DropdownMenuItem>
               {isDraft && (
                 <>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleUpdateAnnonceStatus(annonce.id, "Publiée")}
+                  >
                     <Pin className="size-4" />
                     Publier
                   </DropdownMenuItem>
@@ -274,13 +290,18 @@ export function AnnonceList({ annonces, isLoading }: AnnonceListProps) {
                 </>
               )}
               {annonce.statut === "Publiée" && (
-                <DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleUpdateAnnonceStatus(annonce.id, "Archivée")}
+                >
                   <Archive className="size-4" />
                   Archiver
                 </DropdownMenuItem>
               )}
               {isDraft && (
-                <DropdownMenuItem variant="destructive">
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => handleDeleteAnnonce(annonce.id)}
+                >
                   Supprimer
                 </DropdownMenuItem>
               )}
@@ -356,6 +377,41 @@ export function AnnonceList({ annonces, isLoading }: AnnonceListProps) {
     importanceFilter.length > 0 ||
     statusFilter.length > 0 ||
     searchQuery.length > 0;
+
+  async function handleDeleteAnnonce(id: string) {
+    const confirmed = window.confirm(
+      "Êtes-vous sûr de vouloir supprimer cette annonce ?",
+    );
+
+    if (!confirmed) return;
+
+    const result = await deleteAnnonce(id);
+
+    if (!result.success) {
+      console.error(result.error);
+      alert(`Erreur : ${result.error}`);
+      return;
+    }
+
+    console.log("Annonce supprimée avec succès");
+    router.refresh();
+  }
+
+  async function handleUpdateAnnonceStatus(
+    id: string,
+    statut: "Brouillon" | "Publiée" | "Archivée",
+  ) {
+    const result = await updateAnnonceStatus(id, statut);
+
+    if (!result.success) {
+      console.error(result.error);
+      alert("Erreur lors de la mise à jour du statut.");
+      return;
+    }
+
+    console.log(`Annonce ${statut.toLowerCase()} avec succès`);
+    router.refresh(); 
+  }
 
   if (isLoading) {
     return (
@@ -475,9 +531,9 @@ export function AnnonceList({ annonces, isLoading }: AnnonceListProps) {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                     </TableHead>
                   ))}
                 </TableRow>

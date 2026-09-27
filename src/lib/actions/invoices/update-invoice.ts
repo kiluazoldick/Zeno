@@ -16,7 +16,6 @@ const updateInvoiceSchema = z.object({
 export async function updateInvoice(id: string, data: InvoiceUpdateInput) {
   const adminClient = await createAdminClient();
 
-  // Valider les données
   const validated = updateInvoiceSchema.safeParse({ id, data });
 
   if (!validated.success) {
@@ -27,7 +26,6 @@ export async function updateInvoice(id: string, data: InvoiceUpdateInput) {
   }
 
   try {
-    // Vérifier que la facture existe
     const { data: existing, error: checkError } = await adminClient
       .from("invoices")
       .select("id, statut")
@@ -41,10 +39,9 @@ export async function updateInvoice(id: string, data: InvoiceUpdateInput) {
       };
     }
 
-    // Vérifier que la facture n'est pas déjà payée
     if (
       existing.statut === "Payée" &&
-      validated.data.statut !== existing.statut
+      validated.data.data.statut !== existing.statut
     ) {
       return {
         success: false,
@@ -52,23 +49,51 @@ export async function updateInvoice(id: string, data: InvoiceUpdateInput) {
       };
     }
 
-    // Recalculer le montant total si les lignes ont changé
-    let montantTotal = validated.data.montant_total;
-    if (!montantTotal && validated.data.contenu) {
-      montantTotal = validated.data.contenu.reduce(
-        (sum, item) => sum + (item.quantity || 0) * (item.unitPrice || 0),
+    const formData = validated.data.data;
+
+    // ============================================
+    // EXTRACTION DU client_id depuis "to"
+    // ============================================
+    const clientId =
+      (formData as any).to?.id ??
+      formData.client_id ??
+      null;
+
+    // Calcul du montant total
+    let montantTotal = formData.montant_total;
+
+    if (!montantTotal && formData.contenu) {
+      const items = Array.isArray(formData.contenu)
+        ? formData.contenu
+        : (formData.contenu as any)?.items ?? [];
+
+      montantTotal = items.reduce(
+        (sum: number, item: any) =>
+          sum + (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0),
         0,
       );
     }
 
-    // Mettre à jour la facture
+    const updatePayload = {
+      client_id: clientId,                       // ← correctement extrait
+      projet_id: formData.projet_id ?? null,
+      contrat_id: formData.contrat_id ?? null,
+      titre: formData.titre ?? null,
+      statut: formData.statut,
+      priorite: formData.priorite,
+      date_emission: formData.date_emission ?? null,
+      date_echeance: formData.date_echeance ?? null,
+      date_paiement: formData.date_paiement ?? null,
+      conditions: formData.conditions ?? null,
+      notes: formData.notes ?? null,
+      contenu: formData.contenu ?? null,
+      montant_total: montantTotal ?? null,
+      updated_at: new Date().toISOString(),
+    };
+
     const { data: invoice, error } = await adminClient
       .from("invoices")
-      .update({
-        ...validated.data,
-        montant_total: montantTotal || null,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updatePayload)
       .eq("id", id)
       .select()
       .single();

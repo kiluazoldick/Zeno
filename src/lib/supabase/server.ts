@@ -1,6 +1,6 @@
 import { createServerClient as createSupabaseServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { Database } from "@/types/database";
+import { Database } from "@/types";
 
 // Client Supabase côté serveur (avec cookies)
 export async function createServerClient() {
@@ -38,7 +38,7 @@ export async function createAdminClient() {
     throw new Error("Configuration Supabase manquante");
   }
 
-  return createSupabaseServerClient<Database>(
+  return createSupabaseServerClient<any>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     {

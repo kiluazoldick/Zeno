@@ -77,13 +77,36 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import type { Report } from "@/types/database";
+
+type Report = {
+  auteur: string
+  contenu: string
+  created_at: string
+  date_rapport: string
+  description: string
+  id: string
+  metriques: Record<string, any>
+  notes: string
+  observations: string
+  periode: string
+  problemes: string[]
+  prochaines_etapes: string[]
+  projet_id: string
+  statut: string
+  task_id?: string
+  titre: string
+  type: string
+  updated_at?: string
+}
 
 import { fallbackRapports, statusColors } from "./rapport-data";
+import { updateReportStatus } from "@/lib/actions/reports/update-report-status";
 
 interface RapportListProps {
   rapports: Report[];
   isLoading: boolean;
+  onStatusUpdated?: () => void;
+  onViewRapport?: (id: string) => void;
 }
 
 const statusOptions = ["Tous", "Brouillon", "En cours", "Validé", "Archivé"];
@@ -105,8 +128,53 @@ function preventPaginationNavigation(
   event.preventDefault();
 }
 
-export function RapportList({ rapports, isLoading }: RapportListProps) {
+export function RapportList({ rapports, isLoading, onStatusUpdated, onViewRapport }: RapportListProps) {
   const data = rapports && rapports.length > 0 ? rapports : fallbackRapports;
+  const [updatingStatusId, setUpdatingStatusId] = React.useState<string | null>(
+    null,
+  );
+
+  async function handleValidateReport(rapport: Report) {
+    try {
+      setUpdatingStatusId(rapport.id);
+
+      const result = await updateReportStatus(rapport.id, "Validé");
+
+      if (!result.success) {
+        console.error("Erreur validation :", result.error);
+        alert("Impossible de valider le rapport.");
+        return;
+      }
+
+      onStatusUpdated?.();
+    } catch (error) {
+      console.error(error);
+      alert("Erreur lors de la validation.");
+    } finally {
+      setUpdatingStatusId(null);
+    }
+  }
+
+  async function handleArchiveReport(rapport: Report) {
+    try {
+      setUpdatingStatusId(rapport.id);
+
+      const result = await updateReportStatus(rapport.id, "Archivé");
+
+      if (!result.success) {
+        console.error("Erreur archivage :", result.error);
+        alert("Impossible d'archiver le rapport.");
+        return;
+      }
+
+      onStatusUpdated?.();
+    } catch (error) {
+      console.error(error);
+      alert("Erreur lors de l'archivage.");
+    } finally {
+      setUpdatingStatusId(null);
+    }
+  }
 
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -237,7 +305,10 @@ export function RapportList({ rapports, isLoading }: RapportListProps) {
       cell: ({ row }) => {
         const rapport = row.original;
         const isDraft = rapport.statut === "Brouillon";
+        const isInProgress = rapport.statut === "En cours";
+        const isValidated = rapport.statut === "Validé";
         const isArchived = rapport.statut === "Archivé";
+        const isUpdating = updatingStatusId === rapport.id;
 
         return (
           <DropdownMenu>
@@ -246,30 +317,71 @@ export function RapportList({ rapports, isLoading }: RapportListProps) {
                 variant="ghost"
                 size="icon-sm"
                 className="text-muted-foreground"
+                disabled={isUpdating}
               >
-                <MoreHorizontal className="size-4" />
+                {isUpdating ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <MoreHorizontal className="size-4" />
+                )}
                 <span className="sr-only">Menu</span>
               </Button>
             </DropdownMenuTrigger>
+
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onViewRapport?.(rapport.id)}>
                 <Eye className="size-4" />
                 Voir le rapport
               </DropdownMenuItem>
+
               <DropdownMenuItem>
                 <FileDown className="size-4" />
                 Télécharger PDF
               </DropdownMenuItem>
-              {isDraft && (
+
+              {/* En cours → Validé */}
+              {isInProgress && (
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={isUpdating}
+                    onClick={() => handleValidateReport(rapport)}
+                  >
                     <CheckCircle className="size-4" />
                     Marquer comme validé
                   </DropdownMenuItem>
                 </>
               )}
+
+              {/* Validé → Archivé */}
+              {isValidated && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    disabled={isUpdating}
+                    onClick={() => handleArchiveReport(rapport)}
+                  >
+                    <FileText className="size-4" />
+                    Archiver
+                  </DropdownMenuItem>
+                </>
+              )}
+
+              {isDraft && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    disabled={isUpdating}
+                    onClick={() => handleValidateReport(rapport)}
+                  >
+                    <CheckCircle className="size-4" />
+                    Marquer comme validé
+                  </DropdownMenuItem>
+                </>
+              )}
+
               {!isArchived && <DropdownMenuItem>Dupliquer</DropdownMenuItem>}
+
               {isDraft && (
                 <DropdownMenuItem variant="destructive">
                   Supprimer
@@ -462,9 +574,9 @@ export function RapportList({ rapports, isLoading }: RapportListProps) {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                     </TableHead>
                   ))}
                 </TableRow>

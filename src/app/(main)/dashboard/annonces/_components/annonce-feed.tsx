@@ -23,7 +23,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { cn, getInitials } from "@/lib/utils";
-import type { Annonce } from "@/types/database";
+import type { Annonce } from "@/types/index";
 
 import { importanceColors, fallbackAnnonces } from "./annonce-data";
 
@@ -36,7 +36,10 @@ export function AnnonceFeed({ annonces }: AnnonceFeedProps) {
     "all",
   );
 
-  const data = annonces && annonces.length > 0 ? annonces : fallbackAnnonces;
+  const data: Annonce[] =
+    annonces && annonces.length > 0
+      ? annonces
+      : (fallbackAnnonces as Annonce[]);
 
   const filteredAnnonces =
     filter === "all"
@@ -206,13 +209,14 @@ function AnnonceItem({
   annonce: Annonce;
   pinned?: boolean;
 }) {
-  const colorClass = importanceColors[annonce.importance];
+  const importance = annonce.importance ?? "Normale";
+  const colorClass = importanceColors[importance];
   const iconMap: Record<string, string> = {
     Haute: "🔴",
     Normale: "🟡",
     Basse: "🟢",
   };
-  const icon = iconMap[annonce.importance];
+  const icon = iconMap[importance];
 
   return (
     <div
@@ -252,12 +256,14 @@ function AnnonceItem({
               {annonce.auteur || "Admin"}
             </span>
             <span>
-              {new Date(annonce.date_annonce).toLocaleDateString("fr-FR", {
-                day: "numeric",
-                month: "short",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+              {annonce.date_annonce
+                ? new Date(annonce.date_annonce).toLocaleDateString("fr-FR", {
+                    day: "numeric",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                : "Date inconnue"}
             </span>
             {annonce.date_reunion && (
               <span className="flex items-center gap-1">
@@ -275,7 +281,7 @@ function AnnonceItem({
             </span>
           </div>
           <div className="flex flex-wrap gap-1 mt-2">
-            {(annonce.tags || []).map((tag) => (
+            {(annonce.tags || []).map((tag: string) => (
               <Badge
                 key={tag}
                 variant="secondary"

@@ -11,12 +11,13 @@ import { CONTRAT_PAPER_HEIGHT, CONTRAT_PAPER_SCALE, CONTRAT_PAPER_WIDTH, type Co
 import { ContratPaper } from "./contrat-paper";
 import { PrintContrat } from "./print-contrat";
 import { useVisibleCenterPosition } from "./use-visible-center-position";
+import { ContratInput } from "@/lib/validations";
 
 function handlePrint() {
   window.print();
 }
 
-export function ContratPreview({ contrat }: { contrat: ContratFormValues }) {
+export function ContratPreview({ contrat }: { contrat: ContratInput }) {
   const previewBodyRef = React.useRef<HTMLDivElement>(null);
   const paperLayout = useVisibleCenterPosition(previewBodyRef, {
     height: CONTRAT_PAPER_HEIGHT,

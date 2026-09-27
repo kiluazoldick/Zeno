@@ -9,7 +9,7 @@ import {
   CardDescription,
   CardHeader,
 } from "@/components/ui/card";
-import type { Project } from "@/types/database";
+import type { Project } from "@/types";
 
 interface ProjectKpiProps {
   projects: Project[];

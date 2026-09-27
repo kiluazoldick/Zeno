@@ -1,19 +1,18 @@
 "use server";
 
 import { createServerClient } from "@/lib/supabase/server";
+import { AnnonceInput } from "@/lib/validations/annonce.schema";
 import { z } from "zod";
 
 const getAnnonceSchema = z.object({
   id: z.string().uuid("ID annonce invalide"),
   includeAuteur: z.boolean().default(true),
-  includeComments: z.boolean().default(true),
 });
 
 export async function getAnnonce(
   id: string,
   options?: {
     includeAuteur?: boolean;
-    includeComments?: boolean;
   },
 ) {
   const supabase = await createServerClient();
@@ -21,7 +20,6 @@ export async function getAnnonce(
   const validated = getAnnonceSchema.safeParse({
     id,
     includeAuteur: options?.includeAuteur ?? true,
-    includeComments: options?.includeComments ?? true,
   });
 
   if (!validated.success) {
@@ -36,10 +34,6 @@ export async function getAnnonce(
 
   if (validated.data.includeAuteur) {
     relations.push("auteur_member:auteur (*)");
-  }
-
-  if (validated.data.includeComments) {
-    relations.push("comments (*, auteur_member:auteur (*))");
   }
 
   if (relations.length > 0) {

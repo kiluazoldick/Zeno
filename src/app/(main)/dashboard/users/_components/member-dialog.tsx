@@ -34,6 +34,13 @@ const memberSchema = z.object({
   equipe: z.string().min(1, "L'équipe est requise"),
   status: z.string().min(1, "Le statut est requis"),
   joined_date: z.string().nullable().optional(),
+  password: z
+    .string()
+    .optional()
+    .refine(
+      (value) => !value || value.length >= 6,
+      "Le mot de passe doit contenir au moins 6 caractères",
+    ),
 });
 
 type MemberFormData = z.infer<typeof memberSchema>;
@@ -81,6 +88,15 @@ export function MemberDialog({
   isEditing,
 }: MemberDialogProps) {
   const [loading, setLoading] = useState(false);
+  const formSchema = memberSchema.superRefine((data, context) => {
+    if (!isEditing && !data.password) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["password"],
+        message: "Le mot de passe est requis",
+      });
+    }
+  });
 
   const {
     control,
@@ -88,10 +104,11 @@ export function MemberDialog({
     reset,
     formState: { errors },
   } = useForm<MemberFormData>({
-    resolver: zodResolver(memberSchema),
+    resolver: zodResolver(formSchema),
     defaultValues: {
       nom: "",
       email: "",
+      password: "",
       role: "",
       equipe: "",
       status: "Actif",
@@ -105,6 +122,7 @@ export function MemberDialog({
       reset({
         nom: member.nom || "",
         email: member.email || "",
+        password: "",
         role: member.role || "",
         equipe: member.equipe || "",
         status: member.status || "Actif",
@@ -116,6 +134,7 @@ export function MemberDialog({
       reset({
         nom: "",
         email: "",
+        password: "",
         role: "",
         equipe: "",
         status: "Actif",
@@ -183,6 +202,33 @@ export function MemberDialog({
             />
             {errors.email && (
               <p className="text-sm text-destructive">{errors.email.message}</p>
+            )}
+          </Field>
+
+          {/* Mot de passe */}
+          <Field>
+            <FieldLabel>
+              Mot de passe {!isEditing && <span className="text-destructive">*</span>}
+            </FieldLabel>
+            <Controller
+              name="password"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  type="password"
+                  placeholder={isEditing ? "Laisser vide pour conserver" : "6 caractères minimum"}
+                  autoComplete="new-password"
+                />
+              )}
+            />
+            <p className="text-muted-foreground text-xs">
+              {isEditing
+                ? "Saisissez un nouveau mot de passe uniquement pour le modifier."
+                : "Le mot de passe doit contenir au moins 6 caractères."}
+            </p>
+            {errors.password && (
+              <p className="text-sm text-destructive">{errors.password.message}</p>
             )}
           </Field>
 

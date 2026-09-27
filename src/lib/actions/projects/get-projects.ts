@@ -2,6 +2,7 @@
 
 import { createServerClient } from "@/lib/supabase/server";
 import { z } from "zod";
+import { Project } from "@/types";
 
 // Schéma pour les filtres
 const getProjectsFiltersSchema = z.object({
@@ -17,7 +18,7 @@ const getProjectsFiltersSchema = z.object({
 
 export type GetProjectsFilters = z.infer<typeof getProjectsFiltersSchema>;
 
-export async function getProjects(filters?: GetProjectsFilters) {
+export async function getProjects(filters?: GetProjectsFilters): Promise<Project[]>{
   const supabase = await createServerClient();
 
   // Construire la requête de base

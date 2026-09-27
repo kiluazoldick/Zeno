@@ -10,6 +10,7 @@ import {
   type GetDevisFilters,
 } from "@/lib/actions/devis";
 import { toast } from "sonner";
+import { DevisUpdateInput, type DevisInput } from "@/lib/validations";
 
 // Clés de cache
 export const devisKeys = {
@@ -44,14 +45,34 @@ export function useCreateDevis() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: createDevis,
+    mutationFn: async (data: DevisInput) => {
+      const result = await createDevis(data);
+
+      if (!result.success) {
+        throw new Error(
+          typeof result.error === "string"
+            ? result.error
+            : "Erreur lors de la création du devis"
+        );
+      }
+
+      return result.data;
+    },
+
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: devisKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: devisKeys.lists(),
+      });
+
       toast.success("Devis créé avec succès");
     },
-    onError: (error: any) => {
+
+    onError: (error) => {
       console.error("❌ Erreur création:", error);
-      toast.error(`Erreur: ${error.message || "Une erreur est survenue"}`);
+
+      toast.error(
+        error.message || "Une erreur est survenue"
+      );
     },
   });
 }
@@ -61,7 +82,7 @@ export function useUpdateDevis() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) =>
+    mutationFn: ({ id, data }: { id: string; data: DevisUpdateInput }) =>
       updateDevis(id, data),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: devisKeys.lists() });

@@ -1,4 +1,32 @@
-import type { Invoice } from "@/types/database";
+import { addDays, format } from "date-fns";
+
+type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
+
+export type Invoice = {
+  client_id: string | null
+  conditions: string | null
+  contenu: Json | null
+  contrat_id: string | null
+  created_at: string | null
+  date_echeance: string | null
+  date_emission: string | null
+  date_paiement: string | null
+  id: string
+  montant_total: number | null
+  notes: string | null
+  numero: string
+  priorite: string
+  projet_id: string | null
+  statut: string
+  titre: string | null
+  updated_at: string | null
+}
 
 export const fallbackFactures: Invoice[] = [
   {
@@ -106,3 +134,158 @@ export const statusColors: Record<string, string> = {
   Impayée: "border-destructive/20 bg-destructive/10 text-destructive",
   Annulée: "border-muted-foreground/20 bg-muted text-muted-foreground",
 };
+
+export type FactureDiscountType = "fixed" | "percent";
+
+export interface FactureLineItem {
+  id: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+export interface FactureTaxOption {
+  id: string;
+  name: string;
+  rate: number;
+}
+
+export interface FactureFromDetails {
+  name: string;
+  email: string;
+  phone: string;
+  website: string;
+  addressLines: string[];
+  taxId: string;
+  paymentAccountName: string;
+  routingNumber: string;
+  issuerName: string;
+}
+
+export interface FactureToDetails {
+  id: string;
+  name: string;
+  email: string;
+  addressLines: string[];
+  taxId: string;
+  telephone: string;
+}
+
+export interface FactureFormValues {
+  id: string;
+  numero: string;
+  issuedDate: string;
+  paymentDueDate: string;
+  from: FactureFromDetails;
+  to: FactureToDetails;
+  taxId: string;
+  discountType: FactureDiscountType;
+  discountValue: number;
+  items: FactureLineItem[];
+  notes: string;
+  conditions: string;
+}
+
+export const FACTURE_PAPER_WIDTH = 816;
+export const FACTURE_PAPER_HEIGHT = 1056;
+export const FACTURE_PAPER_SCALE = 0.6;
+
+export const factureTaxOptions: FactureTaxOption[] = [
+  { id: "tva", name: "TVA", rate: 19.25 },
+  { id: "tva-reduite", name: "TVA reduite", rate: 5.5 },
+  { id: "aucune", name: "Aucune taxe", rate: 0 },
+];
+
+export const factureClients: FactureToDetails[] = [
+  {
+    id: "groupe-banto",
+    name: "Groupe Banto",
+    email: "contact@groupebanto.cm",
+    telephone: "+237 6XX XXX XXX",
+    addressLines: ["BP 1234", "Douala", "Cameroun"],
+    taxId: "RC-123456789",
+  },
+];
+
+const today = new Date();
+
+export const defaultFactureValues: FactureFormValues = {
+  id: "",
+  numero: `FAC-${format(today, "yyyy")}-001`,
+  issuedDate: format(today, "yyyy-MM-dd"),
+  paymentDueDate: format(addDays(today, 30), "yyyy-MM-dd"),
+  from: {
+    name: "Zoldick Entreprise",
+    email: "contact@zoldick.cm",
+    phone: "+237 6XX XXX XXX",
+    website: "www.zoldick.cm",
+    addressLines: ["BP 7890", "Douala", "Cameroun"],
+    taxId: "RC-123456789",
+    paymentAccountName: "Zoldick Entreprise",
+    routingNumber: "084009519",
+    issuerName: "Nanga Doumer",
+  },
+  to: factureClients[0],
+  taxId: "tva",
+  discountType: "fixed",
+  discountValue: 0,
+  items: [
+    {
+      id: "item-1",
+      description: "Prestation de service",
+      quantity: 1,
+      unitPrice: 1000000,
+    },
+  ],
+  notes: "Merci de votre confiance.",
+  conditions: "Paiement par virement bancaire.",
+};
+
+export function getLineAmount(item?: FactureLineItem) {
+  if (!item) return 0;
+  return (Number.isFinite(item.quantity) ? item.quantity : 0) *
+    (Number.isFinite(item.unitPrice) ? item.unitPrice : 0);
+}
+
+export function getFactureItems(facture: FactureFormValues) {
+  return facture.items;
+}
+
+export function getFactureSubtotal(facture: FactureFormValues) {
+  return getFactureItems(facture).reduce(
+    (subtotal, item) => subtotal + getLineAmount(item),
+    0,
+  );
+}
+
+export function getFactureDiscount(facture: FactureFormValues) {
+  const subtotal = getFactureSubtotal(facture);
+  const value = Number.isFinite(facture.discountValue)
+    ? facture.discountValue
+    : 0;
+  const discount =
+    facture.discountType === "percent" ? subtotal * (value / 100) : value;
+  return Math.min(Math.max(discount, 0), subtotal);
+}
+
+export function getFactureTaxOption(facture: FactureFormValues) {
+  return (
+    factureTaxOptions.find((option) => option.id === facture.taxId) ??
+    factureTaxOptions[0]
+  );
+}
+
+export function getFactureTax(facture: FactureFormValues) {
+  return (
+    Math.max(getFactureSubtotal(facture) - getFactureDiscount(facture), 0) *
+    (getFactureTaxOption(facture).rate / 100)
+  );
+}
+
+export function getFactureTotal(facture: FactureFormValues) {
+  return (
+    getFactureSubtotal(facture) -
+    getFactureDiscount(facture) +
+    getFactureTax(facture)
+  );
+}

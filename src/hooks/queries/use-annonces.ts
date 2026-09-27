@@ -116,6 +116,7 @@ export function useUpdateAnnonce() {
 }
 
 // Mutation pour mettre à jour le statut d'une annonce
+// Mutation pour mettre à jour le statut d'une annonce
 export function useUpdateAnnonceStatus() {
   const queryClient = useQueryClient();
 
@@ -123,9 +124,10 @@ export function useUpdateAnnonceStatus() {
     mutationFn: ({
       id,
       statut,
-    }: Parameters<typeof updateAnnonceStatus>[0] &
-      Parameters<typeof updateAnnonceStatus>[1]) =>
-      updateAnnonceStatus(id, statut),
+    }: {
+      id: string;
+      statut: "Brouillon" | "Publiée" | "Archivée";
+    }) => updateAnnonceStatus(id, statut),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: annoncesKeys.lists() });
       queryClient.invalidateQueries({ queryKey: annoncesKeys.published() });
