@@ -10,8 +10,19 @@ import { SummaryCards } from "./_components/summary-cards";
 import { TasksSection } from "./_components/tasks-section";
 import { FocusCard } from "./_components/focus-card";
 
+type Task = {
+  id: string;
+  titre: string;
+  description: string | null;
+  statut: string;
+  assigne: { nom: string } | null;
+  date_execution: string | null;
+  lieu: string | null;
+  projet: { nom: string } | null;
+  priorite: string;
+};
+
 export default function Page() {
-  // Récupérer les données réelles
   const { data: projects, isLoading: projectsLoading } = useProjects();
   const { data: tasks, isLoading: tasksLoading } = useTasks({
     includeAssignee: true,
@@ -20,30 +31,21 @@ export default function Page() {
   const { data: members, isLoading: membersLoading } = useMembers();
   const { data: kpi, isLoading: kpiLoading } = useDashboardKPI();
 
-  // Filtrer les tâches du jour
-  const todayTasks =
-    tasks?.filter((task: any) => {
-      if (!task.date_execution) return false;
-      const taskDate = new Date(task.date_execution);
-      const today = new Date();
-      return (
-        taskDate.getDate() === today.getDate() &&
-        taskDate.getMonth() === today.getMonth() &&
-        taskDate.getFullYear() === today.getFullYear()
-      );
-    }) || [];
-
   const isLoading =
     projectsLoading || tasksLoading || membersLoading || kpiLoading;
 
-  // Construire les stats à partir des KPI
+  // Safe conversion: Array.isArray + unknown intermediate
+  const safeTasks: Task[] = Array.isArray(tasks)
+    ? (tasks as unknown as Task[])
+    : [];
+
   const stats = kpi
     ? {
-        total_projects: kpi.projects?.total || 0,
-        total_tasks: kpi.tasks?.total || 0,
-        completed_tasks: kpi.tasks?.completed || 0,
-        total_members: kpi.members?.total || 0,
-        active_projects: kpi.projects?.active || 0,
+        total_projects: projects?.length || 0,
+        total_tasks: kpi.details.tasks.total,
+        completed_tasks: kpi.tachesTerminees,
+        total_members: members?.length || 0,
+        active_projects: kpi.projetsActifs,
       }
     : undefined;
 
@@ -61,14 +63,14 @@ export default function Page() {
           </div>
 
           <SummaryCards
-            tasks={tasks}
+            tasks={safeTasks}
             projects={projects}
             members={members}
             stats={stats}
             isLoading={isLoading}
           />
 
-          <TasksSection tasks={todayTasks} isLoading={isLoading} />
+          <TasksSection tasks={safeTasks} isLoading={isLoading} />
 
           <ProjectsSection projects={projects} isLoading={isLoading} />
         </div>

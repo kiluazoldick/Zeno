@@ -21,7 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 // Schéma de validation
 const clientSchema = z.object({
   nom: z.string().min(2, "Le nom est requis"),
-  email: z.string().email("Email invalide").optional().nullable(),
+  email: z.email({ error: "Email invalide" }).optional().nullable(),
   telephone: z.string().optional().nullable(),
   adresse: z.string().optional().nullable(),
   secteur: z.string().optional().nullable(),
@@ -54,7 +54,7 @@ export function ClientDialog({
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<ClientFormData>({
+  } = useForm<z.input<typeof clientSchema>, unknown, ClientFormData>({
     resolver: zodResolver(clientSchema),
     defaultValues: {
       nom: "",

@@ -31,10 +31,10 @@ export async function updateContratStatus(
   try {
     // Vérifier que le contrat existe
     const { data: existing, error: checkError } = await adminClient
-      .from("contrats")
-      .select("id, projet_id, statut, client_id")
-      .eq("id", id)
-      .single();
+  .from("contrats")
+  .select("id, projet_id, statut, client_id, date_signature, date_debut")
+  .eq("id", id)
+  .single();
 
     if (checkError || !existing) {
       return {

@@ -80,14 +80,7 @@ export default function Page() {
 
     if (editingContrat) {
       // Modification
-      const updateData = Object.fromEntries(
-        Object.entries(data).filter(
-          ([_, value]) =>
-            value !== "" &&
-            value !== null &&
-            value !== undefined
-        )
-      );
+      const updateData = { ...data };
       delete updateData.numero; // si présent, sinon adapter
 
       console.log("📝 Mise à jour du contrat:", editingContrat.id, updateData);

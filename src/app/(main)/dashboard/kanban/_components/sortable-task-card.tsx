@@ -46,8 +46,8 @@ export function SortableTaskCard({
       <TaskCard
         task={task}
         columnId={columnId}
-        onEdit={onEdit}
-        onDelete={onDelete}
+        onEdit={onEdit ? () => onEdit(task) : undefined}
+        onDelete={onDelete ? () => onDelete(task.id) : undefined}
       />
     </div>
   );

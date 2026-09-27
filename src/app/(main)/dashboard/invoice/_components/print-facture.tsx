@@ -4,10 +4,10 @@ import * as React from "react";
 
 import { createPortal } from "react-dom";
 
-import type { FactureFormValues } from "./facture-data";
-import { FacturePaper } from "./facture-paper";
+import type { InvoiceFormValues } from "@/lib/validations/invoice.schema";
+import { InvoicePaper } from "./invoice-paper";
 
-export function PrintFacture({ facture }: { facture: FactureFormValues }) {
+export function PrintFacture({ facture }: { facture: InvoiceFormValues }) {
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
@@ -18,7 +18,7 @@ export function PrintFacture({ facture }: { facture: FactureFormValues }) {
 
   return createPortal(
     <div data-print-root>
-      <FacturePaper facture={facture} />
+      <InvoicePaper invoice={facture} />
     </div>,
     document.body,
   );

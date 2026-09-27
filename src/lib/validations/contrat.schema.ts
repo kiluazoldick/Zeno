@@ -130,4 +130,4 @@ export type ContratInput = z.infer<typeof contratSchema>;
 export type ContratUpdateInput = z.infer<typeof contratUpdateSchema>;
 export type ContratStatusUpdateInput = z.infer<
   typeof contratStatusUpdateSchema
->;
+>

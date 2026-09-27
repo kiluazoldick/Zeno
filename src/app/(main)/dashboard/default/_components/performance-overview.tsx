@@ -48,6 +48,8 @@ interface PerformanceOverviewProps {
   isLoading: boolean;
 }
 
+type MonthlyData = NonNullable<PerformanceOverviewProps["data"]>["monthly"];
+
 type PeriodeType = "yearly" | "quarterly" | "monthly";
 
 // Formater en FCFA
@@ -62,7 +64,7 @@ const formatFCFA = (value: number) => {
 
 // Transformer les données du backend vers le format du graphique
 const transformData = (
-  monthlyData?: PerformanceOverviewProps["data"]["monthly"],
+  monthlyData?: MonthlyData,
 ) => {
   if (!monthlyData || monthlyData.length === 0) {
     return [];

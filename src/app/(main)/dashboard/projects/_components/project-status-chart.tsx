@@ -28,6 +28,12 @@ const statusColors: Record<string, string> = {
   Annulé: "var(--chart-4)",
 };
 
+type StatusChartDatum = {
+  status: string;
+  value: number;
+  fill: string;
+};
+
 export function ProjectStatusChart({ projects }: ProjectStatusChartProps) {
   // Compter les projets par statut
   const statusCount = projects.reduce(
@@ -39,14 +45,16 @@ export function ProjectStatusChart({ projects }: ProjectStatusChartProps) {
     {} as Record<string, number>,
   );
 
-  const statusData = Object.entries(statusCount).map(([status, value]) => ({
-    status,
-    value,
-    fill: statusColors[status] || "var(--chart-5)",
-  }));
+  const statusData: StatusChartDatum[] = Object.entries(statusCount).map(
+    ([status, rawValue]) => ({
+      status,
+      value: Number(rawValue),
+      fill: statusColors[status] || "var(--chart-5)",
+    }),
+  );
 
   // Données de fallback si aucune donnée
-  const fallbackData = [
+  const fallbackData: StatusChartDatum[] = [
     { status: "En cours", value: 6, fill: "var(--chart-1)" },
     { status: "En attente", value: 3, fill: "var(--chart-3)" },
     { status: "Terminé", value: 12, fill: "var(--chart-2)" },

@@ -10,6 +10,7 @@ import {
   type GetInvoicesFilters,
 } from "@/lib/actions/invoices";
 import { toast } from "sonner";
+import { InvoiceStatusUpdateInput } from "@/lib/validations";
 
 // Clés de cache
 export const invoicesKeys = {
@@ -96,13 +97,11 @@ export function useUpdateInvoiceStatus() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      id,
-      statut,
-      notes,
-    }: Parameters<typeof updateInvoiceStatus>[0] &
-      Parameters<typeof updateInvoiceStatus>[1] & { notes?: string }) =>
-      updateInvoiceStatus(id, statut, notes),
+    mutationFn: (params: {
+      id: string;
+      statut: InvoiceStatusUpdateInput['statut'];
+      notes?: string;
+    }) => updateInvoiceStatus(params.id, params.statut, params.notes),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: invoicesKeys.lists() });
       queryClient.invalidateQueries({ queryKey: invoicesKeys.unpaid() });

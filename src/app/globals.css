@@ -105,7 +105,24 @@
   --sidebar-ring: oklch(0.68 0.18 200.5);
 
   /* fonts */
-  --font-sans: var(--font-geist);
+  --font-geist: var(--font-geist-sans);
+  --font-geist-mono: var(--font-geist-mono);
+  --font-inter: var(--font-geist-sans);
+  --font-noto-sans: var(--font-geist-sans);
+  --font-roboto: var(--font-geist-sans);
+  --font-outfit: var(--font-geist-sans);
+  --font-dm-sans: var(--font-geist-sans);
+  --font-nunito-sans: var(--font-geist-sans);
+  --font-figtree: var(--font-geist-sans);
+  --font-raleway: var(--font-geist-sans);
+  --font-public-sans: var(--font-geist-sans);
+  --font-jetbrains-mono: var(--font-geist-mono);
+  --font-noto-serif: var(--font-geist-sans);
+  --font-roboto-slab: var(--font-geist-sans);
+  --font-merriweather: var(--font-geist-sans);
+  --font-lora: var(--font-geist-sans);
+  --font-playfair-display: var(--font-geist-sans);
+  --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 

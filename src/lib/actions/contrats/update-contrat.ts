@@ -44,7 +44,7 @@ export async function updateContrat(id: string, data: ContratUpdateInput) {
     // Vérifier que le contrat n'est pas déjà signé
     if (
       existing.statut === "Signé" &&
-      validated.data.statut !== existing.statut
+      validated.data.data.statut !== existing.statut
     ) {
       return {
         success: false,
@@ -53,11 +53,11 @@ export async function updateContrat(id: string, data: ContratUpdateInput) {
     }
 
     // Vérifier que le projet existe si fourni
-    if (validated.data.projet_id) {
+    if (validated.data.data.project_id) {
       const { data: project, error: projectError } = await adminClient
         .from("projects")
         .select("id")
-        .eq("id", validated.data.projet_id)
+        .eq("id", validated.data.data.project_id)
         .single();
 
       if (projectError || !project) {

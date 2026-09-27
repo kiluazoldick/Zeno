@@ -2,6 +2,14 @@
 
 import { createServerClient } from "@/lib/supabase/server";
 import { z } from "zod";
+import type { Client } from "@/types";
+
+export type ClientWithRelations = Client & {
+  projects?: unknown[] | null;
+  devis?: unknown[] | null;
+  contrats?: unknown[] | null;
+  invoices?: unknown[] | null;
+};
 
 const getClientSchema = z.object({
   id: z.string().uuid("ID client invalide"),
@@ -19,7 +27,7 @@ export async function getClient(
     includeContrats?: boolean;
     includeInvoices?: boolean;
   },
-) {
+): Promise<ClientWithRelations> {
   const supabase = await createServerClient();
 
   const validated = getClientSchema.safeParse({
@@ -72,7 +80,7 @@ export async function getClient(
     );
   }
 
-  return data;
+  return data as ClientWithRelations;
 }
 
 // Récupérer les statistiques d'un client
@@ -99,8 +107,23 @@ export async function getClientStats(id: string) {
     );
   }
 
+  const projectRows = (data ?? []) as unknown as Array<{
+    id: string;
+    statut: string | null;
+    budget_total: number | null;
+    devis: Array<{ montant_total: number | null; statut: string | null }> | null;
+    contrats: Array<{
+      montant_total: number | null;
+      statut: string | null;
+    }> | null;
+    invoices: Array<{
+      montant_total: number | null;
+      statut: string | null;
+    }> | null;
+  }>;
+
   const stats = {
-    totalProjects: data?.length || 0,
+    totalProjects: projectRows.length,
     projectsByStatus: {} as Record<string, number>,
     totalBudget: 0,
     totalDevis: 0,
@@ -108,10 +131,11 @@ export async function getClientStats(id: string) {
     totalInvoices: 0,
   };
 
-  data?.forEach((project) => {
+  projectRows.forEach((project) => {
     // Projets par statut
-    stats.projectsByStatus[project.statut] =
-      (stats.projectsByStatus[project.statut] || 0) + 1;
+    const status = project.statut || "Inconnu";
+    stats.projectsByStatus[status] =
+      (stats.projectsByStatus[status] || 0) + 1;
 
     // Budget total
     if (project.budget_total) {
