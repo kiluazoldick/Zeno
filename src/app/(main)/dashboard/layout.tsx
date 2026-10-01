@@ -14,7 +14,6 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { users } from "@/data/users";
 import {
   SIDEBAR_COLLAPSIBLE_VALUES,
   SIDEBAR_VARIANT_VALUES,
@@ -26,6 +25,8 @@ import { AccountSwitcher } from "./_components/sidebar/account-switcher";
 import { LayoutControls } from "./_components/sidebar/layout-controls";
 import { SearchDialog } from "./_components/sidebar/search-dialog";
 import { ThemeSwitcher } from "./_components/sidebar/theme-switcher";
+import { getSession } from "@/lib/auth-session";
+import { redirect } from "next/navigation";
 
 export default async function Layout({
   children,
@@ -36,6 +37,18 @@ export default async function Layout({
     getPreference("sidebar_variant", SIDEBAR_VARIANT_VALUES, "inset"),
     getPreference("sidebar_collapsible", SIDEBAR_COLLAPSIBLE_VALUES, "icon"),
   ]);
+
+   const session = await getSession();
+   console.log("la session est :",  session);
+  if (!session) redirect("/login");
+
+  const currentUser = {
+    id: session.user.id,
+    name: session.user.name,
+    email: session.user.email,
+    avatar: session.user.image ?? "",
+    role: session.user.role ?? "membre",
+  };
 
   return (
     <SidebarProvider
@@ -75,7 +88,7 @@ export default async function Layout({
             <div className="flex items-center gap-2">
               <ThemeSwitcher />
 
-              <AccountSwitcher users={users} />
+              <AccountSwitcher user={currentUser} />
             </div>
           </div>
         </header>

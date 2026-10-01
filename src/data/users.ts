@@ -16,5 +16,19 @@ export const users = [
     role: "admin",
   },
 ];
+import { getSession } from "@/lib/auth-session";
+import { redirect } from "next/navigation";
 
-export const rootUser = users[0];
+const session = await getSession();
+     console.log("la session est :",  session);
+    if (!session) redirect("/login");
+  
+    const currentUser = {
+      id: session.user.id,
+      name: session.user.name,
+      email: session.user.email,
+      avatar: session.user.image ?? "",
+      role: session.user.role ?? "membre",
+    };
+
+export const rootUser = currentUser;

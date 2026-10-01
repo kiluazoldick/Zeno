@@ -18,6 +18,17 @@ export default function Page() {
     error: chartError,
   } = useChartData();
 
+  const chartDataFormatted = chartData
+  ? {
+      monthly: chartData.monthly.map((item) => ({
+        mois: item.mois ?? "",
+        entrees: item.entrees ?? 0,
+        sorties: item.sorties ?? 0,
+        solde: item.solde ?? 0,
+      })),
+    }
+  : undefined;
+
   // Log des erreurs pour débogage
   if (kpiError) console.error("KPI Error:", kpiError);
   if (chartError) console.error("Chart Error:", chartError);
@@ -40,7 +51,7 @@ export default function Page() {
 
       <MetricCards data={kpiData} isLoading={kpiLoading} error={kpiError} />
       {/* Passer les données mockées au graphique si nécessaire */}
-      <PerformanceOverview data={chartData} isLoading={chartLoading} />
+      <PerformanceOverview data={chartDataFormatted} isLoading={chartLoading} />
       <SubscriberOverview />
     </div>
   );

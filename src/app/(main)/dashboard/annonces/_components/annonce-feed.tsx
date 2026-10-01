@@ -27,6 +27,19 @@ import type { Annonce } from "@/types/index";
 
 import { importanceColors, fallbackAnnonces } from "./annonce-data";
 
+// type Annonce = {
+//   auteur: string | null
+//   contenu: string
+//   created_at?: string | null
+//   date_annonce: string
+//   date_reunion?: string | null
+//   id: string
+//   importance: string
+//   statut: string
+//   tags?: string[] | null
+//   titre: string
+// }
+
 interface AnnonceFeedProps {
   annonces: Annonce[];
 }
@@ -275,10 +288,10 @@ function AnnonceItem({
                 })}
               </span>
             )}
-            <span className="flex items-center gap-1">
+            {/* <span className="flex items-center gap-1">
               <MessageSquare className="size-3.5" />
               {annonce.commentaires_count || 0}
-            </span>
+            </span> */}
           </div>
           <div className="flex flex-wrap gap-1 mt-2">
             {(annonce.tags || []).map((tag: string) => (

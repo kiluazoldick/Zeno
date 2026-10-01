@@ -92,7 +92,7 @@ export async function getContrats(filters?: GetContratsFilters): Promise<Contrat
     );
   }
 
-  return data;
+  return data  as unknown as Contrat[];
 }
 
 // Récupérer les contrats d'un projet

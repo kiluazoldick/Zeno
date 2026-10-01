@@ -37,7 +37,7 @@ import { defaultContratValues } from "./contrat-data";
 interface ClientOption {
   id: string;
   nom: string;
-  email: string;
+  email: string | null;
 }
 
 interface ProjectOption {

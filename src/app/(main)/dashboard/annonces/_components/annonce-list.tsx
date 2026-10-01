@@ -79,19 +79,7 @@ import { cn } from "@/lib/utils";
 import { deleteAnnonce } from "@/lib/actions/annonces";
 import { updateAnnonceStatus } from "@/lib/actions/annonces/update-annonce-status";
 import { useRouter } from "next/navigation";
-
-type Annonce = {
-  auteur?: string | null
-  contenu: string
-  created_at?: string | null
-  date_annonce: string
-  date_reunion?: string | null
-  id: string
-  importance: string
-  statut: string
-  tags?: string[] | null
-  titre: string
-}
+import { Annonce } from "@/types";
 
 import {
   fallbackAnnonces,
@@ -212,11 +200,11 @@ export function AnnonceList({ annonces, isLoading, onEditAnnonce }: AnnonceListP
         <Badge
           className={cn(
             "gap-1 rounded-sm border font-medium",
-            importanceColors[row.original.importance],
+            importanceColors[row.original.importance ?? "Normale"],
           )}
           variant="outline"
         >
-          {row.original.importance}
+          {row.original.importance ?? "Normale"}
         </Badge>
       ),
       filterFn: (row, id, value) => value.includes(row.getValue(id)),
@@ -225,7 +213,8 @@ export function AnnonceList({ annonces, isLoading, onEditAnnonce }: AnnonceListP
       accessorKey: "statut",
       header: "Statut",
       cell: ({ row }) => {
-        const status = row.original.statut;
+        const status = row.original.statut ?? "Brouillon";
+
         return (
           <Badge
             className={cn(
@@ -245,11 +234,13 @@ export function AnnonceList({ annonces, isLoading, onEditAnnonce }: AnnonceListP
       header: "Date",
       cell: ({ row }) => (
         <div className="text-sm">
-          {new Date(row.original.date_annonce).toLocaleDateString("fr-FR", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-          })}
+          {row.original.date_annonce
+            ? new Date(row.original.date_annonce).toLocaleDateString("fr-FR", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })
+            : "Non définie"}
         </div>
       ),
     },
@@ -410,7 +401,7 @@ export function AnnonceList({ annonces, isLoading, onEditAnnonce }: AnnonceListP
     }
 
     console.log(`Annonce ${statut.toLowerCase()} avec succès`);
-    router.refresh(); 
+    router.refresh();
   }
 
   if (isLoading) {

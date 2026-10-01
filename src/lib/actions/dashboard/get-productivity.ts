@@ -102,21 +102,26 @@ export async function getProductivity(options?: GetProductivityOptions) {
     totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 
   // Calculer la productivité moyenne
+  const members = memberProductivity ?? [];
+
   const avgProductivity =
-    memberProductivity.reduce((sum, m) => sum + (m.taux_productivite || 0), 0) /
-    (memberProductivity.length || 1);
+    members.reduce((sum, m) => sum + (m.taux_productivite ?? 0), 0) /
+    (members.length || 1);
+
+  const activeMembers = members.filter(
+    (m) => (m.taux_productivite ?? 0) > 0,
+  ).length;
 
   return {
-    members: memberProductivity || [],
-    projects: projectProductivity || [],
+    members,
+    projects: projectProductivity ?? [],
     trends,
     summary: {
       totalTasks,
       completedTasks,
       completionRate: Math.round(completionRate),
       avgProductivity: Math.round(avgProductivity),
-      activeMembers: memberProductivity.filter((m) => m.taux_productivite > 0)
-        .length,
+      activeMembers,
     },
   };
 }

@@ -8,11 +8,11 @@ import {
 import { Loader2, AlertCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, List, Megaphone } from "lucide-react";
-
 import { AnnonceFeed } from "./_components/annonce-feed";
 import { AnnonceList } from "./_components/annonce-list";
 import { AnnonceForm } from "./_components/annonce-form";
 import { fallbackAnnonces } from "./_components/annonce-data";
+import { Annonce } from "@/types";
 
 export default function Page() {
   const [activeTab, setActiveTab] = useState<"list" | "create" | "feed">(

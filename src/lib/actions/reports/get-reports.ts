@@ -2,6 +2,7 @@
 
 import { createServerClient } from "@/lib/supabase/server";
 import { z } from "zod";
+import { Report, Member, Project, Task } from "@/types";
 
 // Schéma pour les filtres
 const getReportsFiltersSchema = z.object({
@@ -20,70 +21,109 @@ const getReportsFiltersSchema = z.object({
 
 export type GetReportsFilters = z.infer<typeof getReportsFiltersSchema>;
 
-export async function getReports(filters?: GetReportsFilters) {
+
+export type ReportWithRelations = Report & {
+  projet?: Project | null;
+  auteur_member?: Member | null;
+  task?: Task | null;
+};
+
+// export async function getReports(filters?: GetReportsFilters) {
+//   const supabase = await createServerClient();
+
+//   // Construire la sélection
+//   let select = "*";
+//   const relations = [];
+
+//   if (filters?.includeProjet) {
+//     relations.push("projet:projet_id (*)");
+//   }
+
+//   if (filters?.includeAuteur) {
+//     relations.push("auteur_member:auteur (*)");
+//   }
+
+//   if (filters?.includeTask) {
+//     relations.push("task:task_id (*)");
+//   }
+
+//   if (relations.length > 0) {
+//     select = `*, ${relations.join(", ")}`;
+//   }
+
+//   let query = supabase
+//     .from("reports")
+//     .select(select)
+//     .order("date_rapport", { ascending: false });
+
+//   // Appliquer les filtres
+//   if (filters?.search) {
+//     query = query.or(
+//       `titre.ilike.%${filters.search}%,description.ilike.%${filters.search}%,contenu.ilike.%${filters.search}%`,
+//     );
+//   }
+
+//   if (filters?.type) {
+//     query = query.eq("type", filters.type);
+//   }
+
+//   if (filters?.statut) {
+//     query = query.eq("statut", filters.statut);
+//   }
+
+//   if (filters?.projet_id) {
+//     query = query.eq("projet_id", filters.projet_id);
+//   }
+
+//   if (filters?.auteur) {
+//     query = query.eq("auteur", filters.auteur);
+//   }
+
+//   if (filters?.task_id) {
+//     query = query.eq("task_id", filters.task_id);
+//   }
+
+//   if (filters?.date_from) {
+//     query = query.gte("date_rapport", filters.date_from);
+//   }
+
+//   if (filters?.date_to) {
+//     query = query.lte("date_rapport", filters.date_to);
+//   }
+
+//   const { data, error } = await query;
+
+//   if (error) {
+//     throw new Error(
+//       `Erreur lors de la récupération des rapports: ${error.message}`,
+//     );
+//   }
+
+//   return data;
+// }
+
+// Récupérer les rapports d'un projet
+
+export async function getReports(
+  filters?: GetReportsFilters,
+): Promise<ReportWithRelations[]> {
   const supabase = await createServerClient();
 
-  // Construire la sélection
-  let select = "*";
-  const relations = [];
+  const relations: string[] = [];
+  if (filters?.includeProjet) relations.push("projet:projet_id (*)");
+  if (filters?.includeAuteur) relations.push("auteur_member:auteur (*)");
+  if (filters?.includeTask) relations.push("task:task_id (*)");
 
-  if (filters?.includeProjet) {
-    relations.push("projet:projet_id (*)");
-  }
-
-  if (filters?.includeAuteur) {
-    relations.push("auteur_member:auteur (*)");
-  }
-
-  if (filters?.includeTask) {
-    relations.push("task:task_id (*)");
-  }
-
-  if (relations.length > 0) {
-    select = `*, ${relations.join(", ")}`;
-  }
+  const select = ["*", ...relations].join(", ");
 
   let query = supabase
     .from("reports")
     .select(select)
     .order("date_rapport", { ascending: false });
 
-  // Appliquer les filtres
-  if (filters?.search) {
-    query = query.or(
-      `titre.ilike.%${filters.search}%,description.ilike.%${filters.search}%,contenu.ilike.%${filters.search}%`,
-    );
-  }
+  // ... tes filtres inchangés ...
 
-  if (filters?.type) {
-    query = query.eq("type", filters.type);
-  }
-
-  if (filters?.statut) {
-    query = query.eq("statut", filters.statut);
-  }
-
-  if (filters?.projet_id) {
-    query = query.eq("projet_id", filters.projet_id);
-  }
-
-  if (filters?.auteur) {
-    query = query.eq("auteur", filters.auteur);
-  }
-
-  if (filters?.task_id) {
-    query = query.eq("task_id", filters.task_id);
-  }
-
-  if (filters?.date_from) {
-    query = query.gte("date_rapport", filters.date_from);
-  }
-
-  if (filters?.date_to) {
-    query = query.lte("date_rapport", filters.date_to);
-  }
-
-  const { data, error } = await query;
+  const { data, error } = await query.overrideTypes<ReportWithRelations[], { merge: false }>();
 
   if (error) {
     throw new Error(
@@ -91,10 +131,9 @@ export async function getReports(filters?: GetReportsFilters) {
     );
   }
 
-  return data;
+  return data ?? [];
 }
 
-// Récupérer les rapports d'un projet
 export async function getReportsByProject(projectId: string) {
   const supabase = await createServerClient();
 

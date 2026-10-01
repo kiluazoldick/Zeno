@@ -156,7 +156,7 @@ export async function getClients(filters?: GetClientsFilters): Promise<Client[]>
     );
   }
 
-  return (data as Client[]) ?? [];
+  return data as unknown as Client[];
 }
 
 export async function getClientSectors() {

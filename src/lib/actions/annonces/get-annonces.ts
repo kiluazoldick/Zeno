@@ -84,7 +84,7 @@ export async function getAnnonces(
     );
   }
 
-  return data;
+  return data as unknown as Annonce[];
 }
 
 // Récupérer les annonces publiées (pour le fil d'actualité)

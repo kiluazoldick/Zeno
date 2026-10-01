@@ -320,7 +320,7 @@ export function ProjectList({
         <Badge
           className={cn(
             "gap-1.5 rounded-sm border font-medium",
-            statusColors[row.original.statut],
+            statusColors[row.original.statut ?? ""],
           )}
           variant="outline"
         >
@@ -363,7 +363,7 @@ export function ProjectList({
         <div
           className={cn(
             "font-medium text-sm",
-            priorityColors[row.original.priorite],
+            priorityColors[row.original.priorite ?? "Basse"],
           )}
         >
           {row.original.priorite}

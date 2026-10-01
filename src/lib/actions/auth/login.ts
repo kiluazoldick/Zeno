@@ -3,7 +3,6 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-
 import { auth } from "@/lib/auth";
 
 const loginSchema = z.object({
@@ -36,6 +35,8 @@ export async function login(formData: FormData) {
       },
       headers: await headers(),
     });
+
+    console.log("good");
   } catch (error) {
     return {
       error: error instanceof Error ? error.message : "Identifiants invalides",

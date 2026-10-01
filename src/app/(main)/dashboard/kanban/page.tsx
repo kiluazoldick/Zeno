@@ -257,9 +257,19 @@ type TaskByStatusItem = {
   lieu?: string | null;
   rapport_effectue?: boolean | null;
   progression?: number | null;
-  statut: string;
-  assigne?: { id?: string | null; nom?: string | null } | null;
-  projet?: { id?: string | null; nom?: string | null } | null;
+
+  // Supabase peut retourner null
+  statut?: string | null;
+
+  assigne?: {
+    id?: string | null;
+    nom?: string | null;
+  } | null;
+
+  projet?: {
+    id?: string | null;
+    nom?: string | null;
+  } | null;
 };
 
 function convertToBoard(
@@ -314,7 +324,7 @@ function convertToBoard(
             raw: {
               assignee_id: task.assigne?.id || null,
               project_id: task.projet?.id || null,
-              statut: task.statut,
+              statut: task.statut ?? "A faire",
               date_execution: task.date_execution ?? null,
             },
           });
