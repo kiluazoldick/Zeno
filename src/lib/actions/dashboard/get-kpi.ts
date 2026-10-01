@@ -13,6 +13,9 @@ export type GetKPIOptions = {
   period?: "day" | "week" | "month" | "year";
 };
 
+type TransactionLite = Pick<Transaction, "type" | "montant" | "statut">;
+type DevisLite = Pick<Devis, "statut" | "montant_total">;
+
 export async function getKPI(options?: GetKPIOptions) {
   const supabase = await createServerClient();
 
@@ -38,7 +41,7 @@ export async function getKPI(options?: GetKPIOptions) {
   startOfPeriod.setDate(1);
   startOfPeriod.setHours(0, 0, 0, 0);
 
-  let transactions: Transaction[] = [];
+  let transactions: TransactionLite[] = [];
   try {
     const { data, error } = await supabase
       .from("transactions")
@@ -91,7 +94,7 @@ export async function getKPI(options?: GetKPIOptions) {
   );
 
   // Récupérer les devis
-  let devis: Devis[] = [];
+  let devis: DevisLite[] = [];
   try {
     const { data, error } = await supabase
       .from("devis")

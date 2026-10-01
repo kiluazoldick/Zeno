@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import { CircleHelp, ClipboardList, Command, Database, File, Search, Settings } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
-
+import { redirect } from "next/navigation";
 import {
   Sidebar,
   SidebarContent,
@@ -15,13 +15,13 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { APP_CONFIG } from "@/config/app-config";
-import { rootUser } from "@/data/users";
 import { sidebarItems } from "@/navigation/sidebar/sidebar-items";
 import { usePreferencesStore } from "@/stores/preferences/preferences-provider";
-
 import { NavMain } from "./nav-main";
 import { NavUser } from "./nav-user";
 import { SidebarSupportCard } from "./sidebar-support-card";
+import { getSession } from "@/lib/auth-session";
+import { rootUser } from "@/data/users";
 
 const _data = {
   navSecondary: [

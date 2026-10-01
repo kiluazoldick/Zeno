@@ -2,13 +2,13 @@ import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
 import { Pool } from "pg";
 
-if (!process.env.DATABASE_URL) {
+if (!process.env.NEXT_PUBLIC_DATABASE_URL) {
   throw new Error("DATABASE_URL n'est pas définie");
 }
 
 export const auth = betterAuth({
   database: new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: process.env.NEXT_PUBLIC_DATABASE_URL,
   }),
 
   advanced: {

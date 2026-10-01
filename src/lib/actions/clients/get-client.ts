@@ -80,7 +80,7 @@ export async function getClient(
     );
   }
 
-  return data as ClientWithRelations;
+  return data as unknown as ClientWithRelations;
 }
 
 // Récupérer les statistiques d'un client

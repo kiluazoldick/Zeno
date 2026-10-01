@@ -49,6 +49,17 @@ export default function Page() {
       }
     : undefined;
 
+    const safeProjects = projects?.map((project) => ({
+  id: project.id,
+  nom: project.nom,
+  client_id: project.client_id,
+  description: project.description,
+  statut: project.statut ?? "À faire",
+  progression: project.progression ?? 0,
+  date_fin: project.date_fin,
+  location: project.location,
+}));
+
   return (
     <div className="grid gap-6 lg:grid-cols-12">
       <section className="lg:col-span-9">
@@ -72,7 +83,7 @@ export default function Page() {
 
           <TasksSection tasks={safeTasks} isLoading={isLoading} />
 
-          <ProjectsSection projects={projects} isLoading={isLoading} />
+          <ProjectsSection projects={safeProjects} isLoading={isLoading} />
         </div>
       </section>
 

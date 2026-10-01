@@ -76,31 +76,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
-
-type Report = {
-  auteur: string
-  contenu: string
-  created_at: string
-  date_rapport: string
-  description: string
-  id: string
-  metriques: Record<string, any>
-  notes: string
-  observations: string
-  periode: string
-  problemes: string[]
-  prochaines_etapes: string[]
-  projet_id: string
-  statut: string
-  task_id?: string
-  titre: string
-  type: string
-  updated_at?: string
-}
+import { Report } from "@/types";
 
 import { fallbackRapports, statusColors } from "./rapport-data";
 import { updateReportStatus } from "@/lib/actions/reports/update-report-status";
+import { cn } from "@/lib/utils";
 
 interface RapportListProps {
   rapports: Report[];
@@ -129,7 +109,8 @@ function preventPaginationNavigation(
 }
 
 export function RapportList({ rapports, isLoading, onStatusUpdated, onViewRapport }: RapportListProps) {
-  const data = rapports && rapports.length > 0 ? rapports : fallbackRapports;
+  const data: Report[] =
+    rapports && rapports.length > 0 ? rapports : (fallbackRapports as Report[]);
   const [updatingStatusId, setUpdatingStatusId] = React.useState<string | null>(
     null,
   );
@@ -276,11 +257,11 @@ export function RapportList({ rapports, isLoading, onStatusUpdated, onViewRappor
           <Badge
             className={cn(
               "gap-1.5 rounded-sm border font-medium",
-              statusColors[status],
+              statusColors[status ?? "Brouillon"],
             )}
             variant="outline"
           >
-            {iconMap[status]}
+            {iconMap[status ?? ""]}
             {status}
           </Badge>
         );
@@ -395,7 +376,7 @@ export function RapportList({ rapports, isLoading, onStatusUpdated, onViewRappor
     },
   ];
 
-  const table = useReactTable({
+  const table = useReactTable<Report>({
     data: filteredData,
     columns,
     state: {

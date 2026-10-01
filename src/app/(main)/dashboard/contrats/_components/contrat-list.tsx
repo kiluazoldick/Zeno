@@ -201,7 +201,7 @@ export function ContratList({ contrats, isLoading, onAdd, onEdit, onDelete }: Co
       accessorKey: "statut",
       header: "Statut",
       cell: ({ row }) => {
-        const status = row.original.statut;
+        const status = row.original.statut ?? "Brouillon";
         const iconMap: Record<string, React.ReactNode> = {
           Brouillon: <FileText className="size-3.5" />,
           "En cours": <Clock className="size-3.5" />,
@@ -271,7 +271,7 @@ export function ContratList({ contrats, isLoading, onAdd, onEdit, onDelete }: Co
         <div
           className={cn(
             "font-medium text-sm",
-            priorityColors[row.original.priorite],
+            priorityColors[row.original.priorite ?? "Basse"],
           )}
         >
           {row.original.priorite}

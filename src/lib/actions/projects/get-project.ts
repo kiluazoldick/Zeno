@@ -87,7 +87,7 @@ export async function getProject(
     return null;
   }
 
-  return data as ProjectWithRelations;
+  return data as unknown as ProjectWithRelations;
 }
 
 // Récupérer l'avancement d'un projet

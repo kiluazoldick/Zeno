@@ -17,6 +17,7 @@ import {
 import { DevisPaper } from "./devis-paper";
 import { PrintDevis } from "./print-devis";
 import { useVisibleCenterPosition } from "./use-visible-center-position";
+import html2canvas from "html2canvas-pro";
 
 function handlePrint() {
   window.print();
@@ -32,49 +33,143 @@ export function DevisPreview({ devis }: { devis: DevisFormValues }) {
     width: DEVIS_PAPER_WIDTH,
   });
 
+  // const handleDownloadPDF = async () => {
+  //   setIsLoading(true);
+  //   try {
+  //     const html2canvas = (await import("html2canvas-pro")).default;
+  //     const { jsPDF } = await import("jspdf");
+
+  //     const element = document.querySelector(
+  //       "[data-print-paper]",
+  //     ) as HTMLElement;
+  //     if (!element) {
+  //       toast.error("Impossible de générer le PDF");
+  //       return;
+  //     }
+
+  //     toast.info("Génération du PDF en cours...");
+
+  //     const canvas = await html2canvas(element, {
+  //       scale: 2,
+  //       useCORS: true,
+  //       logging: false,
+  //       backgroundColor: "#ffffff",
+  //       width: DEVIS_PAPER_WIDTH,
+  //       height: DEVIS_PAPER_HEIGHT,
+  //     });
+
+  //     const imgData = canvas.toDataURL("image/png");
+  //     const pdf = new jsPDF("p", "mm", "a4");
+  //     const pdfWidth = pdf.internal.pageSize.getWidth();
+  //     const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+  //     pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+  //     pdf.save(`devis-${devis.numero || "sans-numero"}.pdf`);
+  //     toast.success("PDF téléchargé avec succès");
+  //   } catch (error: any) {
+  //     console.error("Erreur PDF:", error);
+  //     toast.error(
+  //       "Erreur: " + (error.message || "Impossible de générer le PDF"),
+  //     );
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
   const handleDownloadPDF = async () => {
-    setIsLoading(true);
-    try {
-      const html2canvas = (await import("html2canvas")).default;
-      const { jsPDF } = await import("jspdf");
+  setIsLoading(true);
+  try {
+    const html2canvas = (await import("html2canvas-pro")).default;
+    const { jsPDF } = await import("jspdf");
 
-      const element = document.querySelector(
-        "[data-print-paper]",
-      ) as HTMLElement;
-      if (!element) {
-        toast.error("Impossible de générer le PDF");
-        return;
-      }
+    const source = document.querySelector(
+      "[data-print-paper]",
+    ) as HTMLElement | null;
 
-      toast.info("Génération du PDF en cours...");
-
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: "#ffffff",
-        width: DEVIS_PAPER_WIDTH,
-        height: DEVIS_PAPER_HEIGHT,
-      });
-
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`devis-${devis.numero || "sans-numero"}.pdf`);
-      toast.success("PDF téléchargé avec succès");
-    } catch (error: any) {
-      console.error("Erreur PDF:", error);
-      toast.error(
-        "Erreur: " + (error.message || "Impossible de générer le PDF"),
-      );
-    } finally {
-      setIsLoading(false);
+    if (!source) {
+      toast.error("Impossible de trouver le devis à exporter");
+      return;
     }
-  };
 
+    toast.info("Génération du PDF en cours...");
+
+    // Clone propre, hors écran, SANS transform
+    const clone = source.cloneNode(true) as HTMLElement;
+    clone.style.cssText = `
+      position: fixed;
+      left: -9999px;
+      top: 0;
+      width: ${DEVIS_PAPER_WIDTH}px;
+      height: auto;
+      min-height: ${DEVIS_PAPER_HEIGHT}px;
+      transform: none !important;
+      scale: 1 !important;
+      opacity: 1 !important;
+      background-color: #ffffff;
+      color: #000000;
+      z-index: -1;
+      pointer-events: none;
+    `;
+
+    // Annule aussi les transforms sur les enfants
+    clone.querySelectorAll("*").forEach((el) => {
+      const htmlEl = el as HTMLElement;
+      htmlEl.style.transform = "none";
+      htmlEl.style.scale = "1";
+    });
+
+    document.body.appendChild(clone);
+
+    // Laisse le navigateur appliquer les styles
+    await new Promise((r) => requestAnimationFrame(() => r(null)));
+
+    const canvas = await html2canvas(clone, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: "#ffffff",
+      width: DEVIS_PAPER_WIDTH,
+      windowWidth: DEVIS_PAPER_WIDTH,
+    });
+
+    document.body.removeChild(clone);
+
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
+    });
+
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = pageWidth;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    let heightLeft = imgHeight;
+    let position = 0;
+
+    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+    }
+
+    pdf.save(`devis-${devis.numero || "sans-numero"}.pdf`);
+    toast.success("PDF téléchargé avec succès");
+  } catch (error: any) {
+    console.error("Erreur PDF:", error);
+    toast.error(
+      "Erreur: " + (error.message || "Impossible de générer le PDF"),
+    );
+  } finally {
+    setIsLoading(false);
+  }
+};
   return (
     <>
       <PrintDevis devis={devis} />

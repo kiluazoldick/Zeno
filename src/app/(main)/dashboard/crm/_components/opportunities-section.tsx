@@ -104,7 +104,7 @@ export function OpportunitiesSection({
       telephone: client.telephone || "-",
       ville: client.ville || "-",
       secteur: client.secteur || "-",
-      projets: client.projects?.length || 0,
+      // projets: client.projects?.length || 0,
       client: client,
     }));
   }, [filteredClients]);

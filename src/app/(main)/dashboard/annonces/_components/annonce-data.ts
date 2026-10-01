@@ -1,17 +1,4 @@
-type Annonce = {
-  auteur?: string | null
-  commentaires_count?: number | null
-  contenu: string
-  created_at?: string | null
-  date_annonce?: string | null
-  date_reunion?: string | null
-  id?: string
-  importance?: string | null
-  statut?: string | null
-  tags?: string[] | null
-  titre: string
-  updated_at?: string | null
-}
+import { Annonce } from "@/types";
 
 export const fallbackAnnonces: Annonce[] = [
   {
@@ -27,7 +14,7 @@ export const fallbackAnnonces: Annonce[] = [
       .toISOString()
       .split("T")[0],
     tags: ["Réunion", "Planning", "Équipe"],
-    commentaires_count: 5,
+    // commentaires_count: 5,
     created_at: "",
     updated_at: "",
   },
@@ -42,7 +29,7 @@ export const fallbackAnnonces: Annonce[] = [
     date_annonce: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
     date_reunion: null,
     tags: ["Chantier", "Banto", "Report"],
-    commentaires_count: 3,
+    // commentaires_count: 3,
     created_at: "",
     updated_at: "",
   },
@@ -57,7 +44,7 @@ export const fallbackAnnonces: Annonce[] = [
     date_annonce: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
     date_reunion: null,
     tags: ["Processus", "Validation", "Rapports"],
-    commentaires_count: 8,
+    // commentaires_count: 8,
     created_at: "",
     updated_at: "",
   },
@@ -74,7 +61,7 @@ export const fallbackAnnonces: Annonce[] = [
       .toISOString()
       .split("T")[0],
     tags: ["Hôtel Royal", "Chantier", "Avancement"],
-    commentaires_count: 2,
+    // commentaires_count: 2,
     created_at: "",
     updated_at: "",
   },
@@ -89,7 +76,7 @@ export const fallbackAnnonces: Annonce[] = [
     date_annonce: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
     date_reunion: null,
     tags: ["Horaires", "Équipe", "Terrain"],
-    commentaires_count: 12,
+    // commentaires_count: 12,
     created_at: "",
     updated_at: "",
   },
