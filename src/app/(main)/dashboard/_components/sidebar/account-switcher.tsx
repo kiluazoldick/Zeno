@@ -37,7 +37,7 @@ export function AccountSwitcher({
     await authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
-          router.push("/login");
+          router.push("/auth/v2/login");
           router.refresh();
         },
         onError: () => setLoggingOut(false),

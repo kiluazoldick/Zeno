@@ -21,7 +21,7 @@ import { redirect } from "next/navigation";
 
 const session = await getSession();
      console.log("la session est :",  session);
-    if (!session) redirect("/login");
+    if (!session) redirect("auth/v2/login");
   
     const currentUser = {
       id: session.user.id,
