@@ -38,9 +38,8 @@ export default async function Layout({
     getPreference("sidebar_collapsible", SIDEBAR_COLLAPSIBLE_VALUES, "icon"),
   ]);
 
-   const session = await getSession();
-   console.log("la session est :",  session);
-  if (!session) redirect("/login");
+  const session = await getSession();
+  if (!session) redirect("/auth/v2/login");
 
   const currentUser = {
     id: session.user.id,
@@ -59,7 +58,7 @@ export default async function Layout({
         } as React.CSSProperties
       }
     >
-      <AppSidebar variant={variant} collapsible={collapsible} />
+      <AppSidebar variant={variant} collapsible={collapsible} user={currentUser} />
       <SidebarInset
         className={cn(
           "[html[data-content-layout=centered]_&>*]:mx-auto",
