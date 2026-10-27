@@ -68,11 +68,11 @@ export function NavUser({
             <DropdownMenuGroup>
               <DropdownMenuItem>
                 <CircleUser />
-                Account
+                Compte
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <CreditCard />
-                Billing
+                Facturation
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <MessageSquareDot />
@@ -82,7 +82,7 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               <LogOut />
-              Log out
+              Se déconnecter
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

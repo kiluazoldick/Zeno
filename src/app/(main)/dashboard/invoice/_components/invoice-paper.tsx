@@ -25,13 +25,10 @@ console.log("est un tableau ?", Array.isArray(invoice?.contenu));
     >
       <header className="flex flex-col gap-10">
         <div className="grid grid-cols-2 items-start gap-14">
-          <svg className="size-12" viewBox="0 0 48 48" aria-hidden="true">
-            <rect width="20" height="20" rx="3" fill="currentColor" />
-            <rect x="28" width="20" height="20" rx="3" fill="currentColor" />
-            <rect y="28" width="20" height="20" rx="3" fill="currentColor" />
-            <rect x="28" y="28" width="20" height="20" rx="3" fill="currentColor" />
-          </svg>
-          <h2 className="text-4xl uppercase tracking-widest">Invoice</h2>
+           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zeno-primary text-white font-bold text-lg">
+                Z
+              </div>
+          <h2 className="text-4xl uppercase tracking-widest">Facture</h2>
         </div>
 
         <section className="grid grid-cols-2 gap-14 text-sm leading-relaxed">
@@ -69,9 +66,9 @@ console.log("est un tableau ?", Array.isArray(invoice?.contenu));
         <section className="text-sm">
           <div className="grid grid-cols-[1fr_74px_116px_116px] bg-stone-200 px-3 py-3 font-semibold uppercase">
             <span>Description</span>
-            <span className="text-right">Units</span>
-            <span className="text-right">Unit cost</span>
-            <span className="text-right">Line total</span>
+            <span className="text-right">Quantité</span>
+            <span className="text-right">Prix Unique</span>
+            <span className="text-right">Prix Total</span>
           </div>
           {getInvoiceItems(invoice).map((item, index) => (
             <div
@@ -90,13 +87,13 @@ console.log("est un tableau ?", Array.isArray(invoice?.contenu));
           <section className="col-start-2 space-y-2">
             <div>
               <div className="flex justify-between gap-8">
-                <span>Net amount</span>
+                <span>Montant Net</span>
                 <span>{formatInvoiceCurrency(getInvoiceSubtotal(invoice))}</span>
               </div>
             </div>
             <div className="border-current border-y-2 py-3">
               <div className="flex justify-between gap-8">
-                <span className="font-semibold uppercase">Balance due</span>
+                <span className="font-semibold uppercase">Montant à payer</span>
                 <span className="font-semibold">{formatInvoiceCurrency(getInvoiceTotal(invoice))}</span>
               </div>
             </div>
