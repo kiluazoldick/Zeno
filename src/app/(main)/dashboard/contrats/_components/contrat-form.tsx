@@ -38,6 +38,12 @@ interface ClientOption {
   id: string;
   nom: string;
   email: string | null;
+  adresse: string | null;
+  ville: string | null;
+  code_postal: string | null;
+  pays: string | null;
+  telephone: string | null;
+  tax_id: string | null;
 }
 
 interface ProjectOption {
@@ -72,7 +78,7 @@ export function ContratForm() {
     clientId
       ? {
         client_id: clientId,
-        includeClient: false,
+        includeClient: true,
         includeTasks: false,
       }
       : undefined,
@@ -82,9 +88,9 @@ export function ContratForm() {
       ? {
         client_id: clientId,
         projet_id: projectId ?? undefined,
-        includeClient: false,
-        includeProjet: false,
-        includeContrat: false,
+        includeClient: true,
+        includeProjet: true,
+        includeContrat: true,
       }
       : undefined,
   );
@@ -183,8 +189,12 @@ function EntrepriseSection() {
           <Input {...register("from.name")} placeholder="Nom" />
         </Field>
         <Field>
+          <FieldLabel className="text-xs">Nom de l'émetteur</FieldLabel>
+          <Input {...register("from.issuerName")} placeholder="Nom de l'émetteur" />
+        </Field>
+        <Field>
           <FieldLabel className="text-xs">Adresse</FieldLabel>
-          <Input {...register("from.addressLines")} placeholder="Adresse" />
+          <Input {...register("from.addressLines.0")} placeholder="Adresse" />
         </Field>
         <Field>
           <FieldLabel className="text-xs">Téléphone</FieldLabel>
@@ -193,6 +203,14 @@ function EntrepriseSection() {
         <Field>
           <FieldLabel className="text-xs">Email</FieldLabel>
           <Input {...register("from.email")} type="email" placeholder="Email" />
+        </Field>
+        <Field>
+          <FieldLabel className="text-xs">N° RC / Tax ID</FieldLabel>
+          <Input {...register("from.taxId")} placeholder="N° RC" />
+        </Field>
+        <Field>
+          <FieldLabel className="text-xs">Site web</FieldLabel>
+          <Input {...register("from.website")} placeholder="Site web" />
         </Field>
       </div>
     </section>
@@ -392,7 +410,42 @@ function ClientProjectDevisSection({
             <FieldLabel className="text-xs">Client</FieldLabel>
             <Select
               value={field.value ?? ""}
-              onValueChange={(val) => field.onChange(val || null)}
+              onValueChange={(val) => {
+                field.onChange(val || null);
+                if (val) {
+                  const selectedClient = clients?.find((client) => client.id === val);
+                  if (selectedClient) {
+                    const addressLines = [];
+                    if (selectedClient.adresse) {
+                      addressLines.push(selectedClient.adresse);
+                    }
+                    if (selectedClient.ville) {
+                      addressLines.push(selectedClient.ville);
+                    }
+                    if (selectedClient.code_postal) {
+                      addressLines.push(selectedClient.code_postal);
+                    }
+                    if (selectedClient.pays) {
+                      addressLines.push(selectedClient.pays);
+                    }
+                    formSetValue("to", {
+                      name: selectedClient.nom || "",
+                      addressLines: addressLines.length ? addressLines : [""],
+                      telephone: selectedClient.telephone || "",
+                      email: selectedClient.email || "",
+                      taxId: selectedClient.tax_id || "",
+                    }, { shouldDirty: true, shouldValidate: true });
+                  }
+                } else {
+                  formSetValue("to", {
+                    name: "",
+                    addressLines: [""],
+                    telephone: "",
+                    email: "",
+                    taxId: "",
+                  }, { shouldDirty: false, shouldValidate: false });
+                }
+              }}
             >
               <SelectTrigger className="w-full data-[size=default]:h-auto">
                 <SelectValue placeholder="Sélectionner un client">
@@ -500,6 +553,13 @@ function ClientProjectDevisSection({
                       shouldValidate: true,
                     }
                   );
+
+                  if (selectedDevis?.titre) {
+                    setValue("titre", selectedDevis.titre, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    });
+                  }
                 }}
                 disabled={!clientId}
               >
@@ -561,8 +621,10 @@ function ClientProjectDevisSection({
 function DatesSection() {
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="font-medium tracking-tight">Période du contrat</h2>
+      <h2 className="font-medium tracking-tight">Dates du contrat</h2>
       <div className="grid gap-5 md:grid-cols-2">
+        <DatePickerField name="date_emission" label="Date d'émission" id="date-emission" />
+        <DatePickerField name="date_signature" label="Date de signature" id="date-signature" />
         <DatePickerField name="date_debut" label="Date de début" id="date-debut" />
         <DatePickerField name="date_fin" label="Date de fin" id="date-fin" />
       </div>
@@ -721,7 +783,7 @@ function StatutPrioriteSection() {
 
 
 // ---- 5.10 DatePickerField (réutilisable) ----
-type DateFieldName = "date_debut" | "date_fin";
+type DateFieldName = "date_emission" | "date_signature" | "date_debut" | "date_fin";
 
 function DatePickerField({
   name,

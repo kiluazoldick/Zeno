@@ -72,9 +72,6 @@ export function ContratPaper({ contrat }: { contrat: ContratInput }) {
         <section className="grid grid-cols-2 gap-14 text-sm leading-relaxed border-b border-zeno-primary/20 pb-4">
           <div className="space-y-1">
             <p className="font-semibold">
-              N° Contrat : <span className="font-normal">{contrat.numero || "-"}</span>
-            </p>
-            <p className="font-semibold">
               Titre : <span className="font-normal">{contrat.titre || "-"}</span>
             </p>
             <p className="font-semibold">
@@ -89,10 +86,10 @@ export function ContratPaper({ contrat }: { contrat: ContratInput }) {
                 {formatDisplayDate(contrat.date_debut)} → {formatDisplayDate(contrat.date_fin)}
               </span>
             </p>
-            <p className="font-semibold">
+            {/* <p className="font-semibold">
               Statut : <span className="font-normal">{contrat.statut || "Brouillon"}</span> | Priorité :{" "}
               <span className="font-normal">{contrat.priorite || "Moyenne"}</span>
-            </p>
+            </p> */}
           </div>
           <div className="text-right space-y-1">
             <p className="font-semibold">Émis par :</p>
@@ -197,41 +194,33 @@ export function ContratPaper({ contrat }: { contrat: ContratInput }) {
         ) : null}
 
         {/* Article 4 - Modalités de paiement */}
-        {paiements && paiements.length > 0 ? (
+        {(paiements && paiements.length > 0) || (contrat.montant_total !== undefined && contrat.montant_total !== null) ? (
           <section className="flex flex-col gap-3">
             <p className="font-semibold uppercase tracking-wide text-zeno-secondary">Article 4 – Modalités de paiement</p>
-            <div className="flex flex-col gap-2">
-              {paiements.map((paiement, payIndex) => (
-                <div key={`paiement-${payIndex}`} className="flex items-center justify-between border-b border-neutral-200 pb-1">
-                  <p>{paiement.label || `Tranche ${payIndex + 1}`}</p>
-                  <p className="font-medium">
-                    {paiement.percentage !== undefined && paiement.percentage !== null
-                      ? `${paiement.percentage} %`
-                      : paiement.montant !== undefined && paiement.montant !== null
-                        ? formatContratCurrency(paiement.montant)
-                        : "-"}
-                  </p>
-                </div>
-              ))}
-            </div>
+            {paiements && paiements.length > 0 ? (
+              <div className="flex flex-col gap-2">
+                {paiements.map((paiement, payIndex) => (
+                  <div key={`paiement-${payIndex}`} className="flex items-center justify-between border-b border-neutral-200 pb-1">
+                    <p>{paiement.label || `Tranche ${payIndex + 1}`}</p>
+                    <p className="font-medium">
+                      {paiement.percentage !== undefined && paiement.percentage !== null
+                        ? `${paiement.percentage} %`
+                        : paiement.montant !== undefined && paiement.montant !== null
+                          ? formatContratCurrency(paiement.montant)
+                          : "-"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : null}
             {contrat.montant_total !== undefined && contrat.montant_total !== null ? (
               <div className="mt-2 flex items-center justify-between border-t border-zeno-primary/30 pt-2">
-                <p className="font-semibold">Montant total TTC / HT selon accord</p>
-                <p className="font-semibold text-zeno-secondary">
+                <p className="font-semibold">Montant total du contrat</p>
+                <p className="font-semibold text-lg text-zeno-secondary">
                   {formatContratCurrency(contrat.montant_total)}
                 </p>
               </div>
             ) : null}
-          </section>
-        ) : contrat.montant_total !== undefined && contrat.montant_total !== null ? (
-          <section className="flex flex-col gap-2">
-            <p className="font-semibold uppercase tracking-wide text-zeno-secondary">Article 4 – Montant du contrat</p>
-            <div className="flex items-center justify-between border-t border-b border-zeno-primary/30 py-2">
-              <p className="font-semibold">Montant total</p>
-              <p className="font-semibold text-lg text-zeno-secondary">
-                {formatContratCurrency(contrat.montant_total)}
-              </p>
-            </div>
           </section>
         ) : null}
 
