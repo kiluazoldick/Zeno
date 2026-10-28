@@ -56,10 +56,10 @@ export function InvoiceItems() {
   return (
     <section className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="font-medium tracking-tight">Invoice Items</h2>
+        <h2 className="font-medium tracking-tight">Éléments de la facture</h2>
         <Button type="button" variant="ghost" size="sm" onClick={handleAddItem}>
           <Plus data-icon="inline-start" />
-          Add Item
+          Ajout d'un élement
         </Button>
       </div>
 
@@ -67,9 +67,9 @@ export function InvoiceItems() {
         <div className="hidden items-center gap-2 px-1 font-medium text-muted-foreground text-xs md:grid md:grid-cols-[24px_minmax(0,1fr)_64px_112px_112px_32px]">
           <span />
           <span>Description</span>
-          <span className="px-2">Units</span>
-          <span className="px-2">Unit cost</span>
-          <span className="text-right">Line Total</span>
+          <span className="px-2">Quantité</span>
+          <span className="px-2">Prix Unitaire</span>
+          <span className="text-right">Total</span>
           <span />
         </div>
 
@@ -161,7 +161,7 @@ function SortableInvoiceItemRow({
         {...register(`contenu.${index}.unitPrice` as const, { valueAsNumber: true })}
       />
       <div className="min-w-0 text-right font-medium text-sm max-md:col-span-3 max-md:col-start-2 max-md:row-start-3 max-md:flex max-md:items-center max-md:justify-between max-md:text-left">
-        <span className="hidden text-muted-foreground max-md:inline">Line total</span>
+        <span className="hidden text-muted-foreground max-md:inline">Total</span>
         <span>{formatInvoiceCurrency(getLineAmount(item))}</span>
       </div>
       <Button

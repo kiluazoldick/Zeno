@@ -91,7 +91,7 @@ export function OverviewCards() {
             <CardTitle>Revenue</CardTitle>
             <CardDescription>Last 6 Months</CardDescription>
           </div>
-          <p className="font-medium text-2xl tabular-nums">$56,050</p>
+          <p className="font-medium text-2xl tabular-nums">56,050 FCFA</p>
           <div className="w-fit rounded-md bg-green-500/10 px-2 py-1 font-medium text-green-500 text-xs">+22.2%</div>
         </CardContent>
       </Card>

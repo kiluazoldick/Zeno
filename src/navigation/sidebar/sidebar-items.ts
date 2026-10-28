@@ -158,25 +158,6 @@ export const sidebarItems: NavGroup[] = [
     ],
   },
   {
-    id: 5,
-    label: "Finances",
-    items: [
-      {
-        id: "finance",
-        title: "Tableau de bord",
-        url: "/dashboard/finance",
-        icon: Banknote,
-      },
-      {
-        id: "transactions",
-        title: "Transactions",
-        url: "/dashboard/transactions",
-        icon: CreditCard,
-        badge: "new",
-      },
-    ],
-  },
-  {
     id: 6,
     label: "Reporting",
     items: [

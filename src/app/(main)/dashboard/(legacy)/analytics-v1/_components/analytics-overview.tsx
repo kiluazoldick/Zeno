@@ -60,7 +60,7 @@ const RISK_SUMMARY_METRICS = [
   {
     key: "risk",
     label: "Revenue at Risk",
-    value: "$1,151,000",
+    value: "1,151,000 FCFA",
     comparatorLabel: "vs previous period",
   },
   {
@@ -160,15 +160,15 @@ function SummaryRow({ revenueSeries }: { revenueSeries: Array<{ day: string; rev
       <div className="min-w-0 space-y-2">
         <div>
           <div className="font-medium text-muted-foreground text-sm">Revenue</div>
-          <div className="font-semibold text-3xl tabular-nums tracking-tight sm:text-4xl">$1,248,000</div>
+          <div className="font-semibold text-3xl tabular-nums tracking-tight sm:text-4xl">1,248,000 FCFA</div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="secondary">+9.4%</Badge>
-          <Badge variant="secondary">+$107,000</Badge>
+          <Badge variant="secondary">+107,000 FCFA</Badge>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 text-muted-foreground text-sm">
-          <span>Previous $1,141,000</span>
+          <span>Previous 1,141,000 FCFA</span>
           <Badge variant="outline" className="font-medium text-xs">
             Risk Ladder 30
           </Badge>

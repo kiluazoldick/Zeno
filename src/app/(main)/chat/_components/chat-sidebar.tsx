@@ -62,7 +62,7 @@ export function ChatSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel className="font-normal">Channels</SidebarGroupLabel>
+          <SidebarGroupLabel className="font-normal">Chaines</SidebarGroupLabel>
           <SidebarMenu className="gap-1">
             {channelItems.map((item) => (
               <SidebarMenuItem key={item.id}>
@@ -81,7 +81,7 @@ export function ChatSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel className="font-normal">Views</SidebarGroupLabel>
+          <SidebarGroupLabel className="font-normal">Vues</SidebarGroupLabel>
           <SidebarMenu className="gap-1">
             {viewItems.map((item) => (
               <SidebarMenuItem key={item.id}>
@@ -132,17 +132,17 @@ export function ChatSidebar() {
                 <DropdownMenuGroup>
                   <DropdownMenuItem>
                     <UserRound />
-                    Account
+                    Compte
                   </DropdownMenuItem>
                   <DropdownMenuItem>
                     <Settings />
-                    Settings
+                    Paramètres
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <LogOut />
-                  Log out
+                  Se déconnecter
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

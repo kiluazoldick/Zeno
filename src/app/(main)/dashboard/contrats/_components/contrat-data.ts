@@ -74,9 +74,9 @@ export const contratTaxOptions: ContratTaxOption[] = [
 ];
 
 const ContratFrom : ContratFromDetails = {
-  name: "Zeno Solutions",
-  issuerName: "Zeno Solutions",
-  email: "contact@zenosolutions.cm",
+  name: "Zoldick Entreprise",
+  issuerName: "Zoldick Entreprise",
+  email: "contact@zoldickentreprise.com",
   phone: "+237 6XX XXX XXX",
   website: "https://www.zenosolutions.cm",
   addressLines: ["BP 1234", "Douala", "Cameroun"],

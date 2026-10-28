@@ -4,7 +4,7 @@
     "date": "2026-05-09T16:42:00",
     "customer": "Emma Smith",
     "payment": "Pending",
-    "total": "$248.00",
+    "total": "248.00 FCFA",
     "items": "2 items",
     "fulfillment": "Unfulfilled"
   },
@@ -13,7 +13,7 @@
     "date": "2026-05-09T14:18:00",
     "customer": "Melody Macy",
     "payment": "Paid",
-    "total": "$1,200.00",
+    "total": "1,200.00 FCFA",
     "items": "3 items",
     "fulfillment": "Fulfilled"
   },
@@ -22,7 +22,7 @@
     "date": "2026-05-08T21:05:00",
     "customer": "Max Smith",
     "payment": "Pending",
-    "total": "$79.00",
+    "total": "79.00 FCFA",
     "items": "1 item",
     "fulfillment": "Unfulfilled"
   },

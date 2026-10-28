@@ -2,12 +2,12 @@ import { Archive, CircleHelp, File, Inbox, Keyboard, type LucideIcon, Send, Star
 import { siFigma, siGoogledocs, siGooglephotos } from "simple-icons";
 
 const arhamKhan = {
-  name: "Arham Khan",
+  name: "Zoldick Entreprise",
   email: "hello@arhamkhnz.com",
 };
 
 const weblabsStudio = {
-  name: "Weblabs Studio",
+  name: "Zoldick Entreprise",
   email: "contact@weblabs.studio",
 };
 
@@ -470,12 +470,12 @@ export const mailNavigation: MailNavigation = {
 export const accounts = [
   {
     id: 1,
-    label: "Arham Khan",
+    label: "Zoldick Entreprise",
     email: "hello@arhamkhnz.com",
   },
   {
     id: 2,
-    label: "Weblabs Studio",
+    label: "Zoldick Entreprise",
     email: "contact@weblabs.studio",
   },
 ];
