@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
 import { CircleUser, CreditCard, EllipsisVertical, LogOut, MessageSquareDot } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -13,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
+import { authClient } from "@/lib/auth-client";
 import { getInitials } from "@/lib/utils";
 
 export function NavUser({
@@ -25,6 +29,21 @@ export function NavUser({
   };
 }) {
   const { isMobile } = useSidebar();
+  const router = useRouter();
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  async function handleLogout() {
+    setLoggingOut(true);
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push("/auth/v2/login");
+          router.refresh();
+        },
+        onError: () => setLoggingOut(false),
+      },
+    });
+  }
 
   return (
     <SidebarMenu>
@@ -80,9 +99,9 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout} disabled={loggingOut}>
               <LogOut />
-              Se déconnecter
+              {loggingOut ? "Déconnexion..." : "Se déconnecter"}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

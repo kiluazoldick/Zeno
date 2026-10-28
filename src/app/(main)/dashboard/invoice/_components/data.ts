@@ -47,18 +47,17 @@ export const defaultInvoiceValues: InvoiceFormValues = {
   notes: "",
 
   from: {
-    name: "Weblabs Studio",
+    name: "Zoldick Entreprise",
     email: "hello@weblabs.studio",
-    phone: "+1-512-555-0184",
-    website: "weblabs.studio",
+    phone: "+237 651 63 25 52",
+    website: "https://zoldickentreprise.com",
     addressLines: [
-      "214 Pixel Avenue",
-      "Austin, TX 78701",
+      "Ndogbong Ecole Royale",
     ],
     taxId: "WS-1029384756",
     paymentAccountName: "Mercury Business",
     routingNumber: "084009519",
-    issuerName: "Arham Khan",
+    issuerName: "Zoldick Entreprise",
   },
 
   to: {

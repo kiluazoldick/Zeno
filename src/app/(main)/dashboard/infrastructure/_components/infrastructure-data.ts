@@ -30,7 +30,7 @@ export interface InfrastructureGroup {
 export const infrastructureGroups: InfrastructureGroup[] = [
   {
     name: "Admin Console",
-    organization: "Weblabs Studio",
+    organization: "Zoldick Entreprise",
     rows: [
       {
         domain: "next-shadcn-admin-dashboard.vercel.app/dashboard",

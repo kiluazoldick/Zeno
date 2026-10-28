@@ -140,17 +140,6 @@ cp .env.local.example .env.local
 npm run dev
 ```
 
-## 📦 Variables d'Environnement
-
-```env
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=votre_url_supabase
-NEXT_PUBLIC_SUPABASE_ANON_KEY=votre_clé_anon_supabase
-
-# Autres
-NEXT_PUBLIC_APP_NAME=Zeno
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
 
 ## 🔧 Scripts Disponibles
 
@@ -174,37 +163,6 @@ L'application est entièrement responsive et s'adapte à tous les écrans :
 
 ### Schéma Principal
 
-```sql
--- Membres de l'équipe
-CREATE TABLE members (
-  id UUID PRIMARY KEY,
-  email TEXT UNIQUE,
-  nom TEXT,
-  role TEXT,
-  avatar_url TEXT
-);
-
--- Projets
-CREATE TABLE projets (
-  id UUID PRIMARY KEY,
-  nom TEXT,
-  client_id UUID,
-  statut TEXT,
-  budget_total DECIMAL
-);
-
--- Tâches
-CREATE TABLE taches (
-  id UUID PRIMARY KEY,
-  titre TEXT,
-  assigne_a UUID,
-  statut TEXT,
-  date_execution DATE,
-  rapport_effectue BOOLEAN
-);
-
--- Devis, Contrats, Factures, Transactions, Rapports, Annonces...
-```
 
 ## 🤝 Contribution
 
@@ -222,8 +180,8 @@ Ce projet est développé pour Zoldick Entreprise. Tous droits réservés.
 
 **Zoldick Entreprise**
 
-- Site: [www.zoldick.cm](https://www.zoldick.cm)
-- Email: contact@zoldick.cm
+- Site: [www.zoldickentreprise.cm](https://www.zoldick.cm)
+- Email: contact@zoldickentreprise.cm
 
 ---
 

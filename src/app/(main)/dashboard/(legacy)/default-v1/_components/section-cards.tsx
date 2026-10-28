@@ -9,7 +9,7 @@ export function SectionCards() {
       <Card className="@container/card">
         <CardHeader>
           <CardDescription>Total Revenue</CardDescription>
-          <CardTitle className="font-semibold @[250px]/card:text-3xl text-2xl tabular-nums">$1,250.00</CardTitle>
+          <CardTitle className="font-semibold @[250px]/card:text-3xl text-2xl tabular-nums">1,250.00 FCFA</CardTitle>
           <CardAction>
             <Badge variant="outline">
               <TrendingUp />
